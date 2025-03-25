@@ -1,5 +1,6 @@
 package com.example.projektiop
 
+import BluetoothManagerUtils
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -43,61 +44,32 @@ class MainActivity : ComponentActivity() {
 //Główny ekran
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val bleManager = remember { BluetoothManagerUtils(context) }
+
+
     Column(modifier = modifier.fillMaxSize(),
         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)){
         Text(text = "Your name is $name!", modifier = modifier)
-        StartAdvertisingButton()
-        StartScanningButton()
-        StopAdvertisingButton()
-        StopScanningButton()
+
+        //przyciski
+        Button(onClick = { bleManager.startScan() }) {
+            Text("Rozpocznij skanowanie")
+        }
+        Button(onClick = { bleManager.stopScan() }) {
+            Text("Zatrzymaj skanowanie")
+        }
+        Button(onClick = { bleManager.startAdvertising() }) {
+            Text("Rozpocznij rozgłaszanie")
+        }
+        Button(onClick = { bleManager.stopAdvertising() }) {
+            Text("Zatrzymaj Rozgłaszanie")
+        }
+
         Status()
     }
 
-}
-
-//Tutaj przycisk do startu nadawania
-@Composable
-fun StartAdvertisingButton(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    Button(onClick = {
-        Toast.makeText(context, "Rozpoczęto nadawanie", Toast.LENGTH_SHORT).show()
-    }, modifier = modifier) {
-        Text(text = "Rozpocznij nadawanie")
-    }
-}
-
-//Tutaj przycisk do startu skanowania
-@Composable
-fun StartScanningButton(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    Button(onClick = {
-        Toast.makeText(context, "Rozpoczęto skanowanie", Toast.LENGTH_SHORT).show()
-    }, modifier = modifier) {
-        Text(text = "Rozpocznij skanowanie")
-    }
-}
-
-//Tutaj przycisk do zatrzymania nadawania
-@Composable
-fun StopAdvertisingButton(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    Button(onClick = {
-        Toast.makeText(context, "Zatrzymano nadawanie", Toast.LENGTH_SHORT).show()
-    }, modifier = modifier) {
-        Text(text = "Zatrzymaj nadawanie")
-    }
-}
-
-//Tutaj przycisk do zatrzymania skanowania
-@Composable
-fun StopScanningButton(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    Button(onClick = {
-        Toast.makeText(context, "Zatrzymano nadawanie", Toast.LENGTH_SHORT).show()
-    }, modifier = modifier) {
-        Text(text = "Zatrzymaj skanowanie")
-    }
 }
 
 //Tutaj pokazuj status czyli np polaczono z itp
