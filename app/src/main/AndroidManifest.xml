@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.NFC" />
+    <!-- <uses-feature android:name="android.hardware.nfc" android:required="true" /> -->
+    <!-- <uses-feature android:name="android.hardware.nfc.hce" android:required="true" /> -->
 
     <!-- Required permissions for BLE -->
     <uses-permission android:name="android.permission.BLUETOOTH"/>
@@ -48,6 +51,47 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".BluetoothLE.BLEActivity"
+            android:exported="true"
+            android:label="BLEActivity"
+            android:theme="@style/Theme.ProjektIOP">
+            <intent-filter>
+                <action android:name="android.intent.action.RUN" />
+
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".activeHandshake.NFC.ReadNFCActivity"
+            android:exported="true"
+            android:label="readNFCActivity"
+            android:theme="@style/Theme.ProjektIOP">
+            <intent-filter>
+                <!-- NFC intents here -->
+                <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".activeHandshake.NFC.HostBasedCardEmulatorActivity"
+            android:exported="true"
+            android:label="HCEActivity"
+            android:theme="@style/Theme.ProjektIOP">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+            </intent-filter>
+        </activity>
+        <service android:name=".activeHandshake.NFC.HCEApduService" android:exported="true"
+            android:permission="android.permission.BIND_NFC_SERVICE">
+            <intent-filter>
+                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE"/>
+
+            </intent-filter>
+            <meta-data android:name="android.nfc.cardemulation.host_apdu_service"
+                android:resource="@xml/apduservice"/>
+        </service>
     </application>
 
 </manifest>
