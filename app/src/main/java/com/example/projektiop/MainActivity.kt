@@ -82,9 +82,27 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         }
 
         Status()
+        ScanStatus(bleManager)
+
     }
 
 }
+
+@Composable
+fun ScanStatus(bleManager: BluetoothManagerUtils, modifier: Modifier = Modifier) {
+    val isScanning by bleManager.isScanning
+    val isAdvertising by bleManager.isAdvertising
+
+    val statusText = when {
+        isScanning && isAdvertising -> "Skanowanie i Rozgłaszanie aktywne"
+        isScanning -> "Skanowanie aktywne"
+        isAdvertising -> "Rozgłaszanie aktywne"
+        else -> "Nieaktywne"
+    }
+
+    Text(text = "Status BLE: $statusText", modifier = modifier)
+}
+
 
 //Tutaj pokazuj status czyli np polaczono z itp
 @Composable

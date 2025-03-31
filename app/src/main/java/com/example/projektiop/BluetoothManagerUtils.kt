@@ -11,6 +11,8 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import java.nio.ByteBuffer
 import java.util.*
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.State
 
 class BluetoothManagerUtils(private val context: Context) {
 
@@ -18,6 +20,12 @@ class BluetoothManagerUtils(private val context: Context) {
     private val bluetoothAdapter: BluetoothAdapter = bluetoothManager.adapter
     private val scanner: BluetoothLeScanner? = bluetoothAdapter.bluetoothLeScanner
     private val advertiser: BluetoothLeAdvertiser? = bluetoothAdapter.bluetoothLeAdvertiser
+
+    private val _isScanning = mutableStateOf(false)
+    val isScanning: State<Boolean> get() = _isScanning
+
+    private val _isAdvertising = mutableStateOf(false)
+    val isAdvertising: State<Boolean> get() = _isAdvertising
 
     @androidx.annotation.RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     private val scanCallback = object : ScanCallback() {
@@ -71,6 +79,7 @@ class BluetoothManagerUtils(private val context: Context) {
                 .build()
 
             scanner?.startScan(null, scanSettings, scanCallback)
+            _isScanning.value = true  // Zmieniamy stan na aktywny
             Log.d("BLE_SCAN", "Rozpoczęto skanowanie BLE")
         } catch (e: SecurityException) {
             Log.e("BLE_SCAN", "SecurityException: ${e.message}")
@@ -84,6 +93,7 @@ class BluetoothManagerUtils(private val context: Context) {
 
         try {
             scanner?.stopScan(scanCallback)
+            _isScanning.value = false  // Zmieniamy stan na nieaktywny
             Log.d("BLE_SCAN", "Zatrzymano skanowanie BLE")
         } catch (e: SecurityException) {
             Log.e("BLE_SCAN", "SecurityException: ${e.message}")
@@ -112,6 +122,7 @@ class BluetoothManagerUtils(private val context: Context) {
 
         try {
             advertiser?.startAdvertising(settings, data, advertiseCallback)
+            _isAdvertising.value = true  // Zmieniamy stan na aktywny
             Log.d("BLE_ADVERTISE", "Rozpoczęto rozgłaszanie BLE z liczbą: $randomNumber")
         } catch (e: SecurityException) {
             Log.e("BLE_ADVERTISE", "SecurityException: ${e.message}")
@@ -125,6 +136,7 @@ class BluetoothManagerUtils(private val context: Context) {
 
         try {
             advertiser?.stopAdvertising(advertiseCallback)
+            _isAdvertising.value = false  // Zmieniamy stan na nieaktywny
             Log.d("BLE_ADVERTISE", "Zatrzymano rozgłaszanie BLE")
         } catch (e: SecurityException) {
             Log.e("BLE_ADVERTISE", "SecurityException: ${e.message}")
