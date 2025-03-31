@@ -23,6 +23,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.projektiop.ui.theme.ProjektIOPTheme
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.navigation.NavController
+import androidx.navigation.compose.*
+import androidx.compose.ui.Alignment
 
 
 class MainActivity : ComponentActivity() {
@@ -41,30 +44,88 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ProjektIOPTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "brak",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+            MyApp()
         }
         requestBluetoothPermissions(this, permissionsLauncher)
     }
 
 }
 
+@Composable
+fun MyApp() {
+    val navController = rememberNavController()
+    NavHost(navController, startDestination = "start") {
+        composable("start") { StartScreen(navController) }
+        composable("login") { LoginScreen(navController) }
+        composable("register") { RegisterScreen(navController) }
+        composable ("scanner") {
+            ScannerScreen(
+                name = "brak",
+                modifier = Modifier.padding(10.dp),
+                navController = navController
+        ) }
+    }
+}
+
+@Composable
+fun StartScreen(navController: NavController) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Button(onClick = { navController.navigate("login") }, modifier = Modifier.padding(8.dp)) {
+            Text("Zaloguj się")
+        }
+        Button(onClick = { navController.navigate("register") }, modifier = Modifier.padding(8.dp)) {
+            Text("Zarejestruj się")
+        }
+        Button(onClick = { navController.navigate("scanner") }, modifier = Modifier.padding(8.dp)) {
+            Text("Skaner")
+        }
+    }
+}
+
+@Composable
+fun LoginScreen(navController: NavController) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Ekran logowania")
+        Button(onClick = { navController.popBackStack() }, modifier = Modifier.padding(8.dp)) {
+            Text("Powrót")
+        }
+    }
+}
+
+@Composable
+fun RegisterScreen(navController: NavController) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Ekran rejestracji")
+        Button(onClick = { navController.popBackStack() }, modifier = Modifier.padding(8.dp)) {
+            Text("Powrót")
+        }
+    }
+}
+
 //Główny ekran
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun ScannerScreen(name: String, modifier: Modifier = Modifier, navController: NavController) {
     val context = LocalContext.current
     val bleManager = remember { BluetoothManagerUtils(context) }
 
 
-    Column(modifier = modifier.fillMaxSize(),
-        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)){
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ){
         Text(text = "Your name is $name!", modifier = modifier)
 
         //przyciski
@@ -84,6 +145,9 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         Status()
         ScanStatus(bleManager)
 
+        Button(onClick = { navController.popBackStack() }, modifier = Modifier.padding(8.dp)) {
+            Text("Powrót")
+        }
     }
 
 }
@@ -121,6 +185,6 @@ fun Status(text: String = "brak", modifier: Modifier = Modifier) {
 @Composable
 fun DefaultPreview() {
     ProjektIOPTheme {
-        Greeting(12345.toString())
+        ScannerScreen(12345.toString(), navController = rememberNavController())
     }
 }
