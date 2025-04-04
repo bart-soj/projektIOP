@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">projektIOP</string>
+    <string name="clear_content_description">Wyczyść</string>
+    <string name="return_button_text">Powrót</string>
+    <string name="username_error">Podana nazwa użykownika jest już zajęta</string>
+    <string name="email_error">Błędny adres e-mail</string>
+    <string name="password_error">Błędne hasło</string>
+    <string name="password_label">Hasło</string>
+    <string name="email_label">E-mail</string>
+    <string name="username_label">Nazwa użytkownika</string>
+    <string name="register_button_text">Zarejestruj się</string>
+    <string name="login_button_text">Zaloguj się</string>
 </resources>
