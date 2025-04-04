@@ -19,7 +19,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.projektiop.R
-import com.example.projektiop.formelements.SwitchWithText
 import com.example.projektiop.formelements.OutlinedTextFieldWithClearAndError
 
 @Composable

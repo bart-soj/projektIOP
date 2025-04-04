@@ -2,9 +2,12 @@ package com.example.projektiop.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -20,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.projektiop.R
 import com.example.projektiop.formelements.OutlinedTextFieldWithClearAndError
+import com.example.projektiop.formelements.SwitchWithText
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -50,6 +54,22 @@ fun LoginScreen(navController: NavController) {
                 modifier = Modifier.padding(8.dp),
                 isError = false // temporary
             )
+            Row (
+                modifier = Modifier
+                    .width(IntrinsicSize.Max)
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
+            ){
+                SwitchWithText(
+                    checked = false,
+                    text = stringResource(R.string.remember_me_label),
+                    modifier = Modifier
+                        .padding(8.dp)
+                ) {
+                    // Handle the switch state change here
+                }
+            }
             Row (
                 modifier = Modifier.padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
