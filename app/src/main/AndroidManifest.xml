@@ -50,7 +50,7 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity >
         <activity
             android:name=".BluetoothLE.BLEActivity"
             android:exported="true"
@@ -80,7 +80,8 @@
             android:theme="@style/Theme.ProjektIOP">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
+                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
         <service android:name=".activeHandshake.NFC.HCEApduService" android:exported="true"
