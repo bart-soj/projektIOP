@@ -1,4 +1,4 @@
-package com.example.projektiop
+package com.example.projektiop // Upewnij się, że pakiet jest poprawny
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -9,6 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle // Ważny import
+import com.example.projektiop.BluetoothLE.BLEActivity
+import com.example.projektiop.BluetoothLE.BluetoothManagerUtils
+import com.example.projektiop.activeHandshake.NFC.SimpleDistinguishableView
 import com.example.projektiop.ui.theme.ProjektIOPTheme
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.navigation.compose.*
@@ -20,7 +24,7 @@ import com.example.projektiop.screens.RegisterScreen
 import com.example.projektiop.screens.ScannerScreen
 
 class MainActivity : ComponentActivity() {
-
+  
     private val permissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             permissions.forEach { (permission, granted) ->
@@ -29,8 +33,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
-
+  
+  
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

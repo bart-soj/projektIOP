@@ -14,6 +14,8 @@
     <!-- Location permissions for BLE scanning (required on Android < 12) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
@@ -37,6 +39,16 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".BluetoothLE.BLEActivity"
+            android:exported="true"
+            android:label="BLEActivity"
+            android:theme="@style/Theme.ProjektIOP">
+            <intent-filter>
+                <action android:name="android.intent.action.RUN" />
+
             </intent-filter>
         </activity>
     </application>
