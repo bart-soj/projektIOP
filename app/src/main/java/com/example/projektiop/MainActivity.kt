@@ -1,26 +1,12 @@
 package com.example.projektiop // Upewnij się, że pakiet jest poprawny
 
-import android.app.LauncherActivity
-import android.content.ComponentName
-import android.content.Intent
-import android.nfc.NfcAdapter
-import android.nfc.cardemulation.CardEmulation
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme // Dodano import dla stylu tekstu
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign // Dodano import dla wyrównania tekstu
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle // Ważny import
@@ -28,14 +14,59 @@ import com.example.projektiop.BluetoothLE.BLEActivity
 import com.example.projektiop.BluetoothLE.BluetoothManagerUtils
 import com.example.projektiop.activeHandshake.NFC.SimpleDistinguishableView
 import com.example.projektiop.ui.theme.ProjektIOPTheme
-import java.util.UUID
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.navigation.compose.*
+
+import com.example.projektiop.screens.StartScreen
+import com.example.projektiop.screens.LoginScreen
+import com.example.projektiop.screens.MainScreen
+import com.example.projektiop.screens.RegisterScreen
+import com.example.projektiop.screens.ScannerScreen
 
 class MainActivity : ComponentActivity() {
+  
+    private val permissionsLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            permissions.forEach { (permission, granted) ->
+                if (!granted) {
+                    showPermissionDeniedMessage(permission)
+                }
+            }
+        }
+  
+  
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        setContent {
+            MyApp()
+        }
+        requestBluetoothPermissions(this, permissionsLauncher)
+    }
 
-        val intent = Intent(this, BLEActivity::class.java)
-        startActivity(intent)
+}
+
+@Composable
+fun MyApp() {
+    val navController = rememberNavController()
+    NavHost(navController, startDestination = "start") {
+        composable("start") { StartScreen(navController) }
+        composable("login") { LoginScreen(navController) }
+        composable("register") { RegisterScreen(navController) }
+        composable ("scanner") {
+            ScannerScreen(
+                name = "brak",
+                modifier = Modifier.padding(10.dp),
+                navController = navController
+        ) }
+        composable("main") { MainScreen(navController) }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DefaultPreview() {
+    ProjektIOPTheme {
+        ScannerScreen(12345.toString(), navController = rememberNavController())
     }
 }
