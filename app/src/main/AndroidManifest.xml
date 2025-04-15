@@ -41,6 +41,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".BluetoothLE.BLEActivity"
+            android:exported="true"
+            android:label="BLEActivity"
+            android:theme="@style/Theme.ProjektIOP">
+            <intent-filter>
+                <action android:name="android.intent.action.RUN" />
+
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

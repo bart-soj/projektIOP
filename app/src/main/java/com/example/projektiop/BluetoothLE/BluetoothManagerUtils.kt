@@ -1,30 +1,36 @@
-package com.example.projektiop // Upewnij się, że pakiet jest poprawny
+package com.example.projektiop.BluetoothLE
 
 import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
-import android.bluetooth.le.*
+import android.bluetooth.le.AdvertiseCallback
+import android.bluetooth.le.AdvertiseData
+import android.bluetooth.le.AdvertiseSettings
+import android.bluetooth.le.BluetoothLeAdvertiser
+import android.bluetooth.le.BluetoothLeScanner
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
+import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.Context
-import android.content.Intent // Potrzebne do otwierania ustawień
+import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.LocationManager // Potrzebne do sprawdzania lokalizacji
+import android.location.LocationManager
 import android.os.Build
 import android.os.ParcelUuid
-import android.provider.Settings // Potrzebne do otwierania ustawień lokalizacji
+import android.provider.Settings
 import android.util.Log
-import android.widget.Toast // Dodano import dla Toast
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.app.ActivityCompat
-import androidx.core.location.LocationManagerCompat // Helper do sprawdzania lokalizacji
+import androidx.core.location.LocationManagerCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.nio.charset.Charset
 import java.util.UUID
 
-// --- WAŻNE: Unikalny UUID dla twojej usługi - MUSI być taki sam w aplikacji skanującej i rozgłaszającej ---
-// Możesz wygenerować własny np. za pomocą `UUID.randomUUID().toString()` i zastąpić ten poniżej
 private val SERVICE_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB") // Użyj własnego stałego UUID
 
 // Tagi do filtrowania logów w Logcat
@@ -37,6 +43,7 @@ class BluetoothManagerUtils(
     private val context: Context,
     private val ownUserId: String // Przekazujemy ID użytkownika do rozgłaszania
 ) {
+
 
     private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     private val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
@@ -99,7 +106,7 @@ class BluetoothManagerUtils(
                     }
                 } else {
                     // UUID nie pasuje (inne urządzenie BLE) - logujemy tylko na poziomie Verbose
-                    Log.v(TAG_SCAN, "onScanResult: Zignorowano urządzenie $deviceAddress (nie pasuje UUID $SERVICE_UUID)")
+                    Log.v(TAG_SCAN, "onScanResult: Zignorowano urządzenie $deviceAddress (nie pasuje UUID ${SERVICE_UUID})")
                 }
             } ?: run {
                 Log.d(TAG_SCAN, "onScanResult: Otrzymano pusty wynik (result == null)")
@@ -111,10 +118,10 @@ class BluetoothManagerUtils(
             Log.e(TAG_SCAN, "Skanowanie nie powiodło się, kod błędu: $errorCode")
             _isScanning.value = false
             val errorText = when (errorCode) {
-                ScanCallback.SCAN_FAILED_ALREADY_STARTED -> "Scan Failed: Already Started"
-                ScanCallback.SCAN_FAILED_APPLICATION_REGISTRATION_FAILED -> "Scan Failed: App Registration Failed (Check Manifest?)"
-                ScanCallback.SCAN_FAILED_INTERNAL_ERROR -> "Scan Failed: Internal Error"
-                ScanCallback.SCAN_FAILED_FEATURE_UNSUPPORTED -> "Scan Failed: Feature Unsupported (BLE Scan not supported?)"
+                SCAN_FAILED_ALREADY_STARTED -> "Scan Failed: Already Started"
+                SCAN_FAILED_APPLICATION_REGISTRATION_FAILED -> "Scan Failed: App Registration Failed (Check Manifest?)"
+                SCAN_FAILED_INTERNAL_ERROR -> "Scan Failed: Internal Error"
+                SCAN_FAILED_FEATURE_UNSUPPORTED -> "Scan Failed: Feature Unsupported (BLE Scan not supported?)"
                 // Można dodać kody z API 31+ jeśli targetSDK >= 31
                 // ScanCallback.SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES -> "Scan Failed: Out of Hardware Resources"
                 // ScanCallback.SCAN_FAILED_SCANNING_TOO_FREQUENTLY -> "Scan Failed: Scanning Too Frequently"
@@ -130,7 +137,7 @@ class BluetoothManagerUtils(
     private val advertiseCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
             super.onStartSuccess(settingsInEffect)
-            Log.i(TAG_ADVERTISE, ">>> Rozgłaszanie rozpoczęte pomyślnie (ID: $ownUserId, UUID: $SERVICE_UUID) <<<")
+            Log.i(TAG_ADVERTISE, ">>> Rozgłaszanie rozpoczęte pomyślnie (ID: $ownUserId, UUID: ${SERVICE_UUID}) <<<")
             _isAdvertising.value = true
             // Można zaktualizować status, np.
             // if (!_isScanning.value) { _foundDeviceStatus.value = "Status: Rozgłaszanie aktywne" }
@@ -140,11 +147,11 @@ class BluetoothManagerUtils(
             Log.e(TAG_ADVERTISE, "Rozgłaszanie nie powiodło się, kod błędu: $errorCode")
             _isAdvertising.value = false
             val errorText = when (errorCode) {
-                AdvertiseCallback.ADVERTISE_FAILED_DATA_TOO_LARGE -> "Advertise Failed: Data Too Large (Check ID length and UUID)"
-                AdvertiseCallback.ADVERTISE_FAILED_TOO_MANY_ADVERTISERS -> "Advertise Failed: Too Many Advertisers (System limit reached)"
-                AdvertiseCallback.ADVERTISE_FAILED_ALREADY_STARTED -> "Advertise Failed: Already Started"
-                AdvertiseCallback.ADVERTISE_FAILED_INTERNAL_ERROR -> "Advertise Failed: Internal Error"
-                AdvertiseCallback.ADVERTISE_FAILED_FEATURE_UNSUPPORTED -> "Advertise Failed: Feature Unsupported (BLE Advertise not supported?)"
+                ADVERTISE_FAILED_DATA_TOO_LARGE -> "Advertise Failed: Data Too Large (Check ID length and UUID)"
+                ADVERTISE_FAILED_TOO_MANY_ADVERTISERS -> "Advertise Failed: Too Many Advertisers (System limit reached)"
+                ADVERTISE_FAILED_ALREADY_STARTED -> "Advertise Failed: Already Started"
+                ADVERTISE_FAILED_INTERNAL_ERROR -> "Advertise Failed: Internal Error"
+                ADVERTISE_FAILED_FEATURE_UNSUPPORTED -> "Advertise Failed: Feature Unsupported (BLE Advertise not supported?)"
                 else -> "Advertise Failed: Unknown error code $errorCode"
             }
             _foundDeviceStatus.value = "Status: Błąd rozgł. ($errorCode)"
@@ -213,7 +220,7 @@ class BluetoothManagerUtils(
 
         // 8. Rozpoczęcie skanowania
         try {
-            Log.i(TAG_SCAN, "Rozpoczynanie skanowania z filtrem UUID: $SERVICE_UUID...")
+            Log.i(TAG_SCAN, "Rozpoczynanie skanowania z filtrem UUID: ${SERVICE_UUID}...")
             bluetoothLeScanner?.startScan(listOf(scanFilter), scanSettings, scanCallback)
             _isScanning.value = true
             _foundDeviceStatus.value = "Status: Skanowanie..." // Początkowy status
@@ -341,7 +348,7 @@ class BluetoothManagerUtils(
 
         // 8. Rozpoczęcie rozgłaszania
         try {
-            Log.i(TAG_ADVERTISE, "Rozpoczynanie rozgłaszania z UUID: $SERVICE_UUID i ID: $ownUserId...")
+            Log.i(TAG_ADVERTISE, "Rozpoczynanie rozgłaszania z UUID: ${SERVICE_UUID} i ID: $ownUserId...")
             bluetoothLeAdvertiser?.startAdvertising(settings, data, advertiseCallback)
             // Stan _isAdvertising zostanie ustawiony na true w callbacku onStartSuccess
             // Można ustawić status tymczasowy:
