@@ -13,4 +13,31 @@
     <string name="remember_me_label">Zapamiętaj mnie</string>
     <string name="login_screen_title">Ekran logowania</string>
     <string name="register_screen_title">Zarejestruj się</string>
+    <string name="start_screen_register_button">Rejestracja</string>
+    <string name="start_screen_login_button">Logowanie</string>
+    <string name="start_screen_scanner_button">Skaner</string>
+    <string name="start_screen_main_button">main</string>
+
+
+    <string name="profile_name_placeholder">Jan Kowalski</string> <!-- Przykładowa nazwa -->
+    <string name="profile_description_placeholder">Krótki opis o mnie, co lubię robić i czego szukam.</string> <!-- Przykładowy opis -->
+    <string name="profile_interests_label">Zainteresowania:</string>
+    <string name="profile_interest_placeholder_1">Sport</string> <!-- Przykładowe zainteresowanie -->
+    <string name="profile_interest_placeholder_2">Muzyka</string> <!-- Przykładowe zainteresowanie -->
+    <string name="profile_interest_placeholder_3">Filmy</string> <!-- Przykładowe zainteresowanie -->
+    <string name="profile_image_content_description">Zdjęcie profilowe</string> <!-- Opis dla czytników ekranu -->
+    <string name="broadcast_message_label">Wiadomość rozgłoszeniowa</string>
+    <string name="filter_settings_label">Ustawienia filtrów</string>
+    <string name="filter_icon_content_description">Filtry</string> <!-- Opis ikony filtrów -->
+    <string name="broadcasting_label">Rozgłaszanie</string>
+    <string name="broadcasting_status_icon_content_description">Status rozgłaszania</string> <!-- Opis ikony statusu -->
+    <!-- Stringi dla dolnego paska nawigacji (Bottom Navigation Bar) -->
+    <string name="bottom_nav_home">Ekran Główny</string>
+    <string name="bottom_nav_profile">Profil</string>
+    <string name="bottom_nav_chats">Czaty</string>
+    <string name="bottom_nav_broadcast">Rozgłaszanie</string>
+    <string name="bottom_nav_settings">Ustawienia</string>
+    <string name="profile_interest_1">Sample 1</string>
+    <string name="profile_interest_2">Sample 2</string>
+    <string name="profile_interest_3">Sample 3</string>
 </resources>

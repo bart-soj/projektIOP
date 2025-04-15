@@ -15,6 +15,7 @@ import androidx.navigation.compose.*
 
 import com.example.projektiop.screens.StartScreen
 import com.example.projektiop.screens.LoginScreen
+import com.example.projektiop.screens.MainScreen
 import com.example.projektiop.screens.RegisterScreen
 import com.example.projektiop.screens.ScannerScreen
 
@@ -54,6 +55,7 @@ fun MyApp() {
                 modifier = Modifier.padding(10.dp),
                 navController = navController
         ) }
+        composable("main") { MainScreen(navController) }
     }
 }
 
