@@ -12,12 +12,15 @@ import androidx.compose.ui.unit.dp
 import com.example.projektiop.ui.theme.ProjektIOPTheme
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.navigation.compose.*
+import com.example.projektiop.screens.ChatsScreen
 
 import com.example.projektiop.screens.StartScreen
 import com.example.projektiop.screens.LoginScreen
 import com.example.projektiop.screens.MainScreen
+import com.example.projektiop.screens.ProfileScreen
 import com.example.projektiop.screens.RegisterScreen
 import com.example.projektiop.screens.ScannerScreen
+import com.example.projektiop.screens.SettingsScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -45,7 +48,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp() {
     val navController = rememberNavController()
-    NavHost(navController, startDestination = "start") {
+    NavHost(navController, startDestination = "main") {
         composable("start") { StartScreen(navController) }
         composable("login") { LoginScreen(navController) }
         composable("register") { RegisterScreen(navController) }
@@ -56,6 +59,9 @@ fun MyApp() {
                 navController = navController
         ) }
         composable("main") { MainScreen(navController) }
+        composable("chats") { ChatsScreen(navController) }
+        composable("profile") { ProfileScreen(navController) }
+        composable("settings") { SettingsScreen(navController) }
     }
 }
 

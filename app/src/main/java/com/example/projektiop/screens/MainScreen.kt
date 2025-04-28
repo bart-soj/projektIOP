@@ -97,7 +97,7 @@ fun ProfileCard(modifier: Modifier = Modifier) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // 2. Zdjęcie profilowe
                 Image(
-                    painter = painterResource(id = R.drawable.avatar_placeholder_background), // Zastąp prawdziwym obrazkiem
+                    painter = painterResource(id = R.drawable.avatar_placeholder), // Zastąp prawdziwym obrazkiem
                     contentDescription = "Zdjęcie profilowe",
                     modifier = Modifier
                         .size(64.dp)
@@ -190,8 +190,8 @@ fun BottomNavigationBar(navController: NavController, currentRoute: String?) {
         BottomNavItem(R.string.bottom_nav_home, Icons.Default.Home, "main"), // Załóżmy, że MainScreen ma route "main"
         BottomNavItem(R.string.bottom_nav_profile, Icons.Default.Person, "profile"),
         BottomNavItem(R.string.bottom_nav_chats, Icons.Default.Chat, "chats"),
-        BottomNavItem(R.string.bottom_nav_broadcast, Icons.Default.BroadcastOnPersonal, "broadcast_control"),
-        BottomNavItem(R.string.bottom_nav_settings, Icons.Default.Settings, "start") // Użyj odpowiedniej ścieżki
+        BottomNavItem(R.string.bottom_nav_broadcast, Icons.Default.BroadcastOnPersonal, "scanner"),
+        BottomNavItem(R.string.bottom_nav_settings, Icons.Default.Settings, "settings") // Użyj odpowiedniej ścieżki
     )
 
     NavigationBar { // Material 3 Bottom Navigation Bar
