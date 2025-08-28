@@ -1,11 +1,12 @@
 package com.example.projektiop.screens
 
-import BluetoothManagerUtils // Upewnij się, że ta klasa jest dostępna
+import com.example.projektiop.BluetoothLE.BluetoothManagerUtils
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.* // Material 3
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -24,7 +25,7 @@ import com.example.projektiop.R // Upewnij się, że masz odpowiednie zasoby str
 fun ScannerScreen(name: String, modifier: Modifier = Modifier, navController: NavController) {
     val context = LocalContext.current
     // Pamiętaj o bleManager - kluczowa logika pozostaje bez zmian
-    val bleManager = remember { BluetoothManagerUtils(context) }
+    val bleManager = remember { BluetoothManagerUtils(context, name) }
 
     // Pobranie aktualnej ścieżki dla dolnego paska nawigacji
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -103,8 +104,8 @@ fun ScannerScreen(name: String, modifier: Modifier = Modifier, navController: Na
 // Komponent ScanStatus pozostaje bez zmian
 @Composable
 fun ScanStatus(bleManager: BluetoothManagerUtils, modifier: Modifier = Modifier) {
-    val isScanning by bleManager.isScanning
-    val isAdvertising by bleManager.isAdvertising
+    val isScanning = bleManager.isScanning.collectAsState().value
+    val isAdvertising = bleManager.isAdvertising.collectAsState().value
 
     // Użyj zasobów string dla lepszej internacjonalizacji
     val statusText = when {
@@ -117,7 +118,7 @@ fun ScanStatus(bleManager: BluetoothManagerUtils, modifier: Modifier = Modifier)
     Text(
         text = stringResource(R.string.ble_status_label, statusText), // Np. "Status BLE: %s"
         style = MaterialTheme.typography.bodyMedium,
-        modifier = modifier.padding(vertical = 8.dp) // Dodaj trochę pionowego paddingu
+        modifier = modifier.padding(vertical = 8.dp)
     )
 }
 

@@ -78,6 +78,16 @@ fun StartScreen(navController: NavController) {
                 Text(text = stringResource(R.string.register))
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { navController.navigate("main") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
+                Text(text = "Przejdź do Main Screen")
+            }
+
             Spacer(modifier = Modifier.height(32.dp)) // Dodatkowy odstęp od dołu
         }
     }

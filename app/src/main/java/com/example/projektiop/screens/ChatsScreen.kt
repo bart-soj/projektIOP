@@ -33,7 +33,6 @@ data class ChatPreviewData(
     val avatarResId: Int // ID zasobu obrazka (drawable)
 )
 
-// --- Przykładowe dane (zastąp prawdziwymi danymi) ---
 val sampleChatListData = listOf(
     ChatPreviewData("1", "Anna Kowalska", "Hej! Co tam?", R.drawable.avatar_placeholder_background), // Użyj placeholdera lub dodaj inne obrazki
     ChatPreviewData("2", "Piotr Nowak", "Widziałeś ten nowy film?", R.drawable.avatar_placeholder_background),

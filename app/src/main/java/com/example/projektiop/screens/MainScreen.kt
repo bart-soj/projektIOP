@@ -79,6 +79,18 @@ fun MainScreen(navController: NavController) {
                 onCheckedChange = { isBroadcasting = it }
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Przycisk do listy znajomych
+            Button(
+                onClick = { navController.navigate("friends_list") },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Group, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Lista znajomych")
+            }
+
             Spacer(modifier = Modifier.height(16.dp)) // Odstęp na dole przed bottom bar
         }
     }

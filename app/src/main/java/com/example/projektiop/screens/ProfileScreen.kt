@@ -41,14 +41,10 @@ fun ProfileScreen(navController: NavController) {
     val interests = listOf(
         stringResource(R.string.profile_interest_1), // Użyj istniejących
         stringResource(R.string.profile_interest_2),
-        stringResource(R.string.profile_interest_3),
-        "Podróże", "Fotografia", "Gotowanie" // Dodaj więcej dla przykładu FlowRow
+        stringResource(R.string.profile_interest_3)
     )
-    // Przykładowe statystyki
     val stats = mapOf(
-        "Odwiedzone miejsca" to 15,
-        "Nawiązane kontakty" to 42,
-        "Udostępnione hobby" to 5
+        "Nawiązane kontakty" to 42
     )
     // ----------------------------------------------------
 
@@ -79,9 +75,7 @@ fun ProfileScreen(navController: NavController) {
                 location = location,
                 avatarResId = R.drawable.avatar_placeholder, // Użyj placeholdera
                 onSettingsClick = {
-                    // TODO: Nawiguj do ekranu edycji/ustawień profilu
-                    // navController.navigate("profile/edit")
-                    println("Settings clicked")
+                    navController.navigate("edit_profile")
                 }
             )
 
@@ -127,18 +121,6 @@ fun ProfileScreen(navController: NavController) {
                     }
                 }
             }
-
-            // --- Elementy 9 i 10 (Dodawanie opisu do zainteresowania) ---
-            // Zgodnie ze schematem, to wymagałoby bardziej złożonej logiki,
-            // np. kliknięcie na tag zainteresowania otwierałoby pole do edycji.
-            // Na tym etapie można pominąć lub dodać adnotację, że ta funkcja
-            // będzie dostępna po kliknięciu w tag lub w ekranie edycji profilu.
-            // Przykład adnotacji:
-            // Text(
-            //     text = "Kliknij na zainteresowanie, aby dodać opis (funkcja wkrótce).",
-            //     style = MaterialTheme.typography.labelSmall,
-            //     modifier = Modifier.padding(top = 16.dp)
-            // )
 
             Spacer(modifier = Modifier.height(16.dp)) // Odstęp na dole przed paskiem nawigacji
         }
@@ -221,6 +203,7 @@ fun ProfileSection(
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 8.dp) // Odstęp pod tytułem
         )
+        content() // Dodano wywołanie lambdy content, aby sekcja wyświetlała treść
     }
 }
 // Komponent dla pojedynczej statystyki
@@ -262,19 +245,3 @@ fun ProfileScreenPreview() {
         ProfileScreen(navController = rememberNavController())
     }
 }
-
-// --- Dodaj te zasoby string do pliku strings.xml (jeśli ich nie ma) ---
-/*
-<resources>
-    ... inne stringi ...
-    <string name="profile_section_description">Opis</string>
-    <string name="profile_section_interests">Zainteresowania / Hobby</string>
-    <string name="profile_section_stats">Statystyki</string>
-    <string name="profile_settings_button_desc">Ustawienia profilu</string>
-    // Upewnij się, że stringi używane w danych przykładowych istnieją:
-    // profile_name_placeholder, profile_description_placeholder,
-    // profile_interest_1, profile_interest_2, profile_interest_3
-    // Oraz stringi dla BottomNav jeśli jeszcze ich nie masz:
-    // bottom_nav_home, bottom_nav_profile, bottom_nav_chats, ...
-</resources>
-*/

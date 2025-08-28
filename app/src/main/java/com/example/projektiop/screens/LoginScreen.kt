@@ -114,21 +114,6 @@ fun LoginScreen(navController: NavController) {
                 )
             }
 
-            /* // Alternatywnie: Przełącznik "Zapamiętaj mnie" - Wyrównany do prawej
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End // Wyrównaj do końca (prawej)
-            ) {
-                SwitchWithText(
-                     checked = rememberMe,
-                     text = stringResource(R.string.remember_me_label),
-                     onCheckedChange = { rememberMe = it }
-                 )
-            }
-            */
-
-
             Spacer(modifier = Modifier.height(24.dp)) // Większy odstęp przed przyciskami
 
             // Wiersz z przyciskami
