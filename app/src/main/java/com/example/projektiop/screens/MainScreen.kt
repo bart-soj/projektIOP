@@ -215,15 +215,20 @@ fun BottomNavigationBar(navController: NavController, currentRoute: String?) {
                 onClick = {
                     // Nawiguj tylko, jeśli nie jesteśmy już na tym ekranie
                     if (currentRoute != item.route) {
-                        navController.navigate(item.route) {
-                            // Wyczyść stos do ekranu startowego grafu, by uniknąć budowania wielkiego stosu
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true // Zapisz stan ekranów na stosie
+                        // Najpierw spróbuj cofnąć się do istniejącej instancji danego route
+                        val popped = navController.popBackStack(item.route, inclusive = false)
+                        if (!popped) {
+                            // Jeśli nie było takiego elementu na stosie, przejdź do niego normalnie
+                            navController.navigate(item.route) {
+                                // Wyczyść stos do ekranu startowego grafu, by uniknąć budowania wielkiego stosu
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true // Zapisz stan ekranów na stosie
+                                }
+                                // Unikaj wielokrotnego tworzenia tego samego ekranu na szczycie stosu
+                                launchSingleTop = true
+                                // Przywróć stan, jeśli wracamy do ekranu
+                                restoreState = true
                             }
-                            // Unikaj wielokrotnego tworzenia tego samego ekranu na szczycie stosu
-                            launchSingleTop = true
-                            // Przywróć stan, jeśli wracamy do ekranu
-                            restoreState = true
                         }
                     }
                 }
