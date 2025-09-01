@@ -1,9 +1,7 @@
 <resources>
-    <string name="app_name">projektIOP</string>
     <string name="servicedesc">HCE service for the projektiop app</string>
     <string name="aiddescription">HCE service AID for projektiop app</string>
     <string name="app_name">HelloBeacon</string>
-
 
     <string name="clear_content_description">Wyczyść</string>
     <string name="return_button_text">Powrót</string>
