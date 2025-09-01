@@ -28,10 +28,6 @@ import com.example.projektiop.R
 @OptIn(ExperimentalMaterial3Api::class) // Dla Scaffold, Card, etc.
 @Composable
 fun MainScreen(navController: NavController) {
-
-    // Stany dla elementów interaktywnych
-    var broadcastMessage by remember { mutableStateOf("") }
-    var isBroadcasting by remember { mutableStateOf(false) }
     // Stan dla dolnego paska nawigacji (który element jest aktywny)
     // W prawdziwej aplikacji ten stan byłby powiązany z aktualną ścieżką NavController
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -59,27 +55,7 @@ fun MainScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(24.dp))
 
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 7. Ustawienia filtrów (jako przycisk tekstowy)
-            TextButton(
-                onClick = { /* TODO: Nawiguj do ustawień filtrów */ },
-                modifier = Modifier.align(Alignment.Start) // Wyrównaj do lewej
-            ) {
-                Icon(Icons.Default.FilterList, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                Text(stringResource(R.string.filter_settings_label))
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // 8. Włącznik rozgłaszania
-            BroadcastToggle(
-                isBroadcasting = isBroadcasting,
-                onCheckedChange = { isBroadcasting = it }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
+            // Usunięto sekcje filtrów i rozgłaszania
 
             // Przycisk do listy znajomych
             Button(
@@ -155,36 +131,7 @@ fun InterestTag(text: String) { // Prosty Chip/Tag
     SuggestionChip(onClick = { /* Nic nie rób lub pozwól na interakcję */ }, label = { Text(text) })
 }
 
-@Composable
-fun BroadcastToggle(
-    isBroadcasting: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween // Rozmieść elementy
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // Ikona statusu rozgłaszania (może się zmieniać)
-            Icon(
-                imageVector = if (isBroadcasting) Icons.Default.WifiTethering  else Icons.Default.PortableWifiOff,
-                contentDescription = null
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = stringResource(R.string.broadcasting_label),
-                style = MaterialTheme.typography.bodyLarge
-            )
-        }
-
-        Switch(
-            checked = isBroadcasting,
-            onCheckedChange = onCheckedChange
-        )
-    }
-}
+// Usunięto BroadcastToggle
 
 
 // --- Dolny Pasek Nawigacji (element 9) ---
