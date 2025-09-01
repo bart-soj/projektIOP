@@ -24,7 +24,6 @@ import com.example.projektiop.screens.ChatsScreen
 import com.example.projektiop.screens.StartScreen
 import com.example.projektiop.screens.LoginScreen
 import com.example.projektiop.screens.MainScreen
-import com.example.projektiop.screens.ProfileScreen
 import com.example.projektiop.screens.RegisterScreen
 import com.example.projektiop.screens.ScannerScreen
 import com.example.projektiop.screens.SettingsScreen
@@ -75,7 +74,6 @@ fun MyApp() {
         }
         composable("main") { MainScreen(navController) }
         composable("chats") { ChatsScreen(navController) }
-        composable("profile") { ProfileScreen(navController) }
         composable("settings") { SettingsScreen(navController) }
         composable("edit_profile") { EditProfileScreen(navController) }
         composable("friends_list") { FriendsListScreen(navController) }

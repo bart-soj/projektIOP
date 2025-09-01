@@ -31,7 +31,7 @@ object AuthRepository {
     suspend fun login(email: String, password: String): Result<String?> {
         return withContext(Dispatchers.IO) {
             try {
-                val response = RetrofitInstance.api.login(LoginRequest(email, password))
+                val response = RetrofitInstance.authApi.login(LoginRequest(email, password))
                 if (response.isSuccessful) {
                     Result.success(response.body()?.token)
                 } else {
@@ -46,7 +46,7 @@ object AuthRepository {
     suspend fun register(username: String, email: String, password: String): Result<String?> {
         return withContext(Dispatchers.IO) {
             try {
-                val response = RetrofitInstance.api.register(RegisterRequest(username, email, password))
+                val response = RetrofitInstance.authApi.register(RegisterRequest(username, email, password))
                 if (response.isSuccessful) {
                     Result.success(response.body()?.token)
                 } else {

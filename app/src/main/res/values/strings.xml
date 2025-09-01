@@ -26,7 +26,7 @@
     <string name="register">Zarejestruj się</string>
     <string name="background_image_description">Obraz tła ekranu startowego</string>
 
-    <string name="profile_name_placeholder">Jan Kowalski</string> <!-- Przykładowa nazwa -->
+    <string name="profile_name_placeholder">John Doe</string> <!-- Przykładowa nazwa -->
     <string name="profile_description_placeholder">Krótki opis o mnie, co lubię robić i czego szukam.</string> <!-- Przykładowy opis -->
     <string name="profile_interests_label">Zainteresowania:</string>
     <string name="profile_interest_placeholder_1">Sport</string> <!-- Przykładowe zainteresowanie -->
@@ -41,6 +41,7 @@
     <!-- Stringi dla dolnego paska nawigacji (Bottom Navigation Bar) -->
     <string name="bottom_nav_home">Ekran Główny</string>
     <string name="bottom_nav_profile">Profil</string>
+    <string name="bottom_nav_friends">Znajomi</string>
     <string name="bottom_nav_chats">Czaty</string>
     <string name="bottom_nav_broadcast">Rozgłaszanie</string>
     <string name="bottom_nav_settings">Ustawienia</string>

@@ -4,10 +4,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items // Import dla LazyColumn items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search // Ikona wyszukiwania
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,40 +23,36 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.projektiop.R // Upewnij się, że R jest poprawnie zaimportowane
-
-// --- Przykładowa struktura danych dla elementu listy ---
-data class ChatPreviewData(
-    val id: String, // Unikalny identyfikator czatu/znajomego
-    val friendName: String,
-    val lastMessage: String,
-    val avatarResId: Int // ID zasobu obrazka (drawable)
-)
-
-val sampleChatListData = listOf(
-    ChatPreviewData("1", "Anna Kowalska", "Hej! Co tam?", R.drawable.avatar_placeholder_background), // Użyj placeholdera lub dodaj inne obrazki
-    ChatPreviewData("2", "Piotr Nowak", "Widziałeś ten nowy film?", R.drawable.avatar_placeholder_background),
-    ChatPreviewData("3", "Ewa Zielińska", "Dzięki za pomoc wczoraj :)", R.drawable.avatar_placeholder_background),
-    ChatPreviewData("4", "Janusz Programista", "OK, sprawdzę to jutro.", R.drawable.avatar_placeholder_background),
-    ChatPreviewData("5", "Alicja Testerka", "Zgłosiłam buga #123", R.drawable.avatar_placeholder_background),
-    ChatPreviewData("6", "Krypto Entuzjasta", "...", R.drawable.avatar_placeholder_background)
-)
+import com.example.projektiop.R
+import com.example.projektiop.data.ChatListItem
+import com.example.projektiop.data.ChatRepository
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatsScreen(navController: NavController) {
-
-    // Stan dla pola wyszukiwania
     var searchText by remember { mutableStateOf("") }
-
-    // Pobieranie aktualnej ścieżki dla dolnego paska nawigacji
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Filtrowanie listy na podstawie wyszukiwania (prosta implementacja)
-    val filteredChatList = sampleChatListData.filter {
-        it.friendName.contains(searchText, ignoreCase = true) ||
-                it.lastMessage.contains(searchText, ignoreCase = true)
+    var chats by remember { mutableStateOf<List<ChatListItem>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            loading = true
+            error = null
+            ChatRepository.fetchChats()
+                .onSuccess { chats = it }
+                .onFailure { error = it.message }
+            loading = false
+        }
+    }
+
+    val filteredChatList = chats.filter {
+        it.title.contains(searchText, ignoreCase = true) || it.lastMessage.contains(searchText, ignoreCase = true)
     }
 
     Scaffold(
@@ -83,20 +79,44 @@ fun ChatsScreen(navController: NavController) {
 
             // 3, 4, 5. Lista znajomych/czatów (używamy LazyColumn dla wydajności)
             // 6. Pasek przewijania jest automatycznie obsługiwany przez LazyColumn
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(), // Wypełnij pozostałe miejsce
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), // Padding dla elementów listy
-                verticalArrangement = Arrangement.spacedBy(12.dp) // Odstęp między elementami listy
-            ) {
-                items(filteredChatList, key = { it.id }) { chatData -> // Użyj klucza dla lepszej wydajności
-                    ChatItem(
-                        chatData = chatData,
-                        onClick = {
-                            // TODO: Nawiguj do szczegółów czatu, np.:
-                            // navController.navigate("chatDetail/${chatData.id}")
-                            println("Clicked chat: ${chatData.friendName}") // Tymczasowe logowanie
+            when {
+                loading -> {
+                    Box(Modifier.fillMaxSize()) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
+                }
+                error != null -> {
+                    Box(Modifier.fillMaxSize()) {
+                        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(error ?: "Błąd", color = MaterialTheme.colorScheme.error)
+                            Spacer(Modifier.height(8.dp))
+                            Button(onClick = {
+                                scope.launch {
+                                    loading = true
+                                    error = null
+                                    ChatRepository.fetchChats()
+                                        .onSuccess { chats = it }
+                                        .onFailure { error = it.message }
+                                    loading = false
+                                }
+                            }) { Text("Spróbuj ponownie") }
                         }
-                    )
+                    }
+                }
+                filteredChatList.isEmpty() -> {
+                    Box(Modifier.fillMaxSize()) { Text("Brak czatów", Modifier.align(Alignment.Center)) }
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(filteredChatList, key = { it.id }) { chatData ->
+                            ChatItem(
+                                chatData = chatData,
+                                onClick = { /* TODO: navController.navigate("chat/${chatData.id}") */ }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -129,7 +149,7 @@ fun SearchBar(
 
 @Composable
 fun ChatItem(
-    chatData: ChatPreviewData,
+    chatData: ChatListItem,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -142,8 +162,8 @@ fun ChatItem(
     ) {
         // 3. Zdjęcie profilowe znajomego
         Image(
-            painter = painterResource(id = chatData.avatarResId),
-            contentDescription = stringResource(R.string.profile_picture_desc, chatData.friendName), // Opis dla dostępności
+            painter = painterResource(id = R.drawable.avatar_placeholder_background),
+            contentDescription = stringResource(R.string.profile_picture_desc),
             modifier = Modifier
                 .size(56.dp) // Nieco mniejsze niż w profilu głównym
                 .clip(CircleShape),
@@ -158,7 +178,7 @@ fun ChatItem(
         ) {
             // 4. Nazwa znajomego
             Text(
-                text = chatData.friendName,
+                text = chatData.title,
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1, // Maksymalnie jedna linia
                 overflow = TextOverflow.Ellipsis // Utnij, jeśli za długie

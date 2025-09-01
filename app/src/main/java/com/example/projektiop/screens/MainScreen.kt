@@ -24,6 +24,13 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
+import com.example.projektiop.data.UserRepository
+import com.example.projektiop.api.UserProfileResponse
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.Period
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 @OptIn(ExperimentalMaterial3Api::class) // Dla Scaffold, Card, etc.
 @Composable
@@ -49,25 +56,12 @@ fun MainScreen(navController: NavController) {
         ) {
             Spacer(modifier = Modifier.height(16.dp)) // Odstęp od góry
 
-            // 1. Karta Profilu (elementy 1-5)
-            ProfileCard()
+            // 1. Dynamiczna karta profilu
+            ProfileCardDynamic(navController)
 
             Spacer(modifier = Modifier.height(24.dp))
-
-
-            // Usunięto sekcje filtrów i rozgłaszania
-
-            // Przycisk do listy znajomych
-            Button(
-                onClick = { navController.navigate("friends_list") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.Group, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Lista znajomych")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp)) // Odstęp na dole przed bottom bar
+            // Usunięto sekcje filtrów, rozgłaszania oraz przeniesiono przycisk listy znajomych do dolnej nawigacji
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -76,50 +70,131 @@ fun MainScreen(navController: NavController) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileCard(modifier: Modifier = Modifier) {
-    Card( // Użyj Card dla wizualnego odseparowania
+fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifier) {
+    val scope = rememberCoroutineScope()
+    var profile by remember { mutableStateOf<UserProfileResponse?>(null) }
+    var loading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    // Re-fetch on entering screen (including returning from edit) by keying effect to current route
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    LaunchedEffect(navBackStackEntry?.destination?.route) {
+        if (navBackStackEntry?.destination?.route == "main") {
+            scope.launch {
+                loading = true
+                error = null
+                UserRepository.fetchMyProfile()
+                    .onSuccess { profile = it }
+                    .onFailure { error = it.message }
+                loading = false
+            }
+        }
+    }
+
+    Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // 2. Zdjęcie profilowe
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Image(
-                    painter = painterResource(id = R.drawable.avatar_placeholder), // Zastąp prawdziwym obrazkiem
+                    painter = painterResource(id = R.drawable.avatar_placeholder),
                     contentDescription = "Zdjęcie profilowe",
                     modifier = Modifier
                         .size(64.dp)
-                        .clip(CircleShape), // Okrągły obrazek
+                        .clip(CircleShape),
                     contentScale = ContentScale.Crop
                 )
                 Spacer(modifier = Modifier.width(16.dp))
-                // 3. Nazwa profilu
                 Text(
-                    text = stringResource(R.string.profile_name_placeholder),
-                    style = MaterialTheme.typography.titleLarge
+                    text = when {
+                        loading -> "Ładowanie..."
+                        error != null -> "Błąd"
+                        !profile?.effectiveDisplayName.isNullOrBlank() -> profile?.effectiveDisplayName ?: ""
+                        else -> stringResource(R.string.profile_name_placeholder)
+                    },
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.weight(1f)
                 )
+                IconButton(onClick = { navController.navigate("edit_profile") }) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edytuj profil")
+                }
+            }
+            // --- Pasek z płcią, miastem i wiekiem ---
+            val genderRaw = profile?.profile?.gender
+            val genderLabel = when (genderRaw) {
+                "male" -> "Mężczyzna"
+                "female" -> "Kobieta"
+                "other" -> "Inna"
+                "prefer_not_to_say" -> "Nie podano"
+                else -> null
+            }
+            val locationVal = profile?.profile?.location?.takeIf { it.isNotBlank() }
+            val ageVal = profile?.profile?.birthDate?.let { bd ->
+                // Obsłuż format ISO – weź tylko YYYY-MM-DD
+                val datePart = bd.take(10)
+                try {
+                    val ld = LocalDate.parse(datePart, DateTimeFormatter.ISO_DATE)
+                    val now = LocalDate.now()
+                    val years = Period.between(ld, now).years
+                    if (years in 0..150) years else null
+                } catch (e: DateTimeParseException) { null }
+            }
+            val infoItems = listOfNotNull(
+                genderLabel?.let { InfoItem(Icons.Default.Person, it) },
+                locationVal?.let { InfoItem(Icons.Default.LocationOn, it) },
+                ageVal?.let { InfoItem(Icons.Default.Cake, "$it l.") }
+            )
+            if (infoItems.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val color = MaterialTheme.colorScheme.onSurfaceVariant
+                    infoItems.forEachIndexed { index, item ->
+                        if (index > 0) Spacer(Modifier.width(16.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(item.icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = color)
+                            Spacer(Modifier.width(4.dp))
+                            Text(item.text, style = MaterialTheme.typography.bodySmall, color = color)
+                        }
+                    }
+                }
             }
             Spacer(modifier = Modifier.height(12.dp))
-            // 4. Opis profilu
             Text(
-                text = stringResource(R.string.profile_description_placeholder),
+                text = when {
+                    loading -> "Pobieranie opisu..."
+                    error != null -> error ?: "Błąd pobierania"
+                    !profile?.effectiveDescription.isNullOrBlank() -> profile?.effectiveDescription ?: ""
+                    else -> stringResource(R.string.profile_description_placeholder)
+                },
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(12.dp))
-            // 5. Zainteresowania
             Text(
-                text = stringResource(R.string.profile_interests_label),
+                text = "Zainteresowania",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
-            // Prosty sposób wyświetlenia zainteresowań (można użyć Chipów, FlowRow etc.)
             Row {
-                InterestTag(text = stringResource(R.string.profile_interest_1))
-                Spacer(modifier = Modifier.width(8.dp))
-                InterestTag(text = stringResource(R.string.profile_interest_2))
-                Spacer(modifier = Modifier.width(8.dp))
-                InterestTag(text = stringResource(R.string.profile_interest_3))
+                val interests = profile?.interests ?: emptyList()
+                if (loading) {
+                    InterestTag(text = "...")
+                } else if (interests.isEmpty()) {
+                    InterestTag(text = "Brak")
+                } else {
+                    interests.take(3).forEachIndexed { index, tag ->
+                        if (index > 0) Spacer(modifier = Modifier.width(8.dp))
+                        InterestTag(text = tag)
+                    }
+                }
             }
         }
     }
@@ -146,11 +221,11 @@ data class BottomNavItem(
 @Composable
 fun BottomNavigationBar(navController: NavController, currentRoute: String?) {
     val items = listOf(
-        BottomNavItem(R.string.bottom_nav_home, Icons.Default.Home, "main"), // Załóżmy, że MainScreen ma route "main"
-        BottomNavItem(R.string.bottom_nav_profile, Icons.Default.Person, "profile"),
+        BottomNavItem(R.string.bottom_nav_home, Icons.Default.Home, "main"), // Main
+        BottomNavItem(R.string.bottom_nav_friends, Icons.Default.Group, "friends_list"), // Nowy: lista znajomych
         BottomNavItem(R.string.bottom_nav_chats, Icons.Default.Chat, "chats"),
-        BottomNavItem(R.string.bottom_nav_broadcast, Icons.Default.BroadcastOnPersonal, "scanner"),
-        BottomNavItem(R.string.bottom_nav_settings, Icons.Default.Settings, "settings") // Użyj odpowiedniej ścieżki
+        BottomNavItem(R.string.bottom_nav_broadcast, Icons.Default.BroadcastOnPersonal, "scanner"), // scanner pozostaje
+        BottomNavItem(R.string.bottom_nav_settings, Icons.Default.Settings, "settings")
     )
 
     NavigationBar { // Material 3 Bottom Navigation Bar
@@ -193,3 +268,5 @@ fun MainScreenPreview() {
         MainScreen(navController = rememberNavController())
     }
 }
+
+private data class InfoItem(val icon: ImageVector, val text: String)

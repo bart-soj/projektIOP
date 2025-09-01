@@ -3,6 +3,11 @@ package com.example.projektiop.screens
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -10,7 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.projektiop.data.AuthRepository
+import com.example.projektiop.data.UserRepository
+import com.example.projektiop.api.UserProfileResponse
 import kotlinx.coroutines.launch
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -19,24 +25,52 @@ import java.io.File
 @Composable
 fun EditProfileScreen(
     navController: NavController,
-    currentName: String = "",
-    currentLocation: String = "",
-    currentAge: String = "",
-    currentGender: String = "",
-    currentDescription: String = "",
-    currentInterests: String = ""
 ) {
-    var name by remember { mutableStateOf(currentName) }
-    var location by remember { mutableStateOf(currentLocation) }
-    var age by remember { mutableStateOf(currentAge) }
-    var gender by remember { mutableStateOf(currentGender) }
-    var description by remember { mutableStateOf(currentDescription) }
-    var interests by remember { mutableStateOf(currentInterests) }
+    var name by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
+    var birthDate by remember { mutableStateOf("") } // YYYY-MM-DD
+    var gender by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var interests by remember { mutableStateOf("") } // legacy text field
+    // Lista interesów z obu obrazów (kolekcja test.interests + test.interestcategories)
+    val allInterests = remember {
+        listOf(
+            // test.interests
+            "Programowanie",
+            "Gry Komputerowe",
+            "Cyberbezpieczeństwo",
+            // test.interestcategories
+            "Technologia i IT",
+            "Sport i Aktywność Fizyczna",
+            "Sztuka i Kultura",
+            "Podróże i Odkrywanie"
+        )
+    }
+    var selectedInterests by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var broadcastMessage by remember { mutableStateOf("") }
+    var loadingInitial by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        // Pobierz aktualny profil i wypełnij pola
+        loadingInitial = true
+        UserRepository.fetchMyProfile()
+            .onSuccess { prof ->
+                // Preferuj dowolne wystąpienie displayName (top-level lub nested profile)
+                name = prof.effectiveDisplayName ?: prof.username ?: prof.email ?: ""
+                description = prof.effectiveDescription ?: ""
+                gender = prof.profile?.gender ?: ""
+                location = prof.profile?.location ?: ""
+                birthDate = prof.profile?.birthDate?.takeIf { it.length >= 10 }?.substring(0,10) ?: ""
+                broadcastMessage = prof.profile?.broadcastMessage ?: ""
+            }
+            .onFailure { error = it.message }
+        loadingInitial = false
+    }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -47,46 +81,64 @@ fun EditProfileScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text("Edycja profilu", style = MaterialTheme.typography.headlineMedium)
+            if (loadingInitial) {
+                Spacer(Modifier.height(8.dp))
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
-                label = { Text("Imię i nazwisko") },
+                onValueChange = { if (it.length <= 50) name = it },
+                label = { Text("Nick (1-50)") },
+                supportingText = { Text("${name.length}/50") },
+                isError = name.isBlank() || name.length > 50,
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = location,
-                onValueChange = { location = it },
-                label = { Text("Miejscowość") },
+                onValueChange = { if (it.length <= 100) location = it },
+                label = { Text("Miejscowość (max 100)") },
+                supportingText = { Text("${location.length}/100") },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
-                value = age,
-                onValueChange = { age = it },
-                label = { Text("Wiek") },
+                value = birthDate,
+                onValueChange = {
+                    // Prosta walidacja format YYYY-MM-DD (pozwól wpisywać częściowo)
+                    if (it.length <= 10 && it.matches(Regex("^\\d{0,4}-?\\d{0,2}-?\\d{0,2}$"))) birthDate = it
+                },
+                label = { Text("Data urodzenia (YYYY-MM-DD)") },
+                isError = birthDate.isNotBlank() && !birthDate.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$")),
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
-                value = gender,
-                onValueChange = { gender = it },
-                label = { Text("Płeć") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            GenderDropdown(gender = gender, onGenderChange = { gender = it })
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = description,
-                onValueChange = { description = it },
-                label = { Text("Opis") },
+                onValueChange = { if (it.length <= 500) description = it },
+                label = { Text("Opis (max 500)") },
+                supportingText = { Text("${description.length}/500") },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
+            MultiSelectInterestsDropdown(
+                all = allInterests,
+                selected = selectedInterests,
+                onChange = { updated ->
+                    selectedInterests = updated
+                    interests = updated.joinToString(",")
+                }
+            )
+            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
             OutlinedTextField(
-                value = interests,
-                onValueChange = { interests = it },
-                label = { Text("Zainteresowania") },
+                value = broadcastMessage,
+                onValueChange = { if (it.length <= 280) broadcastMessage = it },
+                label = { Text("Wiadomość (max 280)") },
+                supportingText = { Text("${broadcastMessage.length}/280") },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(16.dp))
@@ -94,24 +146,25 @@ fun EditProfileScreen(
                 onClick = {
                     coroutineScope.launch {
                         isLoading = true
-                        // Przykład podpięcia pod API (szablon):
-                        // 1. Aktualizacja danych tekstowych:
-                        // val result = AuthRepository.updateProfile(name, location, age, gender, description, interests)
-                        // 2. Aktualizacja zdjęcia profilowego:
-                        // if (avatarUri != null) {
-                        //     val file = File(avatarUri!!.path ?: "")
-                        //     val requestFile = RequestBody.create("image/*".toMediaTypeOrNull(), file)
-                        //     val body = MultipartBody.Part.createFormData("avatarImage", file.name, requestFile)
-                        //     // val avatarResult = AuthRepository.updateAvatar(body)
-                        // }
-                        // Po sukcesie:
-                        isLoading = false
-                        navController.popBackStack()
-                        // Po błędzie:
-                        // error = "Nie udało się zaktualizować profilu"
+                        error = null
+                        UserRepository.updateMyProfile(
+                            displayName = name,
+                            gender = gender,
+                            location = location,
+                            bio = description,
+                            birthDate = if (birthDate.isBlank()) null else birthDate,
+                            broadcastMessage = broadcastMessage
+                        ).onSuccess {
+                            isLoading = false
+                            navController.popBackStack()
+                        }.onFailure {
+                            error = it.message
+                            isLoading = false
+                        }
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !loadingInitial && !isLoading && name.isNotBlank() && name.length in 1..50 && (birthDate.isBlank() || birthDate.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$")))
             ) {
                 Text(if (isLoading) "Zapisywanie..." else "Zapisz zmiany")
             }
@@ -148,3 +201,108 @@ fun EditProfileScreen(
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GenderDropdown(gender: String, onGenderChange: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    // Map backend values to Polish labels
+    val options = listOf(
+        "" to "(brak)",
+        "male" to "Mężczyzna",
+        "female" to "Kobieta",
+        "other" to "Inna",
+        "prefer_not_to_say" to "Wolę nie podawać"
+    )
+    val currentLabel = options.firstOrNull { it.first == gender }?.second ?: "(brak)"
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = currentLabel,
+            onValueChange = { },
+            readOnly = true,
+            label = { Text("Płeć") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { (value, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    onClick = {
+                        onGenderChange(value)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MultiSelectInterestsDropdown(
+    all: List<String>,
+    selected: Set<String>,
+    onChange: (Set<String>) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val summary = if (selected.isEmpty()) "Wybierz zainteresowania" else selected.joinToString(limit = 3, truncated = "…")
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = summary,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Zainteresowania") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            val scrollState = rememberScrollState()
+            Column(
+                modifier = Modifier
+                    .heightIn(max = 260.dp)
+                    .verticalScroll(scrollState)
+            ) {
+                all.forEach { item ->
+                    val checked = item in selected
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(
+                                    checked = checked,
+                                    onCheckedChange = null
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(item)
+                            }
+                        },
+                        onClick = {
+                            val new = selected.toMutableSet().apply {
+                                if (checked) remove(item) else add(item)
+                            }
+                            onChange(new)
+                        }
+                    )
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+            TextButton(
+                onClick = { expanded = false },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Zamknij") }
+        }
+    }
+}
+

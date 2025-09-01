@@ -7,8 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,13 +18,11 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
+import com.example.projektiop.data.FriendItem
+import com.example.projektiop.data.FriendshipRepository
+import kotlinx.coroutines.launch
 
-// Prosty model danych dla szablonu listy znajomych
-data class Friend(
-    val id: String,
-    val name: String,
-    val avatarRes: Int = R.drawable.avatar_placeholder
-)
+// Ekran dynamiczny listy znajomych z API
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,13 +30,21 @@ fun FriendsListScreen(navController: NavController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val sampleFriends = listOf(
-        Friend(id = "1", name = "Alicja Nowak"),
-        Friend(id = "2", name = "Bartek Kowalski"),
-        Friend(id = "3", name = "Celina Wiśniewska"),
-        Friend(id = "4", name = "Dominik Zieliński"),
-        Friend(id = "5", name = "Ewa Malinowska")
-    )
+    var friends by remember { mutableStateOf<List<FriendItem>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            loading = true
+            error = null
+            FriendshipRepository.fetchAccepted()
+                .onSuccess { friends = it }
+                .onFailure { error = it.message }
+            loading = false
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -49,27 +54,57 @@ fun FriendsListScreen(navController: NavController) {
             BottomNavigationBar(navController = navController, currentRoute = currentRoute)
         }
     ) { paddingValues ->
-        // Treść: lista
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            items(sampleFriends) { friend ->
-                FriendCard(friend = friend, onClick = {
-                    // Na razie nie nawigujemy na szczegóły.
-                    // Możesz tu dodać: navController.navigate("friend/${friend.id}")
-                })
+            when {
+                loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+                error != null -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(error ?: "Błąd", color = MaterialTheme.colorScheme.error)
+                        Spacer(Modifier.height(8.dp))
+                        Button(onClick = {
+                            scope.launch {
+                                loading = true
+                                error = null
+                                FriendshipRepository.fetchAccepted()
+                                    .onSuccess { friends = it }
+                                    .onFailure { error = it.message }
+                                loading = false
+                            }
+                        }) { Text("Spróbuj ponownie") }
+                    }
+                }
+                friends.isEmpty() -> {
+                    Text("Brak znajomych", modifier = Modifier.align(Alignment.Center))
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
+                        items(friends, key = { it.id }) { friend ->
+                            FriendCard(friend = friend, onClick = { /* TODO: nawigacja do czatu / profilu */ })
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun FriendCard(friend: Friend, onClick: () -> Unit) {
+private fun FriendCard(friend: FriendItem, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -83,7 +118,7 @@ private fun FriendCard(friend: Friend, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                painter = painterResource(id = friend.avatarRes),
+                painter = painterResource(id = R.drawable.avatar_placeholder), // TODO: załaduj avatarUrl jeśli dostępny
                 contentDescription = "Avatar",
                 modifier = Modifier
                     .size(56.dp)
@@ -93,7 +128,7 @@ private fun FriendCard(friend: Friend, onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(friend.name, style = MaterialTheme.typography.titleMedium)
+                Text(friend.displayName, style = MaterialTheme.typography.titleMedium)
             }
 
             // Przykładowy przycisk akcji (np. czat)

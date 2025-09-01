@@ -23,9 +23,9 @@ data class AuthResponse(
 )
 
 interface AuthApi {
-    @POST("register")
+    @POST("auth/register")
     suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
 
-    @POST("login")
+    @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
 }
