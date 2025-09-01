@@ -162,7 +162,7 @@ fun LoginScreen(navController: NavController) {
                             scope.launch {
                                 val result = AuthRepository.login(email, password)
                                 result.onSuccess { token ->
-                                    if (!token.isNullOrBlank()) AuthRepository.saveToken(token)
+                                    if (!token.isNullOrBlank()) AuthRepository.saveToken(token, remember = rememberMe)
                                     // Przykład: przejście do głównego ekranu dopiero po sukcesie
                                     navController.navigate("main") {
                                         popUpTo("login") { inclusive = true }

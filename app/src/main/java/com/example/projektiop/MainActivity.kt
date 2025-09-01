@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.LaunchedEffect
+import com.example.projektiop.data.AuthRepository
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -44,6 +46,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Initialize repository for persistent auth state
+        AuthRepository.init(this)
         setContent {
             MyApp()
         }
@@ -56,7 +60,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp() {
     val navController = rememberNavController()
-    NavHost(navController, startDestination = "start") {
+    // Determine start destination based on remembered token
+    val startDestination = if (AuthRepository.getToken().isNullOrBlank()) "start" else "main"
+    NavHost(navController, startDestination = startDestination) {
         composable("start") { StartScreen(navController) }
         composable("login") { LoginScreen(navController) }
         composable("register") { RegisterScreen(navController) }

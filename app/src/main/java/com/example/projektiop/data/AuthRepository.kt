@@ -1,6 +1,7 @@
 package com.example.projektiop.data
 
-import com.example.projektiop.api.AuthApi
+import android.content.Context
+import android.content.SharedPreferences
 import com.example.projektiop.api.RetrofitInstance
 import com.example.projektiop.api.RegisterRequest
 import com.example.projektiop.api.LoginRequest
@@ -8,9 +9,25 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object AuthRepository {
-    private var token: String? = null
+    private const val PREFS_NAME = "auth_prefs"
+    private const val KEY_TOKEN = "auth_token"
+    private const val KEY_REMEMBER = "remember_me"
 
-    // Przykładowa funkcja logowania
+    private var token: String? = null
+    private var rememberMe: Boolean = false
+    private var prefs: SharedPreferences? = null
+
+    fun init(context: Context) {
+        if (prefs == null) {
+            prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            // Load persisted values
+            rememberMe = prefs?.getBoolean(KEY_REMEMBER, false) ?: false
+            if (rememberMe) {
+                token = prefs?.getString(KEY_TOKEN, null)
+            }
+        }
+    }
+
     suspend fun login(email: String, password: String): Result<String?> {
         return withContext(Dispatchers.IO) {
             try {
@@ -26,7 +43,6 @@ object AuthRepository {
         }
     }
 
-    // Przykładowa funkcja rejestracji
     suspend fun register(username: String, email: String, password: String): Result<String?> {
         return withContext(Dispatchers.IO) {
             try {
@@ -42,15 +58,34 @@ object AuthRepository {
         }
     }
 
-    fun saveToken(newToken: String?) {
+    fun saveToken(newToken: String?, remember: Boolean) {
         token = newToken
-        // Możesz dodać zapis do SharedPreferences jeśli chcesz trwałość
+        rememberMe = remember
+        prefs?.edit()?.apply {
+            if (remember && !newToken.isNullOrBlank()) {
+                putString(KEY_TOKEN, newToken)
+                putBoolean(KEY_REMEMBER, true)
+            } else {
+                remove(KEY_TOKEN)
+                putBoolean(KEY_REMEMBER, false)
+            }
+            apply()
+        }
     }
+
+    // Backwards compatibility for old calls (default remember = false)
+    fun saveToken(newToken: String?) = saveToken(newToken, remember = false)
 
     fun clearToken() {
         token = null
-        // Jeśli używasz SharedPreferences, usuń zapisany token
+        rememberMe = false
+        prefs?.edit()?.apply {
+            remove(KEY_TOKEN)
+            putBoolean(KEY_REMEMBER, false)
+            apply()
+        }
     }
 
     fun getToken(): String? = token
+    fun isRemembered(): Boolean = rememberMe
 }
