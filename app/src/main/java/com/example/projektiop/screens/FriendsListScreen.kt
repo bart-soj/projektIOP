@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,8 +21,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
 import com.example.projektiop.data.FriendItem
+import com.example.projektiop.data.PendingRequestItem
 import com.example.projektiop.data.FriendshipRepository
 import kotlinx.coroutines.launch
+import com.example.projektiop.api.UserSearchDto
 
 // Ekran dynamiczny listy znajomych z API
 
@@ -31,24 +35,39 @@ fun FriendsListScreen(navController: NavController) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     var friends by remember { mutableStateOf<List<FriendItem>>(emptyList()) }
+    var incoming by remember { mutableStateOf<List<PendingRequestItem>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
+    fun refreshAll() {
         scope.launch {
             loading = true
             error = null
-            FriendshipRepository.fetchAccepted()
-                .onSuccess { friends = it }
-                .onFailure { error = it.message }
+            val fr = FriendshipRepository.fetchAccepted()
+            val pend = FriendshipRepository.fetchIncomingPending()
+            fr.onSuccess { friends = it }.onFailure { error = it.message }
+            pend.onSuccess { incoming = it }.onFailure { error = it.message }
             loading = false
         }
     }
 
+    LaunchedEffect(Unit) { refreshAll() }
+
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Lista znajomych") })
+            TopAppBar(
+                title = { Text("Lista znajomych") },
+                actions = {
+                    var showSearch by remember { mutableStateOf(false) }
+                    IconButton(onClick = { showSearch = true }) {
+                        Icon(Icons.Default.Search, contentDescription = "Szukaj użytkowników")
+                    }
+                    if (showSearch) {
+                        UserSearchDialog(onClose = { showSearch = false })
+                    }
+                }
+            )
         },
         bottomBar = {
             BottomNavigationBar(navController = navController, currentRoute = currentRoute)
@@ -70,21 +89,10 @@ fun FriendsListScreen(navController: NavController) {
                     ) {
                         Text(error ?: "Błąd", color = MaterialTheme.colorScheme.error)
                         Spacer(Modifier.height(8.dp))
-                        Button(onClick = {
-                            scope.launch {
-                                loading = true
-                                error = null
-                                FriendshipRepository.fetchAccepted()
-                                    .onSuccess { friends = it }
-                                    .onFailure { error = it.message }
-                                loading = false
-                            }
-                        }) { Text("Spróbuj ponownie") }
+                        Button(onClick = { refreshAll() }) { Text("Spróbuj ponownie") }
                     }
                 }
-                friends.isEmpty() -> {
-                    Text("Brak znajomych", modifier = Modifier.align(Alignment.Center))
-                }
+                friends.isEmpty() && incoming.isEmpty() -> Text("Brak znajomych", modifier = Modifier.align(Alignment.Center))
                 else -> {
                     LazyColumn(
                         modifier = Modifier
@@ -93,8 +101,36 @@ fun FriendsListScreen(navController: NavController) {
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
-                        items(friends, key = { it.id }) { friend ->
-                            FriendCard(friend = friend, onClick = { /* TODO: nawigacja do czatu / profilu */ })
+                        if (incoming.isNotEmpty()) {
+                            item("pending_header") {
+                                Text("Oczekujące zaproszenia", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 4.dp))
+                            }
+                            items(incoming, key = { it.friendshipId }) { req ->
+                                PendingRequestCard(
+                                    item = req,
+                                    onAccept = {
+                                        scope.launch {
+                                            FriendshipRepository.acceptFriendship(req.friendshipId).onSuccess { refreshAll() }
+                                        }
+                                    },
+                                    onReject = {
+                                        scope.launch {
+                                            FriendshipRepository.rejectFriendship(req.friendshipId).onSuccess { refreshAll() }
+                                        }
+                                    }
+                                )
+                            }
+                            item("divider_after_pending") { Divider(Modifier.padding(vertical = 4.dp)) }
+                        }
+                        if (friends.isNotEmpty()) {
+                            item("friends_header") {
+                                Text("Znajomi", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 4.dp))
+                            }
+                            items(friends, key = { it.id }) { friend ->
+                                FriendCard(friend = friend, onClick = { /* profil później */ }, onChat = {
+                                    navController.navigate("chat_detail?chatId=null&friendId=${friend.id}")
+                                })
+                            }
                         }
                     }
                 }
@@ -104,7 +140,7 @@ fun FriendsListScreen(navController: NavController) {
 }
 
 @Composable
-private fun FriendCard(friend: FriendItem, onClick: () -> Unit) {
+private fun FriendCard(friend: FriendItem, onClick: () -> Unit, onChat: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -132,11 +168,118 @@ private fun FriendCard(friend: FriendItem, onClick: () -> Unit) {
             }
 
             // Przykładowy przycisk akcji (np. czat)
-            TextButton(onClick = { /* TODO: rozpocznij czat */ }) {
-                Text("Czat")
+            TextButton(onClick = onChat) { Text("Czat") }
+        }
+    }
+}
+
+@Composable
+private fun PendingRequestCard(item: PendingRequestItem, onAccept: () -> Unit, onReject: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.avatar_placeholder),
+                contentDescription = "Avatar",
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(item.displayName, style = MaterialTheme.typography.titleMedium)
+                Text(item.username, style = MaterialTheme.typography.bodySmall)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                TextButton(onClick = onReject) { Text("Odrzuć") }
+                Button(onClick = onAccept) { Text("Akceptuj") }
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun UserSearchDialog(onClose: () -> Unit) {
+    var query by remember { mutableStateOf("") }
+    var results by remember { mutableStateOf<List<UserSearchDto>>(emptyList()) }
+    var loading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var sentFor by remember { mutableStateOf<Set<String>>(emptySet()) }
+    val scope = rememberCoroutineScope()
+
+    AlertDialog(
+        onDismissRequest = onClose,
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onClose) { Text("Zamknij") }
+        },
+        title = { Text("Szukaj użytkowników") },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text("Fraza (min 1 znak)") },
+                    singleLine = true,
+                    trailingIcon = {
+                        IconButton(enabled = query.isNotBlank(), onClick = {
+                            scope.launch {
+                                loading = true
+                                error = null
+                                results = emptyList()
+                                FriendshipRepository.searchUsers(query)
+                                    .onSuccess { results = it }
+                                    .onFailure { error = it.message }
+                                loading = false
+                            }
+                        }) { Icon(Icons.Default.Search, contentDescription = null) }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(12.dp))
+                if (loading) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                } else if (error != null) {
+                    Text(error!!, color = MaterialTheme.colorScheme.error)
+                } else if (results.isEmpty()) {
+                    Text("Brak wyników", style = MaterialTheme.typography.bodySmall)
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .heightIn(max = 300.dp)
+                    ) {
+                        items(results, key = { it._id ?: it.username ?: it.hashCode().toString() }) { user ->
+                            val userId = user._id ?: return@items
+                            val alreadySent = userId in sentFor
+                            ListItem(
+                                headlineContent = { Text(user.profile?.displayName ?: user.username ?: "(bez nazwy)") },
+                                supportingContent = { Text(user.username ?: "") },
+                                trailingContent = {
+                                    TextButton(enabled = !alreadySent, onClick = {
+                                        scope.launch {
+                                            FriendshipRepository.sendFriendRequest(userId)
+                                                .onSuccess { sentFor = sentFor + userId }
+                                                .onFailure { error = it.message }
+                                        }
+                                    }) { Text(if (alreadySent) "Wysłano" else "Dodaj") }
+                                }
+                            )
+                            Divider()
+                        }
+                    }
+                }
+            }
+        }
+    )
 }
 
 @Preview(showBackground = true)
