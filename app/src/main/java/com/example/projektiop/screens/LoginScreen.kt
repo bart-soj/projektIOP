@@ -25,7 +25,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.example.projektiop.R
 import com.example.projektiop.formelements.OutlinedTextFieldWithClearAndError
 import com.example.projektiop.formelements.SwitchWithText
-import com.example.projektiop.data.AuthRepository
+import com.example.projektiop.data.repositories.AuthRepository
 import kotlinx.coroutines.launch
 
 @Composable

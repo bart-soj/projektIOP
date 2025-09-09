@@ -18,8 +18,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
-import com.example.projektiop.data.FriendItem
-import com.example.projektiop.data.FriendshipRepository
+import com.example.projektiop.data.repositories.FriendItem
+import com.example.projektiop.data.repositories.FriendshipRepository
 import kotlinx.coroutines.launch
 
 // Ekran dynamiczny listy znajomych z API

@@ -1,4 +1,4 @@
-package com.example.projektiop.api
+package com.example.projektiop.data.api
 
 import retrofit2.Response
 import retrofit2.http.Body

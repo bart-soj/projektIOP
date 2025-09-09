@@ -1,10 +1,10 @@
-package com.example.projektiop.data
+package com.example.projektiop.data.repositories
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.example.projektiop.api.RetrofitInstance
-import com.example.projektiop.api.RegisterRequest
-import com.example.projektiop.api.LoginRequest
+import com.example.projektiop.data.api.RetrofitInstance
+import com.example.projektiop.data.api.RegisterRequest
+import com.example.projektiop.data.api.LoginRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

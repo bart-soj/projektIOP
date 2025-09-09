@@ -1,17 +1,15 @@
-package com.example.projektiop.api
+package com.example.projektiop.data.api
 
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
-import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import com.example.projektiop.data.AuthRepository
-import com.example.projektiop.api.FriendshipApi
-import com.example.projektiop.api.ChatApi
+import com.example.projektiop.data.repositories.AuthRepository
 
 object RetrofitInstance {
-    private const val BASE_URL = "https://hellobeacon.onrender.com/api/" // Ujednolicona baza – auth i user pod jednym URL
+    // private const val BASE_URL = "https://hellobeacon.onrender.com/api/" // Ujednolicona baza – auth i user pod jednym URL
+    private const val BASE_URL = "http:/192.168.1.13:3000/api/" // 10.0.2.2 is bound to lo of local machine
 
     private val authInterceptor = Interceptor { chain ->
         val original = chain.request()
@@ -43,4 +41,5 @@ object RetrofitInstance {
     val userApi: UserApi by lazy { retrofit.create(UserApi::class.java) }
     val friendshipApi: FriendshipApi by lazy { retrofit.create(FriendshipApi::class.java) }
     val chatApi: ChatApi by lazy { retrofit.create(ChatApi::class.java) }
+    val certificateApi = retrofit.create(CertificateApi::class.java)
 }

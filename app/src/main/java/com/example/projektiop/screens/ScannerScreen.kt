@@ -8,7 +8,10 @@ import androidx.compose.material3.* // Material 3
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -19,6 +22,12 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R // Upewnij się, że masz odpowiednie zasoby string
+import com.example.projektiop.data.api.CertificateRequest
+import com.example.projektiop.data.api.RetrofitInstance
+import com.example.projektiop.data.repositories.AuthRepository
+import com.example.projektiop.data.CertificateUtils
+import com.example.projektiop.data.repositories.UserRepository
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class) // Dla Scaffold
 @Composable
@@ -96,6 +105,10 @@ fun ScannerScreen(name: String, modifier: Modifier = Modifier, navController: Na
             // systemowy przycisk wstecz oraz BottomNavigationBar.
             // Usunięto: Button(onClick = { navController.popBackStack() }, ...)
 
+
+            Spacer(modifier = Modifier.height(16.dp))
+            CertificateRequester(AuthRepository.getToken().toString())
+
             Spacer(modifier = Modifier.height(16.dp)) // Odstęp na dole przed końcem scrolla/bottom bar
         }
     }
@@ -120,6 +133,96 @@ fun ScanStatus(bleManager: BluetoothManagerUtils, modifier: Modifier = Modifier)
         style = MaterialTheme.typography.bodyMedium,
         modifier = modifier.padding(vertical = 8.dp)
     )
+}
+
+
+@Composable
+fun CertificateRequester(
+    authToken: String,   // Bearer token from your login
+) {
+    var result by remember { mutableStateOf<String?>(null) }
+    var loading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    val api = RetrofitInstance.certificateApi
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Request Certificate", style = MaterialTheme.typography.titleMedium)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = {
+                scope.launch {
+                    loading = true
+                    error = null
+                    result = null
+                    try {
+                        val profileResult = try {
+                            UserRepository.fetchMyProfile()
+                        } catch (e: Exception) {
+                            kotlin.Result.failure(e)
+                        }
+
+                       profileResult.fold(
+                            onSuccess = { profileData ->
+                                // Successfully fetched user profile
+                                val userEmail: String = profileData.email.toString()
+                                println("User email: $userEmail")
+                                try {
+                                    val keyPair = CertificateUtils.generateKeyPair()
+                                    var csrPem = CertificateUtils.generateCSR(userEmail, keyPair)
+                                    println("CSR generated: $csrPem")
+                                    val certificateResponse = try {
+                                        api.issueCertificate(
+                                            token = "Bearer $authToken",
+                                            request = CertificateRequest(csrPem)
+                                        )
+                                    } catch (e: Exception) {
+                                        null
+                                    }
+
+                                    result = if (certificateResponse != null) {
+                                        certificateResponse.certPem
+                                    } else {
+                                        "Error: Failed to issue certificate"
+                                    }
+                                } catch (e: Exception) {
+                                    println(e)
+                                }
+                            },
+                            onFailure = { exception ->
+                                // Handle the error state
+                                println("Error fetching user profile: ${exception.message}")
+                                // Cannot generate CSR because profile fetching failed
+                            })
+
+
+                    } catch (e: Exception) {
+                        error = "Failed: ${e.localizedMessage}"
+                    } finally {
+                        loading = false
+                    }
+                }
+            },
+            enabled = !loading
+        ) {
+            Text(if (loading) "Requesting..." else "Request Certificate")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when {
+            result != null -> Text(result!!, style = MaterialTheme.typography.bodySmall)
+            error != null -> Text(error!!, color = MaterialTheme.colorScheme.error)
+        }
+    }
 }
 
 

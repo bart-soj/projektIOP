@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.R
-import com.example.projektiop.data.AuthRepository
+import com.example.projektiop.data.repositories.AuthRepository
 
 @Composable
 fun SettingsScreen(navController: NavController) {

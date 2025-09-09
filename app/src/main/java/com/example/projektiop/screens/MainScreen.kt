@@ -24,8 +24,8 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
-import com.example.projektiop.data.UserRepository
-import com.example.projektiop.api.UserProfileResponse
+import com.example.projektiop.data.repositories.UserRepository
+import com.example.projektiop.data.api.UserProfileResponse
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.Period

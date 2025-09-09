@@ -1,9 +1,9 @@
-package com.example.projektiop.data
+package com.example.projektiop.data.repositories
 
-import com.example.projektiop.api.RetrofitInstance
-import com.example.projektiop.api.UserProfileResponse
-import com.example.projektiop.api.UpdateProfileRequest
-import com.example.projektiop.api.ProfilePatch
+import com.example.projektiop.data.api.RetrofitInstance
+import com.example.projektiop.data.api.UserProfileResponse
+import com.example.projektiop.data.api.UpdateProfileRequest
+import com.example.projektiop.data.api.ProfilePatch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

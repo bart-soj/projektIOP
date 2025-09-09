@@ -1,6 +1,6 @@
-package com.example.projektiop.data
+package com.example.projektiop.data.repositories
 
-import com.example.projektiop.api.RetrofitInstance
+import com.example.projektiop.data.api.RetrofitInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
