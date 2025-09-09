@@ -4,6 +4,9 @@ import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.PUT
 import retrofit2.http.Body
+import retrofit2.http.Query
+import retrofit2.http.POST
+import retrofit2.http.Path
 import com.google.gson.annotations.SerializedName
 
 // Zakładany endpoint profilu zalogowanego użytkownika.
@@ -15,6 +18,10 @@ interface UserApi {
 
     @PUT("users/profile")
     suspend fun updateMyProfile(@Body request: UpdateProfileRequest): Response<UserProfileResponse>
+
+    // Wyszukiwanie użytkowników: GET /api/users/search?q=...
+    @GET("users/search")
+    suspend fun searchUsers(@Query("q") query: String): Response<List<UserSearchDto>>
 }
 
 // Dane profilu – wszystkie pola opcjonalne, żeby uniknąć crashy przy różnym JSON.
@@ -41,6 +48,12 @@ data class ProfileInner(
     val location: String? = null,
     val birthDate: String? = null,
     val broadcastMessage: String? = null
+)
+
+data class UserSearchDto(
+    val _id: String? = null,
+    val username: String? = null,
+    val profile: ProfileInner? = null
 )
 
 data class UserStats(

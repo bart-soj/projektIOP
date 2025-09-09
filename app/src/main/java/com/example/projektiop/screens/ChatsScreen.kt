@@ -23,8 +23,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
-import com.example.projektiop.data.repositories.ChatListItem
-import com.example.projektiop.data.repositories.ChatRepository
+import com.example.projektiop.data.ChatListItem
+import com.example.projektiop.data.ChatRepository
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

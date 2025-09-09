@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import com.example.projektiop.ui.theme.ProjektIOPTheme
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.navigation.compose.*
+import androidx.navigation.navArgument
 import com.example.projektiop.BluetoothLE.BluetoothManagerUtils.Companion.requestBluetoothPermissions
 import com.example.projektiop.BluetoothLE.BluetoothManagerUtils.Companion.showPermissionDeniedMessage
 import com.example.projektiop.data.db.RealmProvider
@@ -70,6 +71,16 @@ fun MyApp() {
         }
         composable("main") { MainScreen(navController) }
         composable("chats") { ChatsScreen(navController) }
+        composable("chat_detail?chatId={chatId}&friendId={friendId}",
+            arguments = listOf(
+                navArgument("chatId") { nullable = true; defaultValue = null },
+                navArgument("friendId") { nullable = true; defaultValue = null }
+            )
+        ) { backStack ->
+            val chatId = backStack.arguments?.getString("chatId")
+            val friendId = backStack.arguments?.getString("friendId")
+            com.example.projektiop.screens.ChatDetailScreen(navController, chatId, friendId)
+        }
         composable("settings") { SettingsScreen(navController) }
         composable("edit_profile") { EditProfileScreen(navController) }
         composable("friends_list") { FriendsListScreen(navController) }

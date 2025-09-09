@@ -89,4 +89,8 @@ dependencies {
     implementation("org.bouncycastle:bcprov-jdk15to18:1.77")
     implementation("org.bouncycastle:bcpkix-jdk15to18:1.77")
     implementation("io.realm.kotlin:library-base:3.0.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Coil for image loading (avatars in chat)
+    implementation("io.coil-kt:coil-compose:2.7.0")
 }
