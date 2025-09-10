@@ -26,22 +26,48 @@ interface UserApi {
 
 // Dane profilu – wszystkie pola opcjonalne, żeby uniknąć crashy przy różnym JSON.
 data class UserProfileResponse(
-    val displayName: String? = null,            // top-level (jeśli backend tak zwraca)
-    val username: String? = null,
-    val email: String? = null,
-    val description: String? = null,            // fallback jeśli backend używa 'description'
-    @SerializedName("bio") val bio: String? = null, // jeśli pole ma nazwę bio
-    val interests: List<String>? = null,
-    val stats: UserStats? = null,
-    val profile: ProfileInner? = null           // zagnieżdżony profil (częsty wzorzec)
+    val profile: Profile,
+    val _id: String,
+    val username: String,
+    val email: String,
+    val role: String,
+    val isBanned: Boolean,
+    val banReason: String? = null,
+    val bannedAt: String? = null,
+    val isTestAccount: Boolean,
+    val isEmailVerified: Boolean,
+    val isDeleted: Boolean,
+    val deletedAt: String? = null,
+    val createdAt: String,
+    val updatedAt: String,
+    val __v: Int,
+    val interests: List<UserInterestDto>?
 ) {
     val effectiveDisplayName: String?
-        get() = displayName ?: profile?.displayName
+        get() = profile.displayName
     val effectiveDescription: String?
-        get() = description ?: bio ?: profile?.bio
+        get() = profile.bio
 }
 
-data class ProfileInner(
+
+
+data class UserInterestDto(
+    val userInterestId: String,
+    val interest: InterestDto,
+    val customDescription: String? = null
+)
+
+data class InterestDto(
+    val _id: String,                 // MongoDB ObjectId
+    val name: String,
+    val category: String? = null,
+    val description: String = "",
+    val isArchived: Boolean = false,
+    val createdAt: String? = null,
+    val updatedAt: String? = null
+)
+
+data class Profile(
     val displayName: String? = null,
     val bio: String? = null,
     val gender: String? = null,
@@ -53,7 +79,7 @@ data class ProfileInner(
 data class UserSearchDto(
     val _id: String? = null,
     val username: String? = null,
-    val profile: ProfileInner? = null
+    val profile: Profile? = null
 )
 
 data class UserStats(
@@ -64,9 +90,10 @@ data class UserStats(
 
 // Request do aktualizacji profilu – dopasowany do validatorów w userRoutes.js (profile.*)
 data class UpdateProfileRequest(
-    val profile: ProfilePatch
+    val profile: Profile
 )
 
+/*
 data class ProfilePatch(
     val displayName: String? = null,
     val gender: String? = null,
@@ -75,3 +102,4 @@ data class ProfilePatch(
     val bio: String? = null,
     val broadcastMessage: String? = null
 )
+*/

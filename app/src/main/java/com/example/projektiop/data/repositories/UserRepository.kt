@@ -3,7 +3,7 @@ package com.example.projektiop.data.repositories
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.api.UpdateProfileRequest
-import com.example.projektiop.data.api.ProfilePatch
+import com.example.projektiop.data.api.Profile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -31,7 +31,7 @@ object UserRepository {
     ): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
         try {
             val body = UpdateProfileRequest(
-                profile = ProfilePatch(
+                profile = Profile(
                     displayName = displayName?.takeIf { it.isNotBlank() },
                     gender = gender?.takeIf { it.isNotBlank() },
                     location = location?.takeIf { it.isNotBlank() },

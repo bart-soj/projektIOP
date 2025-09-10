@@ -87,7 +87,7 @@ object DBRepository {
 
         fun addLocalFriendship(friendship: Friendship) {
             realm.writeBlocking {
-                copyToRealm(friendship)
+                copyToRealm(friendship) // will throw an exception if pk already exists
             }
         }
 
