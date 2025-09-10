@@ -1,9 +1,11 @@
 package com.example.projektiop.util
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.projektiop.R
@@ -22,6 +24,7 @@ object NotificationHelper {
         }
     }
 
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     fun notifyFriendRequest(context: Context, fromUser: String) {
         val notif = NotificationCompat.Builder(context, CHANNEL_FRIEND)
             .setSmallIcon(R.mipmap.ic_launcher)
@@ -32,6 +35,7 @@ object NotificationHelper {
         NotificationManagerCompat.from(context).notify((System.currentTimeMillis() % 100000).toInt(), notif)
     }
 
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     fun notifyMessage(context: Context, fromUser: String, preview: String) {
         val notif = NotificationCompat.Builder(context, CHANNEL_MESSAGES)
             .setSmallIcon(R.mipmap.ic_launcher)

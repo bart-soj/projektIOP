@@ -24,9 +24,9 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import com.example.projektiop.data.api.Profile
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -53,11 +53,11 @@ fun FriendProfileScreen(
                     // Jeśli mamy wstępne dane wyświetl je minimalnie bez requestu.
                     if (displayNamePrefill != null || usernamePrefill != null) {
                         profile = UserProfileResponse(
-                            _id = null,
-                            username = usernamePrefill,
-                            displayName = displayNamePrefill,
-                            profile = null,
-                            interests = emptyList()
+                            _id = null.toString(),
+                            username = usernamePrefill.toString(),
+                            profile = Profile(displayName = displayNamePrefill),
+                            interests = emptyList(),
+                            email = null.toString()
                         )
                     }
                     // Spróbuj wzbogacić poprzez search (jeśli username znany)
@@ -68,11 +68,11 @@ fun FriendProfileScreen(
                             val candidate = searchResp.body().orEmpty().firstOrNull { it._id == userId || it.username == uname }
                             if (candidate != null) {
                                 profile = UserProfileResponse(
-                                    _id = candidate._id,
-                                    username = candidate.username,
-                                    displayName = candidate.profile?.displayName,
+                                    _id = candidate._id.toString(),
+                                    username = candidate.username.toString(),
                                     profile = candidate.profile,
-                                    interests = emptyList()
+                                    interests = emptyList(),
+                                    email = null.toString()
                                 )
                             }
                         }
@@ -143,7 +143,7 @@ fun FriendProfileScreen(
                         Text("Zainteresowania", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(4.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            p.interests!!.forEach { tag -> InterestTag(text = tag) }
+                            p.interests!!.forEach { tag -> InterestTag(text = tag.toString()) }
                         }
                     }
                 }
