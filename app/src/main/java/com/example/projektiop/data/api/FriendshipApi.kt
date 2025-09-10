@@ -43,6 +43,8 @@ data class FriendshipDto(
     val requestedByUsername: String? = null,
     val isBlocked: Boolean? = null,
     val blockedBy: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
     // Legacy / fallback
     val _id: String? = null,
     val userId: UserRef? = null,

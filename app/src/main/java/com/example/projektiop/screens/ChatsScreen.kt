@@ -112,7 +112,7 @@ fun ChatsScreen(navController: NavController) {
                         items(filteredChatList, key = { it.id }) { chatData ->
                             ChatItem(
                                 chatData = chatData,
-                                onClick = { /* TODO: navController.navigate("chat/${chatData.id}") */ }
+                                onClick = { navController.navigate("chat_detail?chatId=${chatData.id}&friendId=null") }
                             )
                         }
                     }
