@@ -187,11 +187,19 @@ fun ChatItem(
     ) {
         // 3. Zdjęcie profilowe znajomego
         val avatarUrl = chatData.avatarUrl
+        val ctx = LocalContext.current
+        val imageRequest = coil.request.ImageRequest.Builder(ctx)
+            .data(avatarUrl)
+            .crossfade(true)
+            .apply {
+                val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                if (!token.isNullOrBlank()) {
+                    addHeader("Authorization", "Bearer $token")
+                }
+            }
+            .build()
         AsyncImage(
-            model = coil.request.ImageRequest.Builder(LocalContext.current)
-                .data(avatarUrl)
-                .crossfade(true)
-                .build(),
+            model = imageRequest,
             contentDescription = stringResource(R.string.profile_picture_desc),
             placeholder = painterResource(R.drawable.avatar_placeholder),
             error = painterResource(R.drawable.avatar_placeholder_background),

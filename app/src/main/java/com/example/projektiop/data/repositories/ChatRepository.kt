@@ -52,6 +52,13 @@ data class ChatListItem(
 )
 
 object ChatRepository {
+    private fun normalizeUrl(url: String?): String? {
+        if (url.isNullOrBlank()) return null
+        val trimmed = url.trim()
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed
+        val base = "https://hellobeacon.onrender.com"
+        return if (trimmed.startsWith("/")) base + trimmed else "$base/$trimmed"
+    }
     // Call once at app start
     fun init(context: Context) { ChatReadState.ensure(context) }
     /** Mark a chat read by persisting last seen message timestamp */
@@ -90,7 +97,7 @@ object ChatRepository {
                         lastMessage = lastMsg,
                         lastMessageTime = lastMessageTime,
                         friendId = other?._id,
-                        avatarUrl = other?.profile?.avatarUrl,
+                        avatarUrl = normalizeUrl(other?.profile?.avatarUrl),
                         unread = unread
                     )
                 }
