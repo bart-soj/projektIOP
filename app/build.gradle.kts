@@ -93,4 +93,8 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
 
     implementation("io.realm.kotlin:library-base:3.0.0")
+
+    // bouncycastle, both necessary
+    implementation("org.bouncycastle:bcprov-jdk15on:1.70")
+    implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
 }
