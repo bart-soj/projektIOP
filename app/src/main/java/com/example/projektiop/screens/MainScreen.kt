@@ -192,7 +192,7 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 } else {
                     interests.take(3).forEachIndexed { index, tag ->
                         if (index > 0) Spacer(modifier = Modifier.width(8.dp))
-                        InterestTag(text = tag.toString())
+                        InterestTag(text = tag)
                     }
                 }
             }

@@ -19,6 +19,10 @@ interface UserApi {
     @PUT("users/profile")
     suspend fun updateMyProfile(@Body request: UpdateProfileRequest): Response<UserProfileResponse>
 
+    // Profil innego użytkownika po ID: GET /api/users/{id}
+    @GET("users/{id}")
+    suspend fun getUserById(@Path("id") id: String): Response<UserProfileResponse>
+
     // Wyszukiwanie użytkowników: GET /api/users/search?q=...
     @GET("users/search")
     suspend fun searchUsers(@Query("q") query: String): Response<List<UserSearchDto>>
@@ -26,6 +30,7 @@ interface UserApi {
 
 // Dane profilu – wszystkie pola opcjonalne, żeby uniknąć crashy przy różnym JSON.
 data class UserProfileResponse(
+    val _id: String? = null,
     val displayName: String? = null,            // top-level (jeśli backend tak zwraca)
     val username: String? = null,
     val email: String? = null,

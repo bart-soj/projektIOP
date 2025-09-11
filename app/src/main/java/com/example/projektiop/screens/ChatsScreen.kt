@@ -186,19 +186,24 @@ fun ChatItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 3. Zdjęcie profilowe znajomego
-        Image(
-            painter = painterResource(id = R.drawable.avatar_placeholder_background),
+        val avatarUrl = chatData.avatarUrl
+        AsyncImage(
+            model = coil.request.ImageRequest.Builder(LocalContext.current)
+                .data(avatarUrl)
+                .crossfade(true)
+                .build(),
             contentDescription = stringResource(R.string.profile_picture_desc),
-            modifier = Modifier
-                .size(56.dp) // Nieco mniejsze niż w profilu głównym
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop
+            placeholder = painterResource(R.drawable.avatar_placeholder),
+            error = painterResource(R.drawable.avatar_placeholder_background),
+            fallback = painterResource(R.drawable.avatar_placeholder),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.size(56.dp).clip(CircleShape)
         )
 
         Spacer(modifier = Modifier.width(16.dp))
 
         // Kolumna na nazwę i ostatnią wiadomość
-        Column(
+    Column(
             modifier = Modifier.weight(1f) // Zajmij dostępną przestrzeń, aby tekst się zawijał/ucinał
         ) {
             // 4. Nazwa znajomego
