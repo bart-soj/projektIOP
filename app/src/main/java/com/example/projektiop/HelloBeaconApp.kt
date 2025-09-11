@@ -5,6 +5,7 @@ import com.example.projektiop.data.db.RealmProvider
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.ThemePreference
 import com.example.projektiop.util.NotificationHelper
+import io.realm.kotlin.Realm
 
 /**
  * Application class for the HelloBeacon Application

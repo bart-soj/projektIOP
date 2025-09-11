@@ -2,7 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    // Kotlin serialization plugin for type safe routes and navigation arguments
     kotlin("plugin.serialization") version "2.0.21"
+
     // Apply Realm Kotlin plugin to provide io.realm.kotlin types used in data layer
     id("io.realm.kotlin") version "3.0.0"
 }
@@ -90,10 +92,5 @@ dependencies {
     // Coil for image loading (avatars in chat)
     implementation("io.coil-kt:coil-compose:2.7.0")
 
-    // Realm Kotlin runtime for local database models
     implementation("io.realm.kotlin:library-base:3.0.0")
-
-    // bouncycastle, both necessary
-    implementation("org.bouncycastle:bcprov-jdk15on:1.70")
-    implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
 }
