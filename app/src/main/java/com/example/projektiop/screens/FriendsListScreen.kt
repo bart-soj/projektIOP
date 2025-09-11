@@ -2,6 +2,8 @@ package com.example.projektiop.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,22 +22,24 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
+import com.example.projektiop.data.repositories.FriendItem
+import com.example.projektiop.data.repositories.PendingRequestItem
 import com.example.projektiop.data.repositories.FriendshipRepository
 import kotlinx.coroutines.launch
 import com.example.projektiop.data.api.UserSearchDto
-import com.example.projektiop.data.repositories.FriendItem
-import com.example.projektiop.data.repositories.PendingRequestItem
 
 // Ekran dynamiczny listy znajomych z API
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendsListScreen(navController: NavController) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
     var friends by remember { mutableStateOf<List<FriendItem>>(emptyList()) }
     var incoming by remember { mutableStateOf<List<PendingRequestItem>>(emptyList()) }
+    var lastIncomingIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
@@ -47,7 +51,16 @@ fun FriendsListScreen(navController: NavController) {
             val fr = FriendshipRepository.fetchAccepted()
             val pend = FriendshipRepository.fetchIncomingPending()
             fr.onSuccess { friends = it }.onFailure { error = it.message }
-            pend.onSuccess { incoming = it }.onFailure { error = it.message }
+            pend.onSuccess { list ->
+                val newOnes = list.filter { it.friendshipId !in lastIncomingIds }
+                if (newOnes.isNotEmpty()) {
+                    newOnes.take(3).forEach { req ->
+                        com.example.projektiop.util.NotificationHelper.notifyFriendRequest(context, req.displayName)
+                    }
+                }
+                incoming = list
+                lastIncomingIds = list.map { it.friendshipId }.toSet()
+            }.onFailure { error = it.message }
             loading = false
         }
     }
@@ -127,9 +140,13 @@ fun FriendsListScreen(navController: NavController) {
                                 Text("Znajomi", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 4.dp))
                             }
                             items(friends, key = { it.id }) { friend ->
-                                FriendCard(friend = friend, onClick = { /* profil później */ }, onChat = {
-                                    navController.navigate("chat_detail?chatId=null&friendId=${friend.id}")
-                                })
+                                FriendCard(
+                                    friend = friend,
+                                    onClick = { navController.navigate("friend_profile/${friend.id}?username=${friend.username}&displayName=${friend.displayName}") },
+                                    onChat = { navController.navigate("chat_detail?chatId=null&friendId=${friend.id}") },
+                                    onRemoved = { refreshAll() },
+                                    onBlocked = { refreshAll() }
+                                )
                             }
                         }
                     }
@@ -140,11 +157,24 @@ fun FriendsListScreen(navController: NavController) {
 }
 
 @Composable
-private fun FriendCard(friend: FriendItem, onClick: () -> Unit, onChat: () -> Unit) {
+private fun FriendCard(
+    friend: FriendItem,
+    onClick: () -> Unit,
+    onChat: () -> Unit,
+    onRemoved: () -> Unit,
+    onBlocked: () -> Unit
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onLongPress = { menuExpanded = true },
+                    onTap = { onClick() }
+                )
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -169,6 +199,31 @@ private fun FriendCard(friend: FriendItem, onClick: () -> Unit, onChat: () -> Un
 
             // Przykładowy przycisk akcji (np. czat)
             TextButton(onClick = onChat) { Text("Czat") }
+
+            Box { // Dropdown anchor
+                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Usuń znajomego") },
+                        onClick = {
+                            menuExpanded = false
+                            scope.launch {
+                                FriendshipRepository.removeFriend(friend.friendshipId)
+                                    .onSuccess { onRemoved() }
+                            }
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Zablokuj") },
+                        onClick = {
+                            menuExpanded = false
+                            scope.launch {
+                                FriendshipRepository.blockFriendship(friend.friendshipId)
+                                    .onSuccess { onBlocked() }
+                            }
+                        }
+                    )
+                }
+            }
         }
     }
 }

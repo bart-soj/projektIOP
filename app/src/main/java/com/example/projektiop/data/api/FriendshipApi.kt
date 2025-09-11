@@ -5,6 +5,9 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 import retrofit2.http.POST
 import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.PUT
+import retrofit2.http.Path
 import com.google.gson.annotations.SerializedName
 
 // Minimal API dla listy znajomości zalogowanego użytkownika.
@@ -19,11 +22,20 @@ interface FriendshipApi {
     @POST("friendships/request")
     suspend fun sendRequest(@Body body: FriendRequest): Response<Unit>
 
-    @retrofit2.http.PUT("friendships/{id}/accept")
-    suspend fun acceptRequest(@retrofit2.http.Path("id") friendshipId: String): Response<Unit>
+    @PUT("friendships/{id}/accept")
+    suspend fun acceptRequest(@Path("id") friendshipId: String): Response<Unit>
 
-    @retrofit2.http.PUT("friendships/{id}/reject")
-    suspend fun rejectRequest(@retrofit2.http.Path("id") friendshipId: String): Response<Unit>
+    @PUT("friendships/{id}/reject")
+    suspend fun rejectRequest(@Path("id") friendshipId: String): Response<Unit>
+
+    @DELETE("friendships/{id}")
+    suspend fun removeFriendship(@Path("id") friendshipId: String): Response<Unit>
+
+    @PUT("friendships/{id}/block")
+    suspend fun blockFriendship(@Path("id") friendshipId: String): Response<Unit>
+
+    @PUT("friendships/{id}/unblock")
+    suspend fun unblockFriendship(@Path("id") friendshipId: String): Response<Unit>
 }
 
 data class FriendRequest(

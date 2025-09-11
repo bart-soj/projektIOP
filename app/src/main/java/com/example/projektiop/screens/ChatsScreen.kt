@@ -19,12 +19,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow // Do ucinania tekstu
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
-import com.example.projektiop.data.ChatListItem
-import com.example.projektiop.data.ChatRepository
+import com.example.projektiop.data.repositories.ChatListItem
+import com.example.projektiop.data.repositories.ChatRepository
+import com.example.projektiop.data.repositories.ChatUpdateManager
+import com.example.projektiop.data.repositories.UserRepository
+import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,12 +42,25 @@ fun ChatsScreen(navController: NavController) {
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    var myUsername by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        scope.launch {
-            loading = true
-            error = null
-            ChatRepository.fetchChats()
+        loading = true
+        error = null
+        val me = UserRepository.fetchMyProfile()
+        me.onSuccess { profile ->
+            myUsername = profile.username ?: profile.effectiveDisplayName
+        }
+        // Collect updates
+        launch {
+            ChatUpdateManager.chatsFlow.collect { list ->
+                chats = list
+                loading = false
+            }
+        }
+        // Trigger an immediate refresh once (manager polls anyway)
+        launch {
+            ChatRepository.fetchChats(currentUserId = null, currentUsername = myUsername)
                 .onSuccess { chats = it }
                 .onFailure { error = it.message }
             loading = false
@@ -91,7 +108,7 @@ fun ChatsScreen(navController: NavController) {
                                 scope.launch {
                                     loading = true
                                     error = null
-                                    ChatRepository.fetchChats()
+                                    ChatRepository.fetchChats(currentUserId = null, currentUsername = myUsername)
                                         .onSuccess { chats = it }
                                         .onFailure { error = it.message }
                                     loading = false
@@ -112,7 +129,16 @@ fun ChatsScreen(navController: NavController) {
                         items(filteredChatList, key = { it.id }) { chatData ->
                             ChatItem(
                                 chatData = chatData,
-                                onClick = { /* TODO: navController.navigate("chat/${chatData.id}") */ }
+                                onClick = {
+                                    val route = buildString {
+                                        append("chat_detail?")
+                                        append("chatId=").append(chatData.id)
+                                        if (!chatData.friendId.isNullOrBlank()) {
+                                            append("&friendId=").append(chatData.friendId)
+                                        }
+                                    }
+                                    navController.navigate(route)
+                                }
                             )
                         }
                     }
@@ -160,19 +186,24 @@ fun ChatItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 3. Zdjęcie profilowe znajomego
-        Image(
-            painter = painterResource(id = R.drawable.avatar_placeholder_background),
+        val avatarUrl = chatData.avatarUrl
+        AsyncImage(
+            model = coil.request.ImageRequest.Builder(LocalContext.current)
+                .data(avatarUrl)
+                .crossfade(true)
+                .build(),
             contentDescription = stringResource(R.string.profile_picture_desc),
-            modifier = Modifier
-                .size(56.dp) // Nieco mniejsze niż w profilu głównym
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop
+            placeholder = painterResource(R.drawable.avatar_placeholder),
+            error = painterResource(R.drawable.avatar_placeholder_background),
+            fallback = painterResource(R.drawable.avatar_placeholder),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.size(56.dp).clip(CircleShape)
         )
 
         Spacer(modifier = Modifier.width(16.dp))
 
         // Kolumna na nazwę i ostatnią wiadomość
-        Column(
+    Column(
             modifier = Modifier.weight(1f) // Zajmij dostępną przestrzeń, aby tekst się zawijał/ucinał
         ) {
             // 4. Nazwa znajomego
@@ -192,7 +223,15 @@ fun ChatItem(
                 overflow = TextOverflow.Ellipsis // Utnij, jeśli za długie
             )
         }
-        // Można tu dodać np. wskaźnik nieprzeczytanych wiadomości lub czas ostatniej wiadomości
+        if (chatData.unread) {
+            Spacer(Modifier.width(12.dp))
+            Surface(
+                color = MaterialTheme.colorScheme.primary,
+                shape = CircleShape,
+                tonalElevation = 0.dp,
+                modifier = Modifier.size(12.dp)
+            ) {}
+        }
     }
 }
 

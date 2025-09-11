@@ -9,10 +9,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 data class FriendItem(
-    val id: String,
+    val id: String,               // user id of the friend
     val displayName: String,
     val username: String,
-    val avatarUrl: String?
+    val avatarUrl: String?,
+    val friendshipId: String,     // underlying friendship relation id
+    val blockedBy: String? = null // userId who initiated block (for conditional unblock UI)
 )
 
 data class PendingRequestItem(
@@ -24,6 +26,11 @@ data class PendingRequestItem(
 )
 
 object FriendshipRepository {
+    data class BlockInfo(
+        val isBlocked: Boolean,
+        val blockedByMe: Boolean,
+        val friendshipId: String?
+    )
     suspend fun fetchAccepted(): Result<List<FriendItem>> = withContext(Dispatchers.IO) {
         // Nie używamy status=accepted, bo backend wtedy automatycznie filtruje tylko 'verified'.
         // Pobieramy bez status i filtrujemy lokalnie, aby pokazać też 'unverified'.
@@ -56,6 +63,15 @@ object FriendshipRepository {
         } catch (e: Exception) { Result.failure(e) }
     }
 
+    suspend fun fetchBlocked(): Result<List<FriendItem>> = withContext(Dispatchers.IO) {
+        try {
+            val resp = RetrofitInstance.friendshipApi.getFriendships(status = "blocked")
+            if (!resp.isSuccessful) return@withContext Result.failure(Exception("Błąd pobierania zablokowanych (${resp.code()})"))
+            val items = resp.body().orEmpty().filter { it.status == "blocked" }.mapNotNull { mapFriendDto(it) }
+            Result.success(items)
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
     suspend fun acceptFriendship(friendshipId: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val r = RetrofitInstance.friendshipApi.acceptRequest(friendshipId)
@@ -72,11 +88,12 @@ object FriendshipRepository {
 
     private fun mapFriendDto(dto: FriendshipDto): FriendItem? {
         val ref = dto.user ?: dto.userId ?: dto.friendId ?: return null
-        val id = ref._id ?: dto.friendshipId ?: dto._id ?: return null
+    val id = ref._id ?: dto.friendshipId ?: dto._id ?: return null
         val displayName = ref.profile?.displayName ?: ref.username ?: "(bez nazwy)"
         val username = ref.username ?: ""
         val avatar = ref.profile?.avatarUrl
-        return FriendItem(id, displayName, username, avatar)
+    val relationId = dto.friendshipId ?: dto._id ?: id
+    return FriendItem(id, displayName, username, avatar, relationId, dto.blockedBy)
     }
 
     private suspend fun mapFriendshipList(status: String): Result<List<FriendItem>> = try {
@@ -112,6 +129,40 @@ object FriendshipRepository {
                 if (raw.isNullOrBlank()) null else JSONObject(raw).optString("message").takeIf { it.isNotBlank() }
             } catch (e: Exception) { null }
             Result.failure(Exception(msg ?: "Nie udało się wysłać zaproszenia (${secondary.code()})"))
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun removeFriend(friendshipId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val resp = RetrofitInstance.friendshipApi.removeFriendship(friendshipId)
+            if (resp.isSuccessful) Result.success(Unit) else Result.failure(Exception("Błąd usuwania (${resp.code()})"))
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun blockFriendship(friendshipId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val resp = RetrofitInstance.friendshipApi.blockFriendship(friendshipId)
+            if (resp.isSuccessful) Result.success(Unit) else Result.failure(Exception("Błąd blokowania (${resp.code()})"))
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun unblockFriendship(friendshipId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val resp = RetrofitInstance.friendshipApi.unblockFriendship(friendshipId)
+            if (resp.isSuccessful) Result.success(Unit) else Result.failure(Exception("Błąd odblokowania (${resp.code()})"))
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun getBlockInfo(friendId: String): Result<BlockInfo?> = withContext(Dispatchers.IO) {
+        try {
+            val profileResp = com.example.projektiop.data.repositories.UserRepository.fetchMyProfile()
+            val myId = profileResp.getOrNull()?._id
+            if (myId.isNullOrBlank()) return@withContext Result.success(null)
+            val blocked = fetchBlocked().getOrNull().orEmpty()
+            val target = blocked.firstOrNull { it.id == friendId }
+            if (target == null) return@withContext Result.success(null)
+            val blockedByMe = target.blockedBy == myId
+            Result.success(BlockInfo(isBlocked = true, blockedByMe = blockedByMe, friendshipId = target.friendshipId))
         } catch (e: Exception) { Result.failure(e) }
     }
 }

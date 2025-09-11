@@ -16,9 +16,12 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.R
 import com.example.projektiop.data.repositories.AuthRepository
+import com.example.projektiop.data.repositories.FriendshipRepository
+import com.example.projektiop.data.repositories.FriendItem
+import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen(navController: NavController) {
+fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark: () -> Unit) {
 
     var animationPlayed by remember { mutableStateOf(false) } // Flaga, by animacja zagrała raz
     val alphaAnimation = animateFloatAsState(
@@ -37,6 +40,7 @@ fun SettingsScreen(navController: NavController) {
     Scaffold(
         bottomBar = { BottomNavigationBar(navController = navController, currentRoute = currentRoute) }
     ) { paddingValues ->
+    var showBlockedDialog by remember { mutableStateOf(false) }
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -51,31 +55,20 @@ fun SettingsScreen(navController: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
             ) {
-                // Przyciski (bez zmian w ich definicji)
-                Button(
-                    onClick = { navController.navigate("login") },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.start_screen_login_button)) }
+                // Dark mode toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(stringResource(id = R.string.dark_mode_label), style = MaterialTheme.typography.titleMedium)
+                    Switch(checked = darkMode, onCheckedChange = { onToggleDark() })
+                }
 
                 Button(
-                    onClick = { navController.navigate("register") },
+                    onClick = { showBlockedDialog = true },
                     modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.start_screen_register_button)) }
-
-                Button(
-                    onClick = { navController.navigate("scanner") },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.start_screen_scanner_button)) }
-
-                Button(
-                    onClick = { navController.navigate("main") },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.start_screen_main_button)) }
-
-                Button(
-                    onClick = { navController.navigate("start") },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("Start Screen") }
+                ) { Text("Zablokowani użytkownicy") }
 
                 Spacer(modifier = Modifier.weight(1f))
                 Button(
@@ -95,11 +88,86 @@ fun SettingsScreen(navController: NavController) {
                 }
             }
         }
+        if (showBlockedDialog) {
+            BlockedUsersDialog(onClose = { showBlockedDialog = false })
+        }
     }
+}
+
+@Composable
+private fun BlockedUsersDialog(onClose: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var loading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var items by remember { mutableStateOf<List<FriendItem>>(emptyList()) }
+    var processingId by remember { mutableStateOf<String?>(null) }
+    var myUserId by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            loading = true
+            // fetch profile for current user id
+            com.example.projektiop.data.repositories.UserRepository.fetchMyProfile().onSuccess { myUserId = it._id }
+            FriendshipRepository.fetchBlocked()
+                .onSuccess { items = it }
+                .onFailure { error = it.message }
+            loading = false
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onClose,
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onClose) { Text("Zamknij") } },
+        title = { Text("Zablokowani użytkownicy") },
+        text = {
+            when {
+                loading -> { CircularProgressIndicator() }
+                error != null -> { Text(error ?: "Błąd", color = MaterialTheme.colorScheme.error) }
+                items.isEmpty() -> { Text("Brak zablokowanych użytkowników") }
+                else -> {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        items.forEach { u ->
+                            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(u.displayName, style = MaterialTheme.typography.titleMedium)
+                                        Text(u.username, style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    val isProcessing = processingId == u.friendshipId
+                                    val showUnblock = myUserId != null && myUserId == u.blockedBy
+                                    if (showUnblock) {
+                                        TextButton(enabled = !isProcessing, onClick = {
+                                            scope.launch {
+                                                processingId = u.friendshipId
+                                                FriendshipRepository.unblockFriendship(u.friendshipId)
+                                                    .onSuccess {
+                                                        FriendshipRepository.fetchBlocked().onSuccess { items = it }
+                                                    }
+                                                processingId = null
+                                            }
+                                        }) { Text(if (isProcessing) "..." else "Odblokuj") }
+                                    } else {
+                                        Text("Zablokowany", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
 }
 
 @Preview
 @Composable
 fun SettingsScreenPreview() {
-    StartScreen(navController = NavController(LocalContext.current))
+    SettingsScreen(navController = NavController(LocalContext.current), darkMode = false, onToggleDark = {})
 }

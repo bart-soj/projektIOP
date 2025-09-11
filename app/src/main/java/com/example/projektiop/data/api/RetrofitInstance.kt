@@ -8,8 +8,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import com.example.projektiop.data.repositories.AuthRepository
 
 object RetrofitInstance {
-    // private const val BASE_URL = "https://hellobeacon.onrender.com/api/" // Ujednolicona baza – auth i user pod jednym URL
-    private const val BASE_URL = "http:/192.168.1.13:3000/api/" // 10.0.2.2 is bound to lo of local machine
+     private const val BASE_URL = "https://hellobeacon.onrender.com/api/" // Ujednolicona baza – auth i user pod jednym URL
+    //private const val BASE_URL = "http://192.168.1.13:3000/api/" // 10.0.2.2 is bound to lo of local machine
 
     private val authInterceptor = Interceptor { chain ->
         val original = chain.request()
@@ -41,5 +41,5 @@ object RetrofitInstance {
     val userApi: UserApi by lazy { retrofit.create(UserApi::class.java) }
     val friendshipApi: FriendshipApi by lazy { retrofit.create(FriendshipApi::class.java) }
     val chatApi: ChatApi by lazy { retrofit.create(ChatApi::class.java) }
-    val certificateApi = retrofit.create(CertificateApi::class.java)
+    val certificateApi: CertificateApi by lazy { retrofit.create(CertificateApi::class.java) }
 }

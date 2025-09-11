@@ -19,11 +19,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.projektiop.data.ChatRepository
+import com.example.projektiop.data.api.MessageDto
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
-import kotlin.collections.isNotEmpty
-import kotlin.collections.lastIndex
+import com.example.projektiop.data.repositories.ChatRepository
+import com.example.projektiop.data.repositories.FriendshipRepository
 
 // Prosty ekran szczegółów czatu (placeholder) – do zastąpienia real-time logiką.
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,16 +31,20 @@ import kotlin.collections.lastIndex
 fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: String?) {
     val scope = rememberCoroutineScope()
     var resolvedChatId by remember { mutableStateOf(chatId) }
-    var messages by remember { mutableStateOf<List<com.example.projektiop.data.api.MessageDto>>(emptyList()) }
+    var messages by remember { mutableStateOf<List<MessageDto>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var input by remember { mutableStateOf("") }
+    var blockInfo by remember { mutableStateOf<FriendshipRepository.BlockInfo?>(null) }
 
     LaunchedEffect(friendId, chatId) {
         if (resolvedChatId.isNullOrBlank() && !friendId.isNullOrBlank()) {
             ChatRepository.ensureChatWithUser(friendId)
                 .onSuccess { resolvedChatId = it }
                 .onFailure { error = it.message }
+        }
+        if (!friendId.isNullOrBlank()) {
+            FriendshipRepository.getBlockInfo(friendId).onSuccess { blockInfo = it }
         }
         val id = resolvedChatId
         if (!id.isNullOrBlank()) {
@@ -49,6 +53,9 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                 .onSuccess { messages = it } // już w kolejności rosnącej po dacie
                 .onFailure { error = it.message }
             loading = false
+            // Mark read using last message timestamp
+            val lastTimestamp = messages.lastOrNull()?.createdAt
+            ChatRepository.markChatRead(id, lastTimestamp)
         } else {
             loading = false
         }
@@ -98,26 +105,41 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                     }
                 }
             }
+            val isBlocked = blockInfo?.isBlocked == true
+            val blockedByMe = blockInfo?.blockedByMe == true
+            if (isBlocked) {
+                val msg = if (blockedByMe) {
+                    "Zablokowałeś tego użytkownika. Odblokuj go aby wysłać wiadomość."
+                } else {
+                    "Nie możesz wysłać wiadomości – zostałeś zablokowany przez tego użytkownika."
+                }
+                Surface(color = MaterialTheme.colorScheme.errorContainer, modifier = Modifier.fillMaxWidth()) {
+                    Text(msg, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.padding(12.dp))
+                }
+            }
             Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = input,
                     onValueChange = { input = it },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    placeholder = { Text("Napisz wiadomość...") }
+                    placeholder = { Text(if (isBlocked) "Wysyłanie niedostępne" else "Napisz wiadomość...") },
+                    enabled = !isBlocked
                 )
                 Spacer(Modifier.width(8.dp))
                 Button(onClick = {
                     val id = resolvedChatId
-                    if (input.isBlank() || id.isNullOrBlank()) return@Button
+                    if (input.isBlank() || id.isNullOrBlank() || isBlocked) return@Button
                     val content = input
                     input = ""
                     scope.launch {
                         ChatRepository.sendMessage(id, content)
                             .onSuccess { sent -> messages = messages + sent }
                             .onFailure { error = it.message }
+                        val lastTimestamp = messages.lastOrNull()?.createdAt
+                        ChatRepository.markChatRead(id, lastTimestamp)
                     }
-                }, enabled = !resolvedChatId.isNullOrBlank()) { Text("Wyślij") }
+                }, enabled = !resolvedChatId.isNullOrBlank() && !isBlocked) { Text("Wyślij") }
             }
         }
     }
