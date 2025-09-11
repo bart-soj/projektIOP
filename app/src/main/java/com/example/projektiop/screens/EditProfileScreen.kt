@@ -1,17 +1,29 @@
 package com.example.projektiop.screens
 
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.projektiop.R
 import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.asImageBitmap
 
 @Composable
 fun EditProfileScreen(
@@ -45,6 +57,10 @@ fun EditProfileScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
+    var avatarPreviewUri by remember { mutableStateOf<Uri?>(null) }
+    var avatarPreviewBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var uploading by remember { mutableStateOf(false) }
+    var uploadError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         // Pobierz aktualny profil i wypełnij pola
@@ -75,6 +91,27 @@ fun EditProfileScreen(
             if (loadingInitial) {
                 Spacer(Modifier.height(8.dp))
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+            Spacer(Modifier.height(16.dp))
+            AvatarPicker(
+                avatarPreviewUri = avatarPreviewUri,
+                avatarPreviewBytes = avatarPreviewBytes,
+                onPick = { uri, bytes ->
+                    avatarPreviewUri = uri
+                    avatarPreviewBytes = bytes
+                },
+                onUpload = {
+                    if (avatarPreviewUri == null) return@AvatarPicker
+                    coroutineScope.launch {
+                        uploading = true
+                        uploadError = null
+                    }
+                },
+                uploading = uploading
+            )
+            if (uploadError != null) {
+                Spacer(Modifier.height(4.dp))
+                Text(uploadError!!, color = MaterialTheme.colorScheme.error)
             }
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(
@@ -294,6 +331,60 @@ private fun MultiSelectInterestsDropdown(
                 modifier = Modifier.fillMaxWidth()
             ) { Text("Zamknij") }
         }
+    }
+}
+
+@Composable
+private fun AvatarPicker(
+    avatarPreviewUri: Uri?,
+    avatarPreviewBytes: ByteArray?,
+    onPick: (Uri?, ByteArray?) -> Unit,
+    onUpload: () -> Unit,
+    uploading: Boolean
+) {
+    val context = LocalContext.current
+    val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            onPick(uri, bytes)
+        }
+    }
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        val bitmap = remember(avatarPreviewBytes) {
+            avatarPreviewBytes?.let { bytes ->
+                kotlin.runCatching { BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap() }.getOrNull()
+            }
+        }
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap,
+                contentDescription = "Podgląd avatara",
+                modifier = Modifier.size(96.dp).clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Image(
+                painter = painterResource(id = R.drawable.avatar_placeholder),
+                contentDescription = "Brak avatara",
+                modifier = Modifier.size(96.dp).clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(enabled = !uploading, onClick = { pickImage.launch("image/*") }) { Text("Wybierz zdjęcie") }
+            Button(enabled = !uploading && avatarPreviewUri != null, onClick = onUpload) {
+                Text(if (uploading) "Wgrywanie..." else "Wgraj")
+            }
+        }
+    }
+}
+
+private fun queryDisplayName(context: android.content.Context, uri: Uri): String? {
+    val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
+    return context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+        val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        if (index >= 0 && cursor.moveToFirst()) cursor.getString(index) else null
     }
 }
 

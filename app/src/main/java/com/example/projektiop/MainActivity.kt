@@ -36,6 +36,7 @@ import com.example.projektiop.screens.SettingsScreen
 import com.example.projektiop.screens.EditProfileScreen
 import com.example.projektiop.screens.FriendsListScreen
 import com.example.projektiop.screens.FriendProfileScreen
+import io.realm.kotlin.Realm
 
 class MainActivity : ComponentActivity() {
 
