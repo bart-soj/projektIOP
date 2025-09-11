@@ -40,8 +40,10 @@ data class ChatUserDto(
 
 data class MessageDto(
     val _id: String? = null,
+    val chatId: String? = null,
     val content: String? = null,
     val senderId: ChatUserDto? = null,
+    val readBy: List<ChatUserDto>? = null,
     val createdAt: String? = null
 )
 
