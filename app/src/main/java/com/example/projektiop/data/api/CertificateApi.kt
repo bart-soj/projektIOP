@@ -4,16 +4,17 @@ import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
 
-// Request/response models for certificate issuance
+// Data classes for the API request/response
 data class CertificateRequest(
     val csrPem: String
 )
 
 data class CertificateResponse(
-    val certPem: String
+    val certPem: String,
+    val caCertPem: String
 )
 
-// Retrofit API definition for certificate endpoints
+// Retrofit interface
 interface CertificateApi {
     @POST("certificates/issue")
     suspend fun issueCertificate(
