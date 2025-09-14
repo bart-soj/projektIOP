@@ -1,38 +1,37 @@
 package com.example.projektiop.data.repositories
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.data.api.RegisterRequest
 import com.example.projektiop.data.api.LoginRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+
 object AuthRepository {
-    private const val PREFS_NAME = "auth_prefs"
     private const val KEY_TOKEN = "auth_token"
+    private const val EMAIL = "my_email"
     private const val KEY_REMEMBER = "remember_me"
 
     private var token: String? = null
     private var rememberMe: Boolean = false
-    private var prefs: SharedPreferences? = null
 
     fun init(context: Context) {
-        if (prefs == null) {
-            prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            // Load persisted values
-            rememberMe = prefs?.getBoolean(KEY_REMEMBER, false) ?: false
-            if (rememberMe) {
-                token = prefs?.getString(KEY_TOKEN, null)
-            }
+        // Load persisted values directly from repository
+        rememberMe = SharedPreferencesRepository.get(KEY_REMEMBER, false)
+
+        if (rememberMe) {
+            token = SharedPreferencesRepository.get(KEY_TOKEN, null)
         }
     }
+
 
     suspend fun login(email: String, password: String): Result<String?> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = RetrofitInstance.authApi.login(LoginRequest(email, password))
                 if (response.isSuccessful) {
+                    saveEmail(email)
                     Result.success(response.body()?.token)
                 } else {
                     Result.failure(Exception(response.body()?.message ?: "Login failed"))
@@ -42,6 +41,7 @@ object AuthRepository {
             }
         }
     }
+
 
     suspend fun register(username: String, email: String, password: String): Result<String?> {
         return withContext(Dispatchers.IO) {
@@ -58,33 +58,35 @@ object AuthRepository {
         }
     }
 
+
     fun saveToken(newToken: String?, remember: Boolean) {
         token = newToken
         rememberMe = remember
-        prefs?.edit()?.apply {
-            if (remember && !newToken.isNullOrBlank()) {
-                putString(KEY_TOKEN, newToken)
-                putBoolean(KEY_REMEMBER, true)
-            } else {
-                remove(KEY_TOKEN)
-                putBoolean(KEY_REMEMBER, false)
-            }
-            apply()
+
+        if (remember && !newToken.isNullOrBlank()) {
+            SharedPreferencesRepository.set(KEY_TOKEN, newToken!!)
+            SharedPreferencesRepository.set(KEY_REMEMBER, true)
+        } else {
+            SharedPreferencesRepository.set(KEY_REMEMBER, false)
+            SharedPreferencesRepository.remove(KEY_TOKEN)
         }
     }
 
-    // Backwards compatibility for old calls (default remember = false)
-    fun saveToken(newToken: String?) = saveToken(newToken, remember = false)
+
+    fun saveEmail(newEmail: String?) {
+        if (!newEmail.isNullOrBlank()) {
+            SharedPreferencesRepository.set(EMAIL, newEmail)
+        }
+    }
+
 
     fun clearToken() {
         token = null
         rememberMe = false
-        prefs?.edit()?.apply {
-            remove(KEY_TOKEN)
-            putBoolean(KEY_REMEMBER, false)
-            apply()
-        }
+        SharedPreferencesRepository.set(KEY_REMEMBER, false)
+        SharedPreferencesRepository.remove(KEY_TOKEN)
     }
+
 
     fun getToken(): String? = token
     fun isRemembered(): Boolean = rememberMe

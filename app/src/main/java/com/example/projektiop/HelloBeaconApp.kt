@@ -4,6 +4,9 @@ import android.app.Application
 import com.example.projektiop.data.db.RealmProvider
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.ThemePreference
+import com.example.projektiop.data.repositories.DBRepository
+import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.util.NotificationHelper
 import io.realm.kotlin.Realm
 
@@ -16,12 +19,15 @@ class HelloBeaconApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-    RealmProvider.init(this)
-    AuthRepository.init(this)
-    ThemePreference.init(this)
-    NotificationHelper.initChannels(this)
-    com.example.projektiop.data.repositories.ChatRepository.init(this)
-    com.example.projektiop.data.repositories.ChatUpdateManager.start(this)
+        RealmProvider.init(this)
+        DBRepository.init(RealmProvider.getRealm())
+        SharedPreferencesRepository.init(this)
+        AuthRepository.init(this)
+        UserRepository.init(this)
+        ThemePreference.init(this)
+        NotificationHelper.initChannels(this)
+        com.example.projektiop.data.repositories.ChatRepository.init(this)
+        com.example.projektiop.data.repositories.ChatUpdateManager.start(this)
     }
 
     override fun onTerminate() {
