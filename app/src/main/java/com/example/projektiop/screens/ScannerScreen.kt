@@ -122,7 +122,8 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController) {
 
             // Spacer(modifier = Modifier.height(16.dp))
             // CertificateRequester(AuthRepository.getToken().toString())
-            ScannedUsersList(deviceIds = devices) {}
+            ScannedUsersList(deviceIds = devices) { user -> Unit // change onClick behaviour here
+            }
 
             Spacer(modifier = Modifier.height(16.dp)) // Odstęp na dole przed końcem scrolla/bottom bar
         }
@@ -282,9 +283,9 @@ fun ScannedUserRow(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(user.profile?.displayName ?: user.username, style = MaterialTheme.typography.titleMedium)
-                    Text(user.username, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                    Text(user.email, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(user.profile?.displayName ?: user.username.toString(), style = MaterialTheme.typography.titleMedium)
+                    Text(user.username.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(user.email.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                     if (!user.interests.isNullOrEmpty()) {
                         Text(
                             text = "Zainteresowania: ${user.interests.joinToString { it.interest.name }}",

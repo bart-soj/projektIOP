@@ -50,9 +50,9 @@ class User : RealmObject {
     var profile: UserProfile? = null
 
     @Ignore
-    var role: UserRole
+    var role: UserRole?
         get() = UserRole.valueOf(_role)
-        set(value) { _role = value.name }
+        set(value) { _role = (value?.name ?: "USER") }
 
     private var _role: String = UserRole.USER.name
 

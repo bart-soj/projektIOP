@@ -3,6 +3,11 @@ package com.example.projektiop.data.repositories
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.api.UpdateProfileRequest
@@ -14,6 +19,8 @@ import com.example.projektiop.data.repositories.DBRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.util.UUID
 
 
 private const val PREFS_NAME = "auth_prefs"
@@ -168,6 +175,53 @@ object UserRepository {
                 return@withContext Result.success(localUser.toUserProfileResponse())
             }
             return@withContext Result.failure(Exception("API error and no local data available $e"))
+        }
+    }
+
+    suspend fun uploadAvatar(
+        bytes: ByteArray,
+        originalFileName: String? = null,
+        mimeType: String? = null
+    ): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
+        try {
+            val safeMime = (mimeType ?: "image/jpeg").toMediaTypeOrNull()
+            val requestBody: RequestBody = bytes.toRequestBody(safeMime)
+            val fileName = originalFileName?.takeIf { it.isNotBlank() } ?: "avatar_${UUID.randomUUID()}.jpg"
+            val part = MultipartBody.Part.createFormData(
+                name = "avatarImage",
+                filename = fileName,
+                body = requestBody
+            )
+
+            val response = RetrofitInstance.userApi.uploadAvatar(part)
+            if (response.isSuccessful && response.body() != null) {
+                val body = response.body()!!
+                val tmpId: String? = try { body._id } catch (_: Throwable) { null }
+                if (!tmpId.isNullOrBlank()) {
+                    SharedPreferencesRepository.set(ID, tmpId.toString())
+                }
+                // Try to persist locally, but don't fail the whole operation if local save has issues
+                try {
+                    DBRepository.addLocalUser(body.toRealm())
+                } catch (e: Exception) {
+                    Log.w("UserRepository", "uploadAvatar: failed to persist locally, will continue. ${e.message}")
+                }
+                // Best effort: refresh full profile (backend may return partial)
+                try {
+                    val refreshed = fetchMyProfile().getOrNull()
+                    if (refreshed != null) return@withContext Result.success(refreshed)
+                } catch (_: Exception) { /* ignore */ }
+                Result.success(body)
+            } else {
+                val errBody = try { response.errorBody()?.string() } catch (_: Exception) { null }
+                val msg = buildString {
+                    append("Nie udało się wgrać avatara (${response.code()})")
+                    if (!errBody.isNullOrBlank()) append(": ").append(errBody.take(300))
+                }
+                Result.failure(Exception(msg))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

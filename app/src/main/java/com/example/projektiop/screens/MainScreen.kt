@@ -28,6 +28,9 @@ import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.data.api.UserProfileResponse
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
 import java.time.Period
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -100,14 +103,44 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.avatar_placeholder),
-                    contentDescription = "Zdjęcie profilowe",
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
+                val ctx = LocalContext.current
+                val rawUrl = profile?.profile?.avatarUrl?.takeIf { it.isNotBlank() }
+                val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
+                // Cache-busting tied to user.updatedAt so image refreshes after avatar change but remains cacheable otherwise
+                val versionTag = profile?.updatedAt?.takeIf { !it.isNullOrBlank() }?.hashCode()?.toString()
+                val displayUrl = fullUrl?.let { url ->
+                    versionTag?.let { v -> if (url.contains('?')) "$url&v=$v" else "$url?v=$v" } ?: url
+                }
+                if (displayUrl != null) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(ctx)
+                            .data(displayUrl)
+                            .crossfade(true)
+                            .apply {
+                                val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                                if (!token.isNullOrBlank()) {
+                                    addHeader("Authorization", "Bearer $token")
+                                }
+                            }
+                            .build(),
+                        contentDescription = "Zdjęcie profilowe",
+                        placeholder = painterResource(id = R.drawable.avatar_placeholder),
+                        error = painterResource(id = R.drawable.avatar_placeholder),
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.avatar_placeholder),
+                        contentDescription = "Zdjęcie profilowe",
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                }
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = when {
