@@ -13,7 +13,7 @@ fun MessageDto.toRealm(): Message {
     message.senderId = this.senderId.toString()
     message.content = this.content.toString()
     message.readBy = (this.readBy?.mapNotNull{ it._id } ?: emptyList<String>()) as RealmList<String>
-    message.createdAt = this.createdAt as RealmInstant?
+    message.createdAt = mongoTimestampToRealmInstant(this.createdAt)
 
     return message
 }

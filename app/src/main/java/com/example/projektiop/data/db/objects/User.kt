@@ -35,7 +35,7 @@ class UserProfile : EmbeddedRealmObject {
     var location: String = ""
     var bio: String = ""
     var broadcastMessage: String = ""
-}
+ }
 
 class User : RealmObject {
     @PrimaryKey

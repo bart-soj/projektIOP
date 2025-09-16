@@ -2,14 +2,12 @@ package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.Profile
 import com.example.projektiop.data.api.UserProfileResponse
-import com.example.projektiop.data.api.UserStats
 import com.example.projektiop.data.db.objects.Gender
 import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.db.objects.UserProfile
-import com.google.gson.annotations.SerializedName
-import io.realm.kotlin.types.RealmInstant
-import java.time.Instant
-import kotlin.String
+import com.example.projektiop.data.db.objects.UserRole
+
+
 
 fun UserProfileResponse.toRealm(): User {
     var user = User()
@@ -19,10 +17,20 @@ fun UserProfileResponse.toRealm(): User {
     user.profile = UserProfile()
     user.profile?.displayName = this.profile?.displayName.toString()
     user.profile?.gender = Gender.valueOf(this.profile?.gender?.uppercase().toString())
-    user.profile?.birthDate = null // TODO() add a function to map between realm instant and mongodb timestamp
+    user.profile?.birthDate = mongoTimestampToRealmInstant(this.profile?.birthDate)
     user.profile?.location = this.profile?.location.toString()
     user.profile?.bio = this.profile?.bio.toString()
     user.profile?.broadcastMessage = this.profile?.broadcastMessage.toString()
+    user.role = UserRole.valueOf(this.role?.uppercase().toString())
+    user.isBanned = this.isBanned ?: true
+    user.banReason = this.banReason
+    user.bannedAt = mongoTimestampToRealmInstant(this.bannedAt)
+    user.isTestAccount = this.isTestAccount ?: false
+    user.isEmailVerified = this.isEmailVerified ?: false
+    user.isDeleted = this.isDeleted ?: false
+    user.deletedAt = mongoTimestampToRealmInstant(this.deletedAt)
+    user.createdAt = mongoTimestampToRealmInstant(this.createdAt)
+    user.updatedAt = mongoTimestampToRealmInstant(this.updatedAt)
 
     return user
 }
@@ -35,7 +43,7 @@ fun User.toUserProfileResponse(): UserProfileResponse {
             bio = this.profile?.bio,
             gender = this.profile?.gender.toString(),
             location = this.profile?.location,
-            birthDate = this.profile?.birthDate.toString(),
+            birthDate = realmInstantToMongoTimestamp(this.profile?.birthDate),
             broadcastMessage = this.profile?.broadcastMessage
         ),
         _id = this.id,
@@ -44,15 +52,15 @@ fun User.toUserProfileResponse(): UserProfileResponse {
         role = this.role.toString(),
         isBanned = this.isBanned,
         banReason = this.banReason,
-        bannedAt = this.bannedAt.toString(),
+        bannedAt = realmInstantToMongoTimestamp(this.bannedAt),
         isTestAccount = this.isTestAccount,
         isEmailVerified = this.isEmailVerified,
         isDeleted = this.isDeleted,
-        deletedAt = this.deletedAt.toString(),
-        createdAt = this.createdAt.toString(),
-        updatedAt = this.updatedAt.toString(),
+        deletedAt = realmInstantToMongoTimestamp(this.deletedAt),
+        createdAt = realmInstantToMongoTimestamp(this.createdAt),
+        updatedAt = realmInstantToMongoTimestamp(this.updatedAt),
         __v = null,
-        interests = null
+        interests = null // TODO() need to store in db first
     )
 }
 

@@ -90,7 +90,6 @@ fun MyApp() {
             composable("register") { RegisterScreen(navController) }
             composable("scanner") {
                 ScannerScreen(
-                    name = "brak",
                     modifier = Modifier.padding(10.dp),
                     navController = navController
                 )
@@ -136,6 +135,6 @@ fun MyApp() {
 @Composable
 fun DefaultPreview() {
     ProjektIOPTheme() {
-        ScannerScreen(12345.toString(), navController = rememberNavController())
+        ScannerScreen(navController = rememberNavController())
     }
 }

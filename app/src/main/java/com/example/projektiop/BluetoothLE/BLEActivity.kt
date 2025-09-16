@@ -19,9 +19,22 @@ import androidx.compose.ui.text.style.TextAlign // Dodano import dla wyrównania
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle // Ważny import
+import androidx.lifecycle.lifecycleScope
 import com.example.projektiop.BluetoothLE.BluetoothManagerUtils
+import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.ui.theme.ProjektIOPTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
+import kotlin.coroutines.CoroutineContext
+
+
+private const val ID: String = "_id"
+
 
 class BLEActivity : ComponentActivity() {
 
@@ -48,7 +61,7 @@ class BLEActivity : ComponentActivity() {
         }
 
     // Generujemy ID użytkownika raz przy tworzeniu Activity
-    private val userId: String by lazy { generateUserId() } // Użycie lazy dla pewności inicjalizacji
+    private lateinit var userId: String
 
     // Tworzymy instancję managera BLE - lateinit, bo potrzebuje contextu, inicjowana w onCreate
     private lateinit var bleManager: BluetoothManagerUtils
@@ -56,6 +69,7 @@ class BLEActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        userId = SharedPreferencesRepository.get(ID, "brak")
         enableEdgeToEdge() // Włączenie rysowania pod paskami systemowymi
 
         // Inicjalizujemy managera BLE tutaj, przekazując context (this) i userId
@@ -85,6 +99,10 @@ class BLEActivity : ComponentActivity() {
         val newId = UUID.randomUUID().toString().substring(0, 8).uppercase()
         Log.d("USER_ID", "Wygenerowano ID użytkownika: $newId")
         return newId
+    }
+
+    fun getUserId(): String {
+        return userId
     }
 
     // Zatrzymujemy skanowanie/rozgłaszanie przy zamykaniu aplikacji (onDestroy)
@@ -210,15 +228,6 @@ fun DefaultPreview() {
     // Używamy remember do stworzenia managera tylko raz dla podglądu
     val previewContext = LocalContext.current
     val previewBleManager = remember { BluetoothManagerUtils(previewContext, "PREVIEW_ID") }
-
-    // --- USUNIĘTO PRÓBĘ PRZYPISANIA WARTOŚCI ---
-    // Nie próbujemy już modyfikować stanu managera w podglądzie w ten sposób:
-    // LaunchedEffect(Unit) {
-    //     // !!! TE LINIE POWODOWAŁY BŁĄD "Val cannot be reassigned" i zostały usunięte !!!
-    //     // previewBleManager.foundDeviceStatus.value = "Status: Oczekuje (Podgląd)"
-    //     // previewBleManager.isScanning.value = true // To też by nie zadziałało
-    // }
-    // Podgląd po prostu użyje stanu początkowego z managera.
 
     ProjektIOPTheme {
         // Używamy Surface, aby podgląd miał tło z motywu

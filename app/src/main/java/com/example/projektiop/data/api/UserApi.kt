@@ -17,9 +17,11 @@ interface UserApi {
     @PUT("users/profile")
     suspend fun updateMyProfile(@Body request: UpdateProfileRequest): Response<UserProfileResponse>
 
+    /* this endpoint does not exist right now
     // Profil innego użytkownika po ID: GET /api/users/{id}
     @GET("users/{id}")
     suspend fun getUserById(@Path("id") id: String): Response<UserProfileResponse>
+    */
 
     // Wyszukiwanie użytkowników: GET /api/users/search?q=...
     @GET("users/search")

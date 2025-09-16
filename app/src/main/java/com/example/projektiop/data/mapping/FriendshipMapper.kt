@@ -7,16 +7,20 @@ import com.example.projektiop.data.db.objects.Friendship
 import com.example.projektiop.data.db.objects.FriendshipStatus
 import com.example.projektiop.data.db.objects.FriendshipType
 import com.example.projektiop.data.repositories.DBRepository
+import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import io.realm.kotlin.types.RealmInstant
 import java.util.UUID
+
+
+private const val ID: String = "_id"
 
 
 // FriendshipDto (API) → Friendship (Realm)
 fun FriendshipDto.toRealm(): Friendship {
     val friendship = Friendship()
-    friendship.id = this.friendshipId ?: this._id ?: UUID.randomUUID().toString()
+    friendship.id = this.friendshipId ?: this._id ?: UUID.randomUUID().toString() // new UUID creation here is hacky
 
-    friendship.user1 = ""                     // need to put own _id here
+    friendship.user1 = SharedPreferencesRepository.get(ID, "")
     friendship.user2 = this.user?._id ?: ""
 
     friendship.status = this.status
@@ -29,9 +33,9 @@ fun FriendshipDto.toRealm(): Friendship {
 
     friendship.isBlocked = this.isBlocked ?: false
     friendship.blockedBy = this.blockedBy
-    friendship.requestedBy = this.requestedByUsername ?: ""
-    friendship.createdAt = this.createdAt as RealmInstant?
-    friendship.updatedAt = this.updatedAt as RealmInstant?
+    friendship.requestedBy = this.requestedByUsername.toString()
+    friendship.createdAt = mongoTimestampToRealmInstant(this.createdAt)
+    friendship.updatedAt = mongoTimestampToRealmInstant(this.updatedAt)
 
     return friendship
 }

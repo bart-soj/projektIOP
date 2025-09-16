@@ -7,6 +7,9 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
+import android.bluetooth.le.AdvertisingSet
+import android.bluetooth.le.AdvertisingSetCallback
+import android.bluetooth.le.AdvertisingSetParameters
 import android.bluetooth.le.BluetoothLeAdvertiser
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
@@ -26,7 +29,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.app.ActivityCompat
 import androidx.core.location.LocationManagerCompat
+import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.nio.charset.Charset
 import java.util.UUID
@@ -61,7 +67,8 @@ class BluetoothManagerUtils(
     val foundDeviceStatus = _foundDeviceStatus.asStateFlow()
 
     // --- Zbiór do przechowywania unikalnych ID znalezionych urządzeń podczas jednego skanowania ---
-    private val foundDeviceIds = mutableSetOf<String>()
+    private val _foundDeviceIds = MutableStateFlow<List<String>>(emptyList())
+    val foundDeviceIds: StateFlow<List<String>> = _foundDeviceIds.asStateFlow()
 
     // --- Skanowanie ---
     private var bluetoothLeScanner: BluetoothLeScanner? = null
@@ -84,10 +91,12 @@ class BluetoothManagerUtils(
                             val foundUserId = String(serviceData, Charset.forName("UTF-8")).trim() // Dodano trim()
 
                             // Sprawdzamy, czy ID jest niepuste i czy jest nowe
-                            if (foundUserId.isNotEmpty() && foundDeviceIds.add(foundUserId)) {
+                            if (foundUserId.isNotEmpty() && !_foundDeviceIds.value.contains(foundUserId)) {
                                 // ID jest nowe, logujemy i aktualizujemy status
                                 Log.i(TAG_SCAN, ">>> NOWE URZĄDZENIE: Znaleziono ID: $foundUserId (MAC: $deviceAddress) <<<")
                                 _foundDeviceStatus.value = "Status: Znaleziono $foundUserId"
+                                val updatedList = _foundDeviceIds.value + foundUserId
+                                _foundDeviceIds.value = updatedList
                                 // Można dodać więcej logiki, np. zbierać wszystkie ID i pokazywać listę
                                 // _foundDeviceStatus.value = "Status: Znaleziono (${foundDeviceIds.size}): ${foundDeviceIds.joinToString()}"
                             } else if (foundUserId.isNotEmpty()) {
@@ -134,28 +143,30 @@ class BluetoothManagerUtils(
 
     // --- Rozgłaszanie ---
     private var bluetoothLeAdvertiser: BluetoothLeAdvertiser? = null
-    private val advertiseCallback = object : AdvertiseCallback() {
-        override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
-            super.onStartSuccess(settingsInEffect)
-            Log.i(TAG_ADVERTISE, ">>> Rozgłaszanie rozpoczęte pomyślnie (ID: $ownUserId, UUID: ${SERVICE_UUID}) <<<")
-            _isAdvertising.value = true
-            // Można zaktualizować status, np.
-            // if (!_isScanning.value) { _foundDeviceStatus.value = "Status: Rozgłaszanie aktywne" }
-        }
-        override fun onStartFailure(errorCode: Int) {
-            super.onStartFailure(errorCode)
-            Log.e(TAG_ADVERTISE, "Rozgłaszanie nie powiodło się, kod błędu: $errorCode")
-            _isAdvertising.value = false
-            val errorText = when (errorCode) {
-                ADVERTISE_FAILED_DATA_TOO_LARGE -> "Advertise Failed: Data Too Large (Check ID length and UUID)"
-                ADVERTISE_FAILED_TOO_MANY_ADVERTISERS -> "Advertise Failed: Too Many Advertisers (System limit reached)"
-                ADVERTISE_FAILED_ALREADY_STARTED -> "Advertise Failed: Already Started"
-                ADVERTISE_FAILED_INTERNAL_ERROR -> "Advertise Failed: Internal Error"
-                ADVERTISE_FAILED_FEATURE_UNSUPPORTED -> "Advertise Failed: Feature Unsupported (BLE Advertise not supported?)"
-                else -> "Advertise Failed: Unknown error code $errorCode"
+    private var advertisingSet: AdvertisingSet? = null
+
+    private val advertiseSetCallback = object : AdvertisingSetCallback() {
+        override fun onAdvertisingSetStarted(
+            advertisingSet: AdvertisingSet?,
+            txPower: Int,
+            status: Int
+        ) {
+            super.onAdvertisingSetStarted(advertisingSet, txPower, status)
+            if (status == ADVERTISE_SUCCESS) {
+                Log.i(TAG_ADVERTISE, ">>> Rozgłaszanie rozpoczęte pomyślnie (ID: $ownUserId, UUID: $SERVICE_UUID) <<<")
+                this@BluetoothManagerUtils.advertisingSet = advertisingSet
+                _isAdvertising.value = true
+            } else {
+                Log.e(TAG_ADVERTISE, "Rozgłaszanie nie powiodło się, kod błędu: $status")
+                _isAdvertising.value = false
+                _foundDeviceStatus.value = "Status: Błąd rozgł. ($status)"
             }
-            _foundDeviceStatus.value = "Status: Błąd rozgł. ($errorCode)"
-            Log.e(TAG_ADVERTISE, errorText)
+        }
+
+        override fun onAdvertisingSetStopped(advertisingSet: AdvertisingSet?) {
+            super.onAdvertisingSetStopped(advertisingSet)
+            Log.i(TAG_ADVERTISE, "Rozgłaszanie zatrzymane")
+            _isAdvertising.value = false
         }
     }
 
@@ -206,7 +217,7 @@ class BluetoothManagerUtils(
         }
 
         // 6. Wyczyść listę poprzednio znalezionych urządzeń przed nowym skanowaniem
-        foundDeviceIds.clear()
+        _foundDeviceIds.value = emptyList<String>()
         Log.d(TAG_SCAN, "Wyczyszczono zbiór znalezionych ID.")
 
         // 7. Ustawienia skanowania
@@ -214,6 +225,7 @@ class BluetoothManagerUtils(
             .setServiceUuid(ParcelUuid(SERVICE_UUID))
             .build()
         val scanSettings = ScanSettings.Builder()
+            .setLegacy(false)
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY) // Najbardziej agresywne skanowanie
             // .setReportDelay(0) // Domyślnie 0 - raportuj natychmiast
             .build()
@@ -295,8 +307,8 @@ class BluetoothManagerUtils(
         }
 
         // 3. Sprawdzenie wsparcia dla rozgłaszania
-        if (bluetoothAdapter?.isMultipleAdvertisementSupported == false) {
-            Log.e(TAG_ADVERTISE, "Urządzenie nie wspiera rozgłaszania BLE (isMultipleAdvertisementSupported = false).")
+        if (bluetoothAdapter?.isLeExtendedAdvertisingSupported == false) {
+            Log.e(TAG_ADVERTISE, "Urządzenie nie wspiera rozgłaszania BLE (isLeExtendedAdvertisingSupported = false).")
             _foundDeviceStatus.value = "Status: Rozgłaszanie niewspierane"
             return
         }
@@ -316,9 +328,10 @@ class BluetoothManagerUtils(
         }
 
         // 6. Ustawienia rozgłaszania
-        val settings = AdvertiseSettings.Builder()
-            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY) // Najbardziej agresywne
-            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)   // Średnia moc
+        val settings = AdvertisingSetParameters.Builder()
+            .setInterval(AdvertisingSetParameters.INTERVAL_MEDIUM)
+            .setTxPowerLevel(AdvertisingSetParameters.TX_POWER_HIGH)
+            .setLegacyMode(false)
             .setConnectable(false) // Nie oczekujemy połączeń
             .build()
 
@@ -349,7 +362,7 @@ class BluetoothManagerUtils(
         // 8. Rozpoczęcie rozgłaszania
         try {
             Log.i(TAG_ADVERTISE, "Rozpoczynanie rozgłaszania z UUID: ${SERVICE_UUID} i ID: $ownUserId...")
-            bluetoothLeAdvertiser?.startAdvertising(settings, data, advertiseCallback)
+            bluetoothLeAdvertiser?.startAdvertisingSet(settings, data, null, null, null, advertiseSetCallback)
             // Stan _isAdvertising zostanie ustawiony na true w callbacku onStartSuccess
             // Można ustawić status tymczasowy:
             // _foundDeviceStatus.value = "Status: Uruchamianie rozgł..."
@@ -388,7 +401,7 @@ class BluetoothManagerUtils(
 
         try {
             Log.i(TAG_ADVERTISE, "Zatrzymywanie rozgłaszania...")
-            bluetoothLeAdvertiser?.stopAdvertising(advertiseCallback)
+            bluetoothLeAdvertiser?.stopAdvertisingSet(advertiseSetCallback)
             // Stan i status aktualizujemy od razu
             _isAdvertising.value = false
             if (!_isScanning.value) { // Jeśli skanowanie też wyłączone

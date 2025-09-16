@@ -1,20 +1,29 @@
 package com.example.projektiop.screens
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import com.example.projektiop.BluetoothLE.BluetoothManagerUtils
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.* // Material 3
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -24,17 +33,27 @@ import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R // Upewnij się, że masz odpowiednie zasoby string
 import com.example.projektiop.data.api.CertificateRequest
 import com.example.projektiop.data.api.RetrofitInstance
-import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.CertificateUtils
+import com.example.projektiop.data.api.Profile
+import com.example.projektiop.data.api.UserInterestDto
+import com.example.projektiop.data.api.UserProfileResponse
+import com.example.projektiop.data.repositories.FriendItem
+import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.launch
 
+
+private const val ID: String = "_id"
+
+
 @OptIn(ExperimentalMaterial3Api::class) // Dla Scaffold
 @Composable
-fun ScannerScreen(name: String, modifier: Modifier = Modifier, navController: NavController) {
+fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController) {
+    val name: String = SharedPreferencesRepository.get(ID, "brak")
     val context = LocalContext.current
     // Pamiętaj o bleManager - kluczowa logika pozostaje bez zmian
     val bleManager = remember { BluetoothManagerUtils(context, name) }
+    val devices by bleManager.foundDeviceIds.collectAsState()
 
     // Pobranie aktualnej ścieżki dla dolnego paska nawigacji
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -53,7 +72,7 @@ fun ScannerScreen(name: String, modifier: Modifier = Modifier, navController: Na
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues) // Zastosuj padding od Scaffold
-                .verticalScroll(rememberScrollState()) // Umożliw przewijanie
+                 // .verticalScroll(rememberScrollState()) // Umożliw przewijanie
                 .padding(16.dp), // Dodatkowy padding wewnętrzny (poziomy i pionowy)
             horizontalAlignment = Alignment.CenterHorizontally // Wycentruj elementy w kolumnie
         ) {
@@ -101,13 +120,9 @@ fun ScannerScreen(name: String, modifier: Modifier = Modifier, navController: Na
                 Text(stringResource(R.string.scanner_stop_advertising)) // Dodaj zasób string
             }
 
-            // Przycisk "Powrót" jest już niepotrzebny, ponieważ nawigacją zarządza
-            // systemowy przycisk wstecz oraz BottomNavigationBar.
-            // Usunięto: Button(onClick = { navController.popBackStack() }, ...)
-
-
-            Spacer(modifier = Modifier.height(16.dp))
-            CertificateRequester(AuthRepository.getToken().toString())
+            // Spacer(modifier = Modifier.height(16.dp))
+            // CertificateRequester(AuthRepository.getToken().toString())
+            ScannedUsersList(deviceIds = devices) {}
 
             Spacer(modifier = Modifier.height(16.dp)) // Odstęp na dole przed końcem scrolla/bottom bar
         }
@@ -226,12 +241,102 @@ fun CertificateRequester(
 }
 
 
+@Composable
+fun ScannedUserRow(
+    userId: String,
+    onClick: (UserProfileResponse) -> Unit
+) {
+    // Use produceState to fetch user profile asynchronously
+    val userState = produceState<UserProfileResponse?>(initialValue = null, userId) {
+        value = try {
+            val result = UserRepository.fetchUserById(userId) // suspend fun returning Result<UserProfileResponse>
+            result.getOrNull()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    userState.value?.let { user ->
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+                .clickable { onClick(user) },
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Placeholder avatar
+                Image(
+                    painter = painterResource(id = R.drawable.avatar_placeholder),
+                    contentDescription = "Avatar",
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(user.profile?.displayName ?: user.username, style = MaterialTheme.typography.titleMedium)
+                    Text(user.username, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(user.email, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    if (!user.interests.isNullOrEmpty()) {
+                        Text(
+                            text = "Zainteresowania: ${user.interests.joinToString { it.interest.name }}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                // Optional action button (chat, etc.)
+                Button(onClick = { /* handle chat/navigation */ }) {
+                    Text("Czat")
+                }
+            }
+        }
+    } ?: run {
+        // Loading placeholder
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+        }
+    }
+}
+
+
+@Composable
+fun ScannedUsersList(
+    deviceIds: List<String>,
+    onUserClick: (UserProfileResponse) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        items(deviceIds, key = { it }) { deviceId ->
+            ScannedUserRow(userId = deviceId, onClick = onUserClick)
+        }
+    }
+}
+
+
 // --- Podgląd dla ScannerScreen (opcjonalnie) ---
 @Preview(showBackground = true)
 @Composable
 fun ScannerScreenPreview() {
     MaterialTheme { // Użyj swojego motywu
         // Przekaż przykładowe dane i pusty NavController dla podglądu
-        ScannerScreen(name = "Podgląd ID", navController = rememberNavController())
+        ScannerScreen(navController = rememberNavController())
     }
 }
