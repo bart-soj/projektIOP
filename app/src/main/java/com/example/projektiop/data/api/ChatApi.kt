@@ -1,5 +1,6 @@
 package com.example.projektiop.data.api
 
+import com.google.gson.JsonElement
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -40,7 +41,9 @@ data class ChatUserDto(
 
 data class MessageDto(
     val _id: String? = null,
-    val chatId: String? = null,
+    // Server may return chatId either as a string or as an object with _id field.
+    // Use JsonElement to handle both shapes and normalize later in mapping.
+    val chatId: JsonElement? = null,
     val content: String? = null,
     val senderId: ChatUserDto? = null,
     val readBy: List<ChatUserDto>? = null,
