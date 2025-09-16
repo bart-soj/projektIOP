@@ -278,7 +278,5 @@ fun ChatsScreenPreview() {
     <string name="profile_interest_2">Gry</string>
     <string name="profile_interest_3">Muzyka</string>
     <string name="broadcasting_label">Rozgłaszanie lokalizacji</string>
-
-
 </resources>
 */

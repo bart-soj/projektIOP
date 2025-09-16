@@ -12,17 +12,27 @@ import java.time.Instant
 import kotlin.String
 
 fun UserProfileResponse.toRealm(): User {
-    var user = User()
-    user.id = this._id
-    user.username = this.username
-    user.email = this.email
+    val user = User()
+    // Primary key – must not be null/blank; caller should ensure presence, otherwise DB save should be skipped
+    val idFromApi = this._id
+    if (idFromApi != null) {
+        user.id = idFromApi
+    }
+    this.username?.let { user.username = it }
+    this.email?.let { user.email = it }
     user.profile = UserProfile()
-    user.profile?.displayName = this.profile?.displayName.toString()
-    user.profile?.gender = Gender.valueOf(this.profile?.gender?.uppercase().toString())
-    user.profile?.birthDate = null // TODO() add a function to map between realm instant and mongodb timestamp
-    user.profile?.location = this.profile?.location.toString()
-    user.profile?.bio = this.profile?.bio.toString()
-    user.profile?.broadcastMessage = this.profile?.broadcastMessage.toString()
+    user.profile?.displayName = this.profile?.displayName ?: ""
+    user.profile?.avatarUrl = this.profile?.avatarUrl ?: user.profile?.avatarUrl ?: ""
+    // Safe gender mapping
+    val genderEnum = this.profile?.gender
+        ?.takeIf { it.isNotBlank() }
+        ?.uppercase()
+        ?.let { runCatching { Gender.valueOf(it) }.getOrNull() }
+    user.profile?.gender = genderEnum
+    user.profile?.birthDate = null // TODO: map between RealmInstant and MongoDB timestamp if needed
+    user.profile?.location = this.profile?.location ?: ""
+    user.profile?.bio = this.profile?.bio ?: ""
+    user.profile?.broadcastMessage = this.profile?.broadcastMessage ?: ""
 
     return user
 }
@@ -33,24 +43,25 @@ fun User.toUserProfileResponse(): UserProfileResponse {
         profile = Profile(
             displayName = this.profile?.displayName,
             bio = this.profile?.bio,
-            gender = this.profile?.gender.toString(),
+            gender = this.profile?.gender?.name,
             location = this.profile?.location,
-            birthDate = this.profile?.birthDate.toString(),
-            broadcastMessage = this.profile?.broadcastMessage
+            birthDate = this.profile?.birthDate?.toString(),
+            broadcastMessage = this.profile?.broadcastMessage,
+            avatarUrl = this.profile?.avatarUrl
         ),
         _id = this.id,
         username = this.username,
         email = this.email,
-        role = this.role.toString(),
+        role = this.role.name,
         isBanned = this.isBanned,
         banReason = this.banReason,
-        bannedAt = this.bannedAt.toString(),
+        bannedAt = this.bannedAt?.toString(),
         isTestAccount = this.isTestAccount,
         isEmailVerified = this.isEmailVerified,
         isDeleted = this.isDeleted,
-        deletedAt = this.deletedAt.toString(),
-        createdAt = this.createdAt.toString(),
-        updatedAt = this.updatedAt.toString(),
+        deletedAt = this.deletedAt?.toString(),
+        createdAt = this.createdAt?.toString(),
+        updatedAt = this.updatedAt?.toString(),
         __v = null,
         interests = null
     )

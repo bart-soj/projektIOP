@@ -27,6 +27,8 @@ import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import com.example.projektiop.data.api.Profile
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -110,12 +112,33 @@ fun FriendProfileScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Image(
-                        painter = painterResource(id = R.drawable.avatar_placeholder),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(80.dp).clip(CircleShape)
-                    )
+                    val rawUrl = (p.profile?.avatarUrl ?: avatarUrlPrefill)?.takeIf { !it.isNullOrBlank() }
+                    val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
+                    if (fullUrl != null) {
+                        val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                            .data(fullUrl)
+                            .crossfade(true)
+                            .apply {
+                                val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                                if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
+                            }
+                            .build()
+                        AsyncImage(
+                            model = req,
+                            contentDescription = null,
+                            placeholder = painterResource(R.drawable.avatar_placeholder),
+                            error = painterResource(R.drawable.avatar_placeholder),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(80.dp).clip(CircleShape)
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = R.drawable.avatar_placeholder),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(80.dp).clip(CircleShape)
+                        )
+                    }
                     Spacer(Modifier.width(16.dp))
                     Column(Modifier.weight(1f)) {
                         Text(p.effectiveDisplayName ?: p.username ?: "(bez nazwy)", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)

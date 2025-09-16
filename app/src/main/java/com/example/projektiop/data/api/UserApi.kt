@@ -1,11 +1,14 @@
 package com.example.projektiop.data.api
 
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.PUT
 import retrofit2.http.Body
 import retrofit2.http.Query
 import retrofit2.http.Path
+import retrofit2.http.Multipart
+import retrofit2.http.Part
 
 // Zakładany endpoint profilu zalogowanego użytkownika.
 // Jeśli backend różni się ścieżką, zmień @GET("user/me") odpowiednio (np. "users/me" albo "profile/me").
@@ -16,6 +19,11 @@ interface UserApi {
 
     @PUT("users/profile")
     suspend fun updateMyProfile(@Body request: UpdateProfileRequest): Response<UserProfileResponse>
+
+    // Upload avatar image as multipart/form-data with field name 'avatarImage'
+    @Multipart
+    @PUT("users/profile/avatar")
+    suspend fun uploadAvatar(@Part avatarImage: MultipartBody.Part): Response<UserProfileResponse>
 
     // Profil innego użytkownika po ID: GET /api/users/{id}
     @GET("users/{id}")
@@ -29,9 +37,9 @@ interface UserApi {
 // Dane profilu – wszystkie pola opcjonalne, żeby uniknąć crashy przy różnym JSON.
 data class UserProfileResponse(
     val profile: Profile? = Profile(),
-    val _id: String,
-    val username: String,
-    val email: String,
+    val _id: String? = null,
+    val username: String? = null,
+    val email: String? = null,
     val role: String? = null,
     val isBanned: Boolean? = null,
     val banReason: String? = null,
@@ -75,7 +83,8 @@ data class Profile(
     val gender: String? = null,
     val location: String? = null,
     val birthDate: String? = null,
-    val broadcastMessage: String? = null
+    val broadcastMessage: String? = null,
+    val avatarUrl: String? = null
 )
 
 data class UserSearchDto(

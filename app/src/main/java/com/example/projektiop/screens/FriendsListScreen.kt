@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,6 +28,8 @@ import com.example.projektiop.data.repositories.PendingRequestItem
 import com.example.projektiop.data.repositories.FriendshipRepository
 import kotlinx.coroutines.launch
 import com.example.projektiop.data.api.UserSearchDto
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 
 // Ekran dynamiczny listy znajomych z API
 
@@ -183,13 +186,36 @@ private fun FriendCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.avatar_placeholder), // TODO: załaduj avatarUrl jeśli dostępny
-                contentDescription = "Avatar",
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-            )
+            val rawUrl = friend.avatarUrl?.takeIf { it.isNotBlank() }
+            val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
+            if (fullUrl != null) {
+                val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                    .data(fullUrl)
+                    .crossfade(true)
+                    .apply {
+                        val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                        if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
+                    }
+                    .build()
+                AsyncImage(
+                    model = req,
+                    contentDescription = "Avatar",
+                    placeholder = painterResource(R.drawable.avatar_placeholder),
+                    error = painterResource(R.drawable.avatar_placeholder),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.avatar_placeholder),
+                    contentDescription = "Avatar",
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                )
+            }
 
             Spacer(modifier = Modifier.width(12.dp))
 
@@ -241,13 +267,36 @@ private fun PendingRequestCard(item: PendingRequestItem, onAccept: () -> Unit, o
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.avatar_placeholder),
-                contentDescription = "Avatar",
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-            )
+            val rawUrl = item.avatarUrl?.takeIf { it.isNotBlank() }
+            val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
+            if (fullUrl != null) {
+                val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                    .data(fullUrl)
+                    .crossfade(true)
+                    .apply {
+                        val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                        if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
+                    }
+                    .build()
+                AsyncImage(
+                    model = req,
+                    contentDescription = "Avatar",
+                    placeholder = painterResource(R.drawable.avatar_placeholder),
+                    error = painterResource(R.drawable.avatar_placeholder),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.avatar_placeholder),
+                    contentDescription = "Avatar",
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                )
+            }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(item.displayName, style = MaterialTheme.typography.titleMedium)
