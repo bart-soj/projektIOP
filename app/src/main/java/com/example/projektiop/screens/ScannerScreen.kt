@@ -27,9 +27,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.projektiop.BluetoothLE.BLEViewModel
 import com.example.projektiop.R // Upewnij się, że masz odpowiednie zasoby string
 import com.example.projektiop.data.api.CertificateRequest
 import com.example.projektiop.data.api.RetrofitInstance
@@ -48,16 +50,14 @@ private const val ID: String = "_id"
 
 @OptIn(ExperimentalMaterial3Api::class) // Dla Scaffold
 @Composable
-fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController) {
-    val name: String = SharedPreferencesRepository.get(ID, "brak")
+fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, viewModel: BLEViewModel) {
     val context = LocalContext.current
-    // Pamiętaj o bleManager - kluczowa logika pozostaje bez zmian
-    val bleManager = remember { BluetoothManagerUtils(context, name) }
-    val devices by bleManager.foundDeviceIds.collectAsState()
 
     // Pobranie aktualnej ścieżki dla dolnego paska nawigacji
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    val devices by viewModel.foundDeviceIds.collectAsState()
 
     Scaffold(
         bottomBar = {
@@ -89,36 +89,36 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController) {
             // Usunięto 'modifier = modifier' stąd, bo główny modifier jest na Column
 
             Text(
-                text = stringResource(R.string.scanner_your_identifier_label, name), // Dodaj zasób string "Twój identyfikator: %s"
+                text = stringResource(R.string.scanner_your_identifier_label, viewModel.getUserId()), // Dodaj zasób string "Twój identyfikator: %s"
                 style = MaterialTheme.typography.bodyLarge
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // Status BLE - Wyświetlamy go przed przyciskami dla lepszej widoczności
-            ScanStatus(bleManager)
+            ScanStatus(viewModel)
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // Przyciski sterujące BLE
 
-            Button(onClick = { bleManager.startScan() }) {
+            Button(onClick = { viewModel.startScan() }) {
                 Text(stringResource(R.string.scanner_start_scanning)) // Dodaj zasób string
             }
             Spacer(modifier = Modifier.height(8.dp)) // Odstęp między przyciskami
 
-            Button(onClick = { bleManager.stopScan() }) {
+            Button(onClick = { viewModel.stopScan() }) {
                 Text(stringResource(R.string.scanner_stop_scanning)) // Dodaj zasób string
             }
 
             Spacer(modifier = Modifier.height(16.dp)) // Większy odstęp między grupami przycisków
 
-            Button(onClick = { bleManager.startAdvertising() }) {
+            Button(onClick = { viewModel.startAdvertising() }) {
                 Text(stringResource(R.string.scanner_start_advertising)) // Dodaj zasób string
             }
             Spacer(modifier = Modifier.height(8.dp))
 
-            Button(onClick = { bleManager.stopAdvertising() }) {
+            Button(onClick = { viewModel.stopAdvertising() }) {
                 Text(stringResource(R.string.scanner_stop_advertising)) // Dodaj zasób string
             }
 
@@ -137,9 +137,9 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController) {
 
 // Komponent ScanStatus pozostaje bez zmian
 @Composable
-fun ScanStatus(bleManager: BluetoothManagerUtils, modifier: Modifier = Modifier) {
-    val isScanning = bleManager.isScanning.collectAsState().value
-    val isAdvertising = bleManager.isAdvertising.collectAsState().value
+fun ScanStatus(viewModel: BLEViewModel, modifier: Modifier = Modifier) {
+    val isScanning = viewModel.isScanning.collectAsState().value
+    val isAdvertising = viewModel.isAdvertising.collectAsState().value
 
     // Użyj zasobów string dla lepszej internacjonalizacji
     val statusText = when {
@@ -346,6 +346,8 @@ fun ScannedUsersList(
 fun ScannerScreenPreview() {
     MaterialTheme { // Użyj swojego motywu
         // Przekaż przykładowe dane i pusty NavController dla podglądu
-        ScannerScreen(navController = rememberNavController())
+        ScannerScreen(navController = rememberNavController(), viewModel = BLEViewModel(
+            application = TODO()
+        ))
     }
 }

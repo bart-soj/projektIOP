@@ -5,6 +5,7 @@ import android.os.Build
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.projektiop.data.repositories.AuthRepository
@@ -20,11 +21,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.example.projektiop.data.ThemePreference
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.example.projektiop.BluetoothLE.BluetoothManagerUtils.Companion.requestBluetoothPermissions
 import com.example.projektiop.BluetoothLE.BluetoothManagerUtils.Companion.showPermissionDeniedMessage
-import com.example.projektiop.data.db.RealmProvider
 import com.example.projektiop.screens.ChatsScreen
 
 import com.example.projektiop.screens.StartScreen
@@ -36,7 +38,8 @@ import com.example.projektiop.screens.SettingsScreen
 import com.example.projektiop.screens.EditProfileScreen
 import com.example.projektiop.screens.FriendsListScreen
 import com.example.projektiop.screens.FriendProfileScreen
-import io.realm.kotlin.Realm
+
+import com.example.projektiop.BluetoothLE.BLEViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -91,7 +94,8 @@ fun MyApp() {
             composable("scanner") {
                 ScannerScreen(
                     modifier = Modifier.padding(10.dp),
-                    navController = navController
+                    navController = navController,
+                    viewModel = viewModel(LocalActivity.current as ComponentActivity)
                 )
             }
             composable("main") { MainScreen(navController) }
@@ -135,6 +139,6 @@ fun MyApp() {
 @Composable
 fun DefaultPreview() {
     ProjektIOPTheme() {
-        ScannerScreen(navController = rememberNavController())
+        ScannerScreen(navController = rememberNavController(), viewModel = viewModel())
     }
 }
