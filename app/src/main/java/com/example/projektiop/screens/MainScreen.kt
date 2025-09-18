@@ -34,6 +34,8 @@ import androidx.compose.ui.platform.LocalContext
 import java.time.Period
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 
 @OptIn(ExperimentalMaterial3Api::class) // Dla Scaffold, Card, etc.
 @Composable
@@ -71,7 +73,7 @@ fun MainScreen(navController: NavController) {
 
 // --- Komponenty pomocnicze ---
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
@@ -216,16 +218,19 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
-            Row {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 val interests = profile?.interests ?: emptyList()
                 if (loading) {
                     InterestTag(text = "...")
                 } else if (interests.isEmpty()) {
                     InterestTag(text = "Brak")
                 } else {
-                    interests.take(3).forEachIndexed { index, tag ->
-                        if (index > 0) Spacer(modifier = Modifier.width(8.dp))
-                        InterestTag(text = tag.toString())
+                    interests.forEach { ui ->
+                        val label = ui.interest.name.ifBlank { "?" }
+                        InterestTag(text = label)
                     }
                 }
             }

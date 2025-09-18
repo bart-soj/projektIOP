@@ -42,4 +42,5 @@ object RetrofitInstance {
     val friendshipApi: FriendshipApi by lazy { retrofit.create(FriendshipApi::class.java) }
     val chatApi: ChatApi by lazy { retrofit.create(ChatApi::class.java) }
     val certificateApi: CertificateApi by lazy { retrofit.create(CertificateApi::class.java) }
+    val publicInterestApi: PublicInterestApi by lazy { retrofit.create(PublicInterestApi::class.java) }
 }

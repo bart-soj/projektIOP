@@ -1,5 +1,6 @@
 package com.example.projektiop.data.api
 
+import com.google.gson.JsonElement
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.GET
@@ -9,6 +10,8 @@ import retrofit2.http.Query
 import retrofit2.http.Path
 import retrofit2.http.Multipart
 import retrofit2.http.Part
+import retrofit2.http.POST
+import retrofit2.http.DELETE
 
 // Zakładany endpoint profilu zalogowanego użytkownika.
 // Jeśli backend różni się ścieżką, zmień @GET("user/me") odpowiednio (np. "users/me" albo "profile/me").
@@ -33,6 +36,19 @@ interface UserApi {
     // Wyszukiwanie użytkowników: GET /api/users/search?q=...
     @GET("users/search")
     suspend fun searchUsers(@Query("q") query: String): Response<List<UserSearchDto>>
+
+    // Interests management
+    @POST("users/profile/interests")
+    suspend fun addUserInterest(@Body body: AddUserInterestRequest): Response<UserProfileResponse>
+
+    @PUT("users/profile/interests/{userInterestId}")
+    suspend fun updateUserInterest(
+        @Path("userInterestId") userInterestId: String,
+        @Body body: UpdateUserInterestRequest
+    ): Response<UserProfileResponse>
+
+    @DELETE("users/profile/interests/{userInterestId}")
+    suspend fun removeUserInterest(@Path("userInterestId") userInterestId: String): Response<UserProfileResponse>
 }
 
 // Dane profilu – wszystkie pola opcjonalne, żeby uniknąć crashy przy różnym JSON.
@@ -63,7 +79,7 @@ data class UserProfileResponse(
 
 
 data class UserInterestDto(
-    val userInterestId: String,
+    val userInterestId: com.google.gson.JsonElement?,
     val interest: InterestDto,
     val customDescription: String? = null
 )
@@ -71,8 +87,8 @@ data class UserInterestDto(
 data class InterestDto(
     val _id: String,                 // MongoDB ObjectId
     val name: String,
-    val category: String? = null,
-    val description: String = "",
+    val category: JsonElement? = null,
+    val description: String? = null,
     val isArchived: Boolean = false,
     val createdAt: String? = null,
     val updatedAt: String? = null
@@ -103,6 +119,15 @@ data class UserStats(
 // Request do aktualizacji profilu – dopasowany do validatorów w userRoutes.js (profile.*)
 data class UpdateProfileRequest(
     val profile: Profile
+)
+
+data class AddUserInterestRequest(
+    val interestId: String,
+    val customDescription: String? = null
+)
+
+data class UpdateUserInterestRequest(
+    val customDescription: String? = null
 )
 
 /*

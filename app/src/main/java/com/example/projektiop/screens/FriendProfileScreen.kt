@@ -161,12 +161,18 @@ fun FriendProfileScreen(
                 if (!p.effectiveDescription.isNullOrBlank()) {
                     Text(p.effectiveDescription!!, style = MaterialTheme.typography.bodyMedium)
                 }
-                if (!p.interests.isNullOrEmpty()) {
-                    Column {
-                        Text("Zainteresowania", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(4.dp))
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            p.interests!!.forEach { tag -> InterestTag(text = tag.toString()) }
+                Column {
+                    Text("Zainteresowania", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(4.dp))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val interests = p.interests ?: emptyList()
+                        if (interests.isEmpty()) {
+                            InterestTag(text = "Brak")
+                        } else {
+                            interests.forEach { ui ->
+                                val label = ui.interest.name.ifBlank { "?" }
+                                InterestTag(text = label)
+                            }
                         }
                     }
                 }

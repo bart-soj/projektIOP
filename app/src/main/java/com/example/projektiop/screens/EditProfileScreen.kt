@@ -37,18 +37,21 @@ fun EditProfileScreen(
     var gender by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var interests by remember { mutableStateOf("") } // legacy text field
-    val allInterests = remember {
-        listOf(
-            "Programowanie",
-            "Gry Komputerowe",
-            "Cyberbezpieczeństwo",
-            "Technologia i IT",
-            "Sport i Aktywność Fizyczna",
-            "Sztuka i Kultura",
-            "Podróże i Odkrywanie"
+    var allInterests by remember {
+        mutableStateOf(
+            listOf(
+                "Programowanie",
+                "Gry Komputerowe",
+                "Cyberbezpieczeństwo",
+                "Technologia i IT",
+                "Sport i Aktywność Fizyczna",
+                "Sztuka i Kultura",
+                "Podróże i Odkrywanie"
+            )
         )
     }
     var selectedInterests by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var interestsSaving by remember { mutableStateOf(false) }
     var broadcastMessage by remember { mutableStateOf("") }
     var loadingInitial by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -76,8 +79,17 @@ fun EditProfileScreen(
                 broadcastMessage = prof.profile?.broadcastMessage ?: ""
                 currentAvatarUrl = prof.profile?.avatarUrl
                 avatarVersionTag = prof.updatedAt?.hashCode()?.toString()
+                // Initialize interests selection from server-provided interests by name
+                val names = prof.interests?.mapNotNull { it.interest.name }?.toSet().orEmpty()
+                selectedInterests = names
             }
             .onFailure { error = it.message }
+        // Fetch available interests from backend and sort by name
+        UserRepository.fetchInterestsMap()
+            .onSuccess { map ->
+                allInterests = map.keys.sorted()
+            }
+            .onFailure { /* keep defaults if API fails */ }
         loadingInitial = false
     }
 
@@ -215,8 +227,16 @@ fun EditProfileScreen(
                             birthDate = if (birthDate.isBlank()) null else birthDate,
                             broadcastMessage = broadcastMessage
                         ).onSuccess {
+                            // After base profile is saved, sync interests if changed
+                            interestsSaving = true
+                            val syncRes = UserRepository.syncMyInterestsByNames(selectedInterests)
+                            interestsSaving = false
                             isLoading = false
-                            navController.popBackStack()
+                            syncRes.onSuccess {
+                                navController.popBackStack()
+                            }.onFailure { e ->
+                                error = e.message
+                            }
                         }.onFailure {
                             error = it.message
                             isLoading = false
@@ -226,7 +246,12 @@ fun EditProfileScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !loadingInitial && !isLoading && name.isNotBlank() && name.length in 1..50 && (birthDate.isBlank() || birthDate.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$")))
             ) {
-                Text(if (isLoading) "Zapisywanie..." else "Zapisz zmiany")
+                val label = when {
+                    isLoading && interestsSaving -> "Zapisywanie (zainteresowania)..."
+                    isLoading -> "Zapisywanie..."
+                    else -> "Zapisz zmiany"
+                }
+                Text(label)
             }
             Spacer(Modifier.height(8.dp))
             Button(
