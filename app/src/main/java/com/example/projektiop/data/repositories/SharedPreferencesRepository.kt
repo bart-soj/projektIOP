@@ -6,9 +6,13 @@ import android.content.SharedPreferences
 object SharedPreferencesRepository {
     private lateinit var appContext: Context
     private const val PREFS_NAME = "HelloBeaconSharedPrefs"
+    private const val BASE_URL_KEY: String = "BASE_URL"
+    // private const val BASE_URL = "https://hellobeacon.onrender.com/api/" // Ujednolicona baza – auth i user pod jednym URL
+    private const val BASE_URL = "http://192.168.1.13:3000" // 10.0.2.2 is bound to lo of local machine
 
     fun init(context: Context) {
         appContext = context
+        this.set(BASE_URL_KEY, BASE_URL)
     }
 
     fun getAppContext(): Context {

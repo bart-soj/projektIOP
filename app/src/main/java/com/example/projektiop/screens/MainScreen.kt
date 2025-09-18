@@ -36,6 +36,12 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import com.example.projektiop.data.api.RetrofitInstance
+import com.example.projektiop.data.repositories.SharedPreferencesRepository
+
+
+private const val BASE_URL_KEY: String = "BASE_URL"
+
 
 @OptIn(ExperimentalMaterial3Api::class) // Dla Scaffold, Card, etc.
 @Composable
@@ -44,7 +50,6 @@ fun MainScreen(navController: NavController) {
     // W prawdziwej aplikacji ten stan byłby powiązany z aktualną ścieżką NavController
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-
 
     Scaffold(
         bottomBar = {
@@ -72,7 +77,6 @@ fun MainScreen(navController: NavController) {
 }
 
 // --- Komponenty pomocnicze ---
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifier) {
@@ -107,7 +111,7 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
             ) {
                 val ctx = LocalContext.current
                 val rawUrl = profile?.profile?.avatarUrl?.takeIf { it.isNotBlank() }
-                val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
+                val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it" }
                 // Cache-busting tied to user.updatedAt so image refreshes after avatar change but remains cacheable otherwise
                 val versionTag = profile?.updatedAt?.takeIf { !it.isNullOrBlank() }?.hashCode()?.toString()
                 val displayUrl = fullUrl?.let { url ->

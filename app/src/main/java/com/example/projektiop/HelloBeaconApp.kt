@@ -24,7 +24,6 @@ class HelloBeaconApp : Application() {
         SharedPreferencesRepository.init(this)
         AuthRepository.init(this)
         UserRepository.init(this)
-        ThemePreference.init(this)
         NotificationHelper.initChannels(this)
         com.example.projektiop.data.repositories.ChatRepository.init(this)
         com.example.projektiop.data.repositories.ChatUpdateManager.start(this)

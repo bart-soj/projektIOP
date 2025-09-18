@@ -1,4 +1,4 @@
-package com.example.projektiop.data
+package com.example.projektiop.util
 
 import android.util.Log
 import org.bouncycastle.asn1.x500.X500Name

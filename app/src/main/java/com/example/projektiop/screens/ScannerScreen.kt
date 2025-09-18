@@ -33,7 +33,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R // Upewnij się, że masz odpowiednie zasoby string
 import com.example.projektiop.data.api.CertificateRequest
 import com.example.projektiop.data.api.RetrofitInstance
-import com.example.projektiop.data.CertificateUtils
+import com.example.projektiop.util.CertificateUtils
 import com.example.projektiop.data.api.Profile
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UserProfileResponse
@@ -87,6 +87,7 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController) {
 
             // Wyświetlanie przekazanego imienia/identyfikatora
             // Usunięto 'modifier = modifier' stąd, bo główny modifier jest na Column
+
             Text(
                 text = stringResource(R.string.scanner_your_identifier_label, name), // Dodaj zasób string "Twój identyfikator: %s"
                 style = MaterialTheme.typography.bodyLarge
@@ -100,6 +101,7 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController) {
             Spacer(modifier = Modifier.height(24.dp))
 
             // Przyciski sterujące BLE
+
             Button(onClick = { bleManager.startScan() }) {
                 Text(stringResource(R.string.scanner_start_scanning)) // Dodaj zasób string
             }
@@ -122,7 +124,10 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController) {
 
             // Spacer(modifier = Modifier.height(16.dp))
             // CertificateRequester(AuthRepository.getToken().toString())
-            ScannedUsersList(deviceIds = devices) { user -> Unit // change onClick behaviour here
+            ScannedUsersList(deviceIds = devices) { user ->
+                navController.navigate(
+                    "friend_profile/${user._id}?username=${user.username}&displayName=${user.profile?.displayName}&avatarUrl=${user.profile?.avatarUrl}"
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp)) // Odstęp na dole przed końcem scrolla/bottom bar
@@ -183,7 +188,7 @@ fun CertificateRequester(
                         val profileResult = try {
                             UserRepository.fetchMyProfile()
                         } catch (e: Exception) {
-                            kotlin.Result.failure(e)
+                            Result.failure(e)
                         }
 
                        profileResult.fold(
@@ -296,9 +301,12 @@ fun ScannedUserRow(
                 }
 
                 // Optional action button (chat, etc.)
+                /*
                 Button(onClick = { /* handle chat/navigation */ }) {
                     Text("Czat")
                 }
+                */
+
             }
         }
     } ?: run {

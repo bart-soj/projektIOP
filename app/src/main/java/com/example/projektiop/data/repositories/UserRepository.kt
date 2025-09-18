@@ -13,6 +13,7 @@ import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.api.UpdateProfileRequest
 import com.example.projektiop.data.api.Profile
 import com.example.projektiop.data.api.AddUserInterestRequest
+import com.example.projektiop.data.api.RetrofitInstance.publicInterestApi
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.mapping.toRealm
@@ -230,7 +231,7 @@ object UserRepository {
     // Fetch public interests catalog; returns map name->id for quick lookup
     suspend fun fetchInterestsMap(): Result<Map<String, String>> = withContext(Dispatchers.IO) {
         return@withContext try {
-            val resp = com.example.projektiop.data.api.RetrofitInstance.publicInterestApi.getPublicInterests()
+            val resp = publicInterestApi.getPublicInterests()
             if (resp.isSuccessful && resp.body() != null) {
                 val list = resp.body()!!
                 Result.success(list.associate { it.name to it._id })

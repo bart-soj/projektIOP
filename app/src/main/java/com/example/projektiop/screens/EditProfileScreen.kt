@@ -26,6 +26,10 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.asImageBitmap
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.projektiop.data.repositories.AuthRepository
+import com.example.projektiop.data.repositories.SharedPreferencesRepository
+
+private const val BASE_URL_KEY: String = "BASE_URL"
 
 @Composable
 fun EditProfileScreen(
@@ -126,7 +130,7 @@ fun EditProfileScreen(
                         val name = queryDisplayName(context, avatarPreviewUri!!)
                         val type = resolver.getType(avatarPreviewUri!!)
                         // Basic validation: <= 5MB as per backend
-                        val sizeOk = avatarPreviewBytes?.size ?: 0 <= 5 * 1024 * 1024
+                        val sizeOk = (avatarPreviewBytes?.size ?: 0) <= 5 * 1024 * 1024
                         if (!sizeOk) {
                             uploading = false
                             uploadError = "Plik jest zbyt duży (max 5MB)."
@@ -424,7 +428,9 @@ private fun AvatarPicker(
         } else {
             // Show current avatar if available, otherwise a placeholder
             val rawUrl = currentAvatarUrl?.takeIf { it.isNotBlank() }
-            val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
+            val fullUrl = rawUrl?.let {
+                if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it"
+            }
             val displayUrl = fullUrl?.let { url ->
                 versionTag?.let { v -> if (url.contains('?')) "$url&v=$v" else "$url?v=$v" } ?: url
             }
@@ -433,7 +439,7 @@ private fun AvatarPicker(
                     .data(displayUrl)
                     .crossfade(true)
                     .apply {
-                        val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                        val token = AuthRepository.getToken()
                         if (!token.isNullOrBlank()) {
                             addHeader("Authorization", "Bearer $token")
                         }

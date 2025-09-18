@@ -9,13 +9,12 @@ import com.google.gson.JsonElement
 fun MessageDto.toRealm(): Message {
     var message = Message()
 
-    message.id = this._id ?: message.id
+    message.id = this._id.toString()
     message.chatId = extractIdFromElement(this.chatId)
-    message.senderId = this.senderId?._id ?: message.senderId
+    message.senderId = this.senderId?._id ?: ""
     message.content = this.content ?: ""
     message.readBy = (this.readBy?.mapNotNull { it._id } ?: emptyList<String>()) as RealmList<String>
-    // createdAt is an ISO string in DTO; keep as null for now or parse if needed elsewhere
-    message.createdAt = null as RealmInstant?
+    message.createdAt = mongoTimestampToRealmInstant(this.createdAt)
 
     return message
 }

@@ -6,10 +6,11 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import com.example.projektiop.data.repositories.AuthRepository
+import com.example.projektiop.data.repositories.SharedPreferencesRepository
 
 object RetrofitInstance {
-     private const val BASE_URL = "https://hellobeacon.onrender.com/api/" // Ujednolicona baza – auth i user pod jednym URL
-    //private const val BASE_URL = "http://192.168.1.13:3000/api/" // 10.0.2.2 is bound to lo of local machine
+    private const val BASE_URL_KEY: String = "BASE_URL"
+    private val BASE_URL = SharedPreferencesRepository.get(BASE_URL_KEY, "") + "/api/"
 
     private val authInterceptor = Interceptor { chain ->
         val original = chain.request()
@@ -43,4 +44,8 @@ object RetrofitInstance {
     val chatApi: ChatApi by lazy { retrofit.create(ChatApi::class.java) }
     val certificateApi: CertificateApi by lazy { retrofit.create(CertificateApi::class.java) }
     val publicInterestApi: PublicInterestApi by lazy { retrofit.create(PublicInterestApi::class.java) }
+
+    fun getBaseUrl(): String {
+        return BASE_URL
+    }
 }
