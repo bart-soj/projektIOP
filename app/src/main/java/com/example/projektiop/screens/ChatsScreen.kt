@@ -188,21 +188,20 @@ fun ChatItem(
         // 3. Zdjęcie profilowe znajomego
         val avatarUrl = chatData.avatarUrl
         val ctx = LocalContext.current
+        val fullUrl = avatarUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
         val imageRequest = coil.request.ImageRequest.Builder(ctx)
-            .data(avatarUrl)
+            .data(fullUrl)
             .crossfade(true)
             .apply {
                 val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
-                if (!token.isNullOrBlank()) {
-                    addHeader("Authorization", "Bearer $token")
-                }
+                if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
             }
             .build()
         AsyncImage(
             model = imageRequest,
             contentDescription = stringResource(R.string.profile_picture_desc),
             placeholder = painterResource(R.drawable.avatar_placeholder),
-            error = painterResource(R.drawable.avatar_placeholder_background),
+            error = painterResource(R.drawable.avatar_placeholder),
             fallback = painterResource(R.drawable.avatar_placeholder),
             contentScale = ContentScale.Crop,
             modifier = Modifier.size(56.dp).clip(CircleShape)

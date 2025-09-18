@@ -12,12 +12,16 @@ import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.projektiop.data.api.MessageDto
 import kotlinx.coroutines.launch
@@ -176,15 +180,39 @@ private fun MessageBubble(
     val timeText = remember(timestampIso) { parseTimeShort(timestampIso) }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (incoming) Arrangement.Start else Arrangement.End) {
         if (incoming) {
-            if (avatarUrl != null) {
+            if (avatarUrl != null && avatarUrl.isNotBlank()) {
+                val raw = avatarUrl
+                val fullUrl = if (raw.startsWith("http")) raw else "https://hellobeacon.onrender.com$raw"
+                val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                    .data(fullUrl)
+                    .crossfade(true)
+                    .apply {
+                        val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                        if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
+                    }
+                    .build()
                 AsyncImage(
-                    model = avatarUrl,
+                    model = req,
                     contentDescription = "avatar",
-                    modifier = Modifier.size(32.dp).padding(end = 6.dp)
+                    placeholder = painterResource(com.example.projektiop.R.drawable.avatar_placeholder),
+                    error = painterResource(com.example.projektiop.R.drawable.avatar_placeholder),
+                    fallback = painterResource(com.example.projektiop.R.drawable.avatar_placeholder),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .padding(end = 6.dp)
                 )
             } else if (!groupedWithPrev) {
-                // placeholder circle
-                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.size(32.dp).padding(end = 6.dp)) {}
+                // explicit placeholder avatar icon instead of plain background
+                androidx.compose.foundation.Image(
+                    painter = painterResource(id = com.example.projektiop.R.drawable.avatar_placeholder),
+                    contentDescription = "avatar",
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .padding(end = 6.dp)
+                )
             } else Spacer(Modifier.width(38.dp))
         }
         Column(horizontalAlignment = if (incoming) Alignment.Start else Alignment.End) {
