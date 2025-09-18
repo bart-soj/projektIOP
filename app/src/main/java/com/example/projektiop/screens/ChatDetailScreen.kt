@@ -28,6 +28,9 @@ import kotlinx.coroutines.launch
 import androidx.navigation.NavController
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
+import com.example.projektiop.data.repositories.SharedPreferencesRepository
+
+private const val BASE_URL_KEY: String = "BASE_URL"
 
 // Prosty ekran szczegółów czatu (placeholder) – do zastąpienia real-time logiką.
 @OptIn(ExperimentalMaterial3Api::class)
@@ -182,7 +185,7 @@ private fun MessageBubble(
         if (incoming) {
             if (avatarUrl != null && avatarUrl.isNotBlank()) {
                 val raw = avatarUrl
-                val fullUrl = if (raw.startsWith("http")) raw else "https://hellobeacon.onrender.com$raw"
+                val fullUrl = if (raw.startsWith("http")) raw else "${SharedPreferencesRepository.get(BASE_URL_KEY,"")}$raw"
                 val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
                     .data(fullUrl)
                     .crossfade(true)

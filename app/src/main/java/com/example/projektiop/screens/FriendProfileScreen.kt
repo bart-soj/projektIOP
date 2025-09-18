@@ -29,6 +29,9 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import com.example.projektiop.data.api.Profile
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.projektiop.data.repositories.SharedPreferencesRepository
+
+private const val BASE_URL_KEY: String = "BASE_URL"
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -113,7 +116,7 @@ fun FriendProfileScreen(
             ) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     val rawUrl = (p.profile?.avatarUrl ?: avatarUrlPrefill)?.takeIf { !it.isNullOrBlank() }
-                    val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
+                    val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it" }
                     if (fullUrl != null) {
                         val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
                             .data(fullUrl)
@@ -161,15 +164,12 @@ fun FriendProfileScreen(
                 if (!p.effectiveDescription.isNullOrBlank()) {
                     Text(p.effectiveDescription!!, style = MaterialTheme.typography.bodyMedium)
                 }
-                Column {
-                    Text("Zainteresowania", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(4.dp))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        val interests = p.interests ?: emptyList()
-                        if (interests.isEmpty()) {
-                            InterestTag(text = "Brak")
-                        } else {
-                            interests.forEach { ui ->
+                if (!p.interests.isNullOrEmpty()) {
+                    Column {
+                        Text("Zainteresowania", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(4.dp))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            p.interests!!.forEach { ui ->
                                 val label = ui.interest.name.ifBlank { "?" }
                                 InterestTag(text = label)
                             }

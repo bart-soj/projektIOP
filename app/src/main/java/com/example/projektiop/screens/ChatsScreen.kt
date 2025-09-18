@@ -29,7 +29,10 @@ import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.ChatUpdateManager
 import com.example.projektiop.data.repositories.UserRepository
 import coil.compose.AsyncImage
+import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import kotlinx.coroutines.launch
+
+private const val BASE_URL_KEY: String = "BASE_URL"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -188,7 +191,7 @@ fun ChatItem(
         // 3. Zdjęcie profilowe znajomego
         val avatarUrl = chatData.avatarUrl
         val ctx = LocalContext.current
-        val fullUrl = avatarUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
+        val fullUrl = avatarUrl?.let { if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY,"")}$it" }
         val imageRequest = coil.request.ImageRequest.Builder(ctx)
             .data(fullUrl)
             .crossfade(true)

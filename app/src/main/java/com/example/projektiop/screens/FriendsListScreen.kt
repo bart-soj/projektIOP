@@ -30,9 +30,11 @@ import kotlinx.coroutines.launch
 import com.example.projektiop.data.api.UserSearchDto
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.projektiop.data.repositories.SharedPreferencesRepository
+
+private const val BASE_URL_KEY: String = "BASE_URL"
 
 // Ekran dynamiczny listy znajomych z API
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendsListScreen(navController: NavController) {
@@ -187,7 +189,7 @@ private fun FriendCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             val rawUrl = friend.avatarUrl?.takeIf { it.isNotBlank() }
-            val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
+            val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it" }
             if (fullUrl != null) {
                 val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
                     .data(fullUrl)
