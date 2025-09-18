@@ -29,6 +29,7 @@ import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.ChatUpdateManager
 import com.example.projektiop.data.repositories.UserRepository
 import coil.compose.AsyncImage
+import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import kotlinx.coroutines.launch
 
@@ -196,7 +197,7 @@ fun ChatItem(
             .data(fullUrl)
             .crossfade(true)
             .apply {
-                val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                val token = AuthRepository.getToken()
                 if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
             }
             .build()

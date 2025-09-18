@@ -7,6 +7,8 @@ import kotlinx.coroutines.withContext
 import android.content.Context
 import android.content.SharedPreferences
 
+private const val BASE_URL_KEY: String = "BASE_URL"
+
 // Lightweight local storage for last read timestamps per chat
 private object ChatReadState {
     private const val PREFS = "chat_read_state"
@@ -56,7 +58,7 @@ object ChatRepository {
         if (url.isNullOrBlank()) return null
         val trimmed = url.trim()
         if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed
-        val base = "https://hellobeacon.onrender.com"
+        val base = SharedPreferencesRepository.get(BASE_URL_KEY,"")
         return if (trimmed.startsWith("/")) base + trimmed else "$base/$trimmed"
     }
     // Call once at app start
