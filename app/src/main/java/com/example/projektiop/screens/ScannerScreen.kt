@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -31,6 +32,8 @@ import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.projektiop.BluetoothLE.BLEViewModel
 import com.example.projektiop.R // Upewnij się, że masz odpowiednie zasoby string
 import com.example.projektiop.data.api.CertificateRequest
@@ -46,6 +49,7 @@ import kotlinx.coroutines.launch
 
 
 private const val ID: String = "_id"
+private const val BASE_URL_KEY: String = "BASE_URL"
 
 
 @OptIn(ExperimentalMaterial3Api::class) // Dla Scaffold
@@ -276,14 +280,33 @@ fun ScannedUserRow(
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Placeholder avatar
-                Image(
-                    painter = painterResource(id = R.drawable.avatar_placeholder),
-                    contentDescription = "Avatar",
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                )
+                val rawUrl = user.profile?.avatarUrl
+                val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it" }
+                if (fullUrl != null) {
+                    val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                        .data(fullUrl)
+                        .crossfade(true)
+                        .apply {
+                            val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                            if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
+                        }
+                        .build()
+                    AsyncImage(
+                        model = req,
+                        contentDescription = null,
+                        placeholder = painterResource(R.drawable.avatar_placeholder),
+                        error = painterResource(R.drawable.avatar_placeholder),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(80.dp).clip(CircleShape)
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.avatar_placeholder),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(80.dp).clip(CircleShape)
+                    )
+                }
 
                 Spacer(modifier = Modifier.width(12.dp))
 
