@@ -2,14 +2,11 @@ package com.example.projektiop.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import com.example.projektiop.BluetoothLE.BluetoothManagerUtils
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.* // Material 3
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -28,21 +25,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.projektiop.BluetoothLE.BLEViewModel
-import com.example.projektiop.R // Upewnij się, że masz odpowiednie zasoby string
+import com.example.projektiop.R
 import com.example.projektiop.data.api.CertificateRequest
+import com.example.projektiop.data.api.InterestDto
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.util.CertificateUtils
-import com.example.projektiop.data.api.Profile
-import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UserProfileResponse
-import com.example.projektiop.data.repositories.FriendItem
+import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.launch
@@ -256,6 +251,7 @@ fun ScannedUserRow(
     userId: String,
     onClick: (UserProfileResponse) -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
     // Use produceState to fetch user profile asynchronously
     val userState = produceState<UserProfileResponse?>(initialValue = null, userId) {
         value = try {
@@ -323,12 +319,12 @@ fun ScannedUserRow(
                     }
                 }
 
-                // Optional action button (chat, etc.)
-                /*
-                Button(onClick = { /* handle chat/navigation */ }) {
-                    Text("Czat")
+                Button(onClick = {
+                    coroutineScope.launch{ FriendshipRepository.sendFriendRequest(user._id.toString()) }
                 }
-                */
+                ) {
+                    Text("Dodaj") // TODO() better repository add function that takes already existing friend into account
+                }
 
             }
         }
@@ -351,15 +347,41 @@ fun ScannedUsersList(
     deviceIds: List<String>,
     onUserClick: (UserProfileResponse) -> Unit
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(16.dp)
-    ) {
-        items(deviceIds, key = { it }) { deviceId ->
-            ScannedUserRow(userId = deviceId, onClick = onUserClick)
+    val myProfile by produceState<UserProfileResponse?>(initialValue = null) {
+        value = UserRepository.fetchMyProfile().getOrNull()
+    }
+    // Fetch and map deviceIds → UserProfileResponse
+    val users by produceState<List<UserProfileResponse>?>(initialValue = emptyList<UserProfileResponse>(), key1 = deviceIds) {
+        value = deviceIds.mapNotNull { _id ->
+            UserRepository.fetchUserById(_id).getOrNull()
+        }.sortedByDescending { user ->
+            cosineSimilarity<InterestDto>(user.interests?.map{ it.interest.name }?.toSet() ?: emptySet(),
+                myProfile?.interests?.map{ it.interest.name }
+                    ?.toSet() ?: emptySet())
         }
     }
+
+    if (users == null) {
+        CircularProgressIndicator()
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(16.dp)
+        ) {
+            items(users!!, key = { it._id!! }) { user ->
+                ScannedUserRow(userId = user._id.toString(), onClick = { onUserClick(user) })
+            }
+        }
+    }
+}
+
+
+fun <T> cosineSimilarity(a: Set<Any?>, b: Set<Any?>): Double {
+    if (a.isEmpty() || b.isEmpty()) return 0.0
+
+    val intersectionSize = a.intersect(b).size
+    return intersectionSize / kotlin.math.sqrt(a.size.toDouble() * b.size.toDouble())
 }
 
 
