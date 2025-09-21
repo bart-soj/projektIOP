@@ -20,13 +20,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.example.projektiop.R
 import com.example.projektiop.formelements.OutlinedTextFieldWithClearAndError
 import com.example.projektiop.formelements.SwitchWithText
+import com.example.projektiop.data.repositories.AuthRepository
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -36,6 +36,10 @@ fun LoginScreen(navController: NavController) {
     var rememberMe by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf<String?>(null) } // Przechowuje komunikat błędu lub null
     var passwordError by remember { mutableStateOf<String?>(null) } // Przechowuje komunikat błędu lub null
+    var apiError by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
 
     // --- Validation Logic (Example) ---
     // W rzeczywistej aplikacji walidacja byłaby bardziej złożona i prawdopodobnie w ViewModel
@@ -74,12 +78,12 @@ fun LoginScreen(navController: NavController) {
                 onValueChange = {
                     email = it
                     emailError = null // Resetuj błąd przy zmianie
+                    apiError = null
                 },
                 label = stringResource(R.string.email_label),
                 errorMessage = emailError ?: stringResource(R.string.email_error), // Pokaż błąd walidacji lub domyślny
                 modifier = Modifier.fillMaxWidth(), // Wypełnij szerokość
                 isError = emailError != null, // Pokaż błąd, jeśli istnieje
-                //keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
             Spacer(modifier = Modifier.height(16.dp)) // Odstęp między polami
@@ -90,13 +94,13 @@ fun LoginScreen(navController: NavController) {
                 onValueChange = {
                     password = it
                     passwordError = null // Resetuj błąd przy zmianie
+                    apiError = null
                 },
                 label = stringResource(R.string.password_label),
                 errorMessage = passwordError ?: stringResource(R.string.password_error), // Pokaż błąd walidacji lub domyślny
                 modifier = Modifier.fillMaxWidth(), // Wypełnij szerokość
                 isError = passwordError != null, // Pokaż błąd, jeśli istnieje
                 visualTransformation = PasswordVisualTransformation(), // Ukryj hasło
-                //keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(keyboardType = KeyboardType.Password)
             )
 
             Spacer(modifier = Modifier.height(16.dp)) // Odstęp
@@ -105,7 +109,6 @@ fun LoginScreen(navController: NavController) {
             Row(
                 modifier = Modifier.fillMaxWidth(), // Wypełnij szerokość, aby móc wyrównać
                 verticalAlignment = Alignment.CenterVertically,
-                // horizontalArrangement = Arrangement.Start // Domyślnie jest Start
             ) {
                 SwitchWithText(
                     checked = rememberMe,
@@ -114,22 +117,18 @@ fun LoginScreen(navController: NavController) {
                 )
             }
 
-            /* // Alternatywnie: Przełącznik "Zapamiętaj mnie" - Wyrównany do prawej
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End // Wyrównaj do końca (prawej)
-            ) {
-                SwitchWithText(
-                     checked = rememberMe,
-                     text = stringResource(R.string.remember_me_label),
-                     onCheckedChange = { rememberMe = it }
-                 )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (apiError != null) {
+                Text(
+                    text = apiError ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                )
             }
-            */
 
-
-            Spacer(modifier = Modifier.height(24.dp)) // Większy odstęp przed przyciskami
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Wiersz z przyciskami
             Row (
@@ -139,12 +138,15 @@ fun LoginScreen(navController: NavController) {
             ) {
                 // Przycisk Powrót
                 Button(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier.weight(1f).padding(end = 8.dp), // Daj wagę i odstęp
+                    onClick = { if (!isLoading) navController.popBackStack() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
                         contentColor = MaterialTheme.colorScheme.error
-                    )
+                    ),
+                    enabled = !isLoading
                 ) {
                     Text(stringResource(R.string.return_button_text))
                 }
@@ -152,22 +154,37 @@ fun LoginScreen(navController: NavController) {
                 // Przycisk Zaloguj
                 Button(
                     onClick = {
-                        validateFields() // Uruchom walidację
+                        if (isLoading) return@Button
+                        validateFields()
                         if (isEmailValid && isPasswordValid) {
-                            // Logika logowania - nawiguj tylko jeśli pola są poprawne
-                            navController.navigate("scanner")
-                        } else {
-                            // Opcjonalnie: Pokaż Snackbar/Toast z informacją o błędach
+                            isLoading = true
+                            apiError = null
+                            scope.launch {
+                                val result = AuthRepository.login(email, password)
+                                result.onSuccess { token ->
+                                    if (!token.isNullOrBlank()) AuthRepository.saveToken(token, remember = rememberMe)
+                                    // Przykład: przejście do głównego ekranu dopiero po sukcesie
+                                    navController.navigate("main") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                }.onFailure { e ->
+                                    apiError = e.message ?: "Nieudane logowanie"
+                                }
+                                isLoading = false
+                            }
                         }
                     },
-                    modifier = Modifier.weight(1f).padding(start = 8.dp), // Daj wagę i odstęp
-                    // enabled = isEmailValid && isPasswordValid, // Opcjonalnie: wyłącz przycisk, jeśli dane są niepoprawne
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                    ),
+                    enabled = isEmailValid && isPasswordValid && !isLoading
                 ) {
-                    Text(stringResource(R.string.login_button_text))
+                    Text(if (isLoading) "Logowanie..." else stringResource(R.string.login_button_text))
                 }
             }
         }

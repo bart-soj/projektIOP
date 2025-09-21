@@ -19,8 +19,15 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
+    <!-- Permission to access the internet -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Notifications (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
 
     <application
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:name=".HelloBeaconApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -39,16 +46,6 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".BluetoothLE.BLEActivity"
-            android:exported="true"
-            android:label="BLEActivity"
-            android:theme="@style/Theme.ProjektIOP">
-            <intent-filter>
-                <action android:name="android.intent.action.RUN" />
-
             </intent-filter>
         </activity>
     </application>

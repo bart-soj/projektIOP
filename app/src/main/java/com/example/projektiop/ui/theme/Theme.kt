@@ -55,4 +55,4 @@ fun ProjektIOPTheme(
         typography = Typography,
         content = content
     )
-}
+} 

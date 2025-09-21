@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="possible_interests_extended">
+        <!-- Zainteresowania intelektualne i naukowe -->
+        <item>Czytanie (beletrystyka, non-fiction)</item>
+        <item>Nauka i technologia</item>
+        <item>Astronomia</item>
+        <item>Historia (konkretne epoki, regiony)</item>
+        <item>Filozofia</item>
+        <item>Psychologia</item>
+        <item>Języki obce (nauka, praktyka)</item>
+        <item>Programowanie / Kodowanie</item>
+        <item>Matematyka / Logika</item>
+        <item>Badania / Research</item>
+        <item>Debaty / Dyskusje</item>
+        <item>Rozwiązywanie zagadek / Łamigłówki</item>
+
+        <!-- Zainteresowania artystyczne i kreatywne -->
+        <item>Muzyka (słuchanie, granie, komponowanie)</item>
+        <item>Gra na instrumencie (np. gitara, pianino, bębny)</item>
+        <item>Śpiew / Chór</item>
+        <item>Taniec (różne style)</item>
+        <item>Malarstwo / Rysunek</item>
+        <item>Rzeźbiarstwo / Ceramika</item>
+        <item>Fotografia (artystyczna, reportażowa, przyrodnicza)</item>
+        <item>Filmowanie / Tworzenie wideo</item>
+        <item>Pisanie (proza, poezja, scenariusze, blog)</item>
+        <item>Grafika komputerowa / Projektowanie graficzne</item>
+        <item>Projektowanie mody / Szycie</item>
+        <item>Rękodzieło / DIY (np. biżuteria, scrapbooking, decoupage)</item>
+        <item>Kaligrafia / Liternictwo</item>
+        <item>Teatr / Aktorstwo / Improwizacja</item>
+        <item>Sztuka uliczna / Graffiti</item>
+
+        <!-- Zainteresowania związane z aktywnością fizyczną i sportem -->
+        <item>Sporty zespołowe (piłka nożna, siatkówka, koszykówka)</item>
+        <item>Bieganie / Lekkoatletyka</item>
+        <item>Pływanie</item>
+        <item>Jazda na rowerze (szosowa, górska, miejska)</item>
+        <item>Siłownia / Fitness / Crossfit</item>
+        <item>Joga / Pilates</item>
+        <item>Wędrówki / Trekking / Alpinizm</item>
+        <item>Wspinaczka (skałkowa, na ściance)</item>
+        <item>Sztuki walki (np. karate, judo, boks)</item>
+        <item>Sporty zimowe (narciarstwo, snowboarding)</item>
+        <item>Sporty wodne (kajakarstwo, żeglarstwo, surfing)</item>
+        <item>Gimnastyka / Akrobatyka</item>
+        <item>Nordic walking</item>
+        <item>Rolki / Łyżwy</item>
+
+        <!-- Zainteresowania związane z domem, ogrodem i kulinariami -->
+        <item>Gotowanie / Eksperymenty kulinarne</item>
+        <item>Pieczenie (ciasta, chleb)</item>
+        <item>Ogrodnictwo / Uprawa roślin</item>
+        <item>Majsterkowanie / Stolarstwo</item>
+        <item>Dekoracja wnętrz</item>
+        <item>Akwarystyka / Terrarystyka</item>
+        <item>Browarnictwo domowe / Winiarstwo</item>
+        <item>Przetwory domowe</item>
+        <item>Kultura kawy / herbaty</item>
+        <item>Miksologia / Tworzenie koktajli</item>
+
+        <!-- Zainteresowania związane z technologią i grami -->
+        <item>Gry komputerowe / Konsolowe</item>
+        <item>Gry planszowe / Karciane / RPG</item>
+        <item>E-sport</item>
+        <item>Nowe technologie / Gadżety</item>
+        <item>Budowa / Modyfikacja komputerów (PC Building)</item>
+        <item>Druk 3D</item>
+        <item>Robotyka</item>
+        <item>Sztuczna inteligencja (AI) / Uczenie maszynowe (ML)</item>
+        <item>Cyberbezpieczeństwo</item>
+
+        <!-- Zainteresowania społeczne i związane ze społecznością -->
+        <item>Wolontariat / Działalność charytatywna</item>
+        <item>Działalność społeczna / Aktywizm</item>
+        <item>Polityka / Sprawy bieżące</item>
+        <item>Spotkania towarzyskie / Organizacja imprez</item>
+        <item>Członkostwo w klubach / stowarzyszeniach</item>
+        <item>Wystąpienia publiczne / Toastmasters</item>
+        <item>Mentoring / Dzielenie się wiedzą</item>
+
+        <!-- Zainteresowania związane z podróżami i odkrywaniem -->
+        <item>Podróże (bliskie i dalekie)</item>
+        <item>Turystyka (miejska, wiejska, ekstremalna)</item>
+        <item>Kemping / Biwakowanie</item>
+        <item>Geocaching</item>
+        <item>Odkrywanie lokalnych atrakcji / Urban exploration</item>
+        <item>Kultury świata / Antropologia</item>
+
+        <!-- Inne zainteresowania -->
+        <item>Kolekcjonerstwo (np. znaczki, monety, komiksy, winyle)</item>
+        <item>Motoryzacja (samochody, motocykle)</item>
+        <item>Zwierzęta / Opieka nad zwierzętami</item>
+        <item>Moda / Stylizacja</item>
+        <item>Modelarstwo (samoloty, statki, pociągi)</item>
+        <item>Wędkarstwo</item>
+        <item>Obserwacja ptaków / Ornitologia</item>
+        <item>Medytacja / Mindfulness / Rozwój duchowy</item>
+        <item>Zdrowe odżywianie / Dietetyka</item>
+        <item>Genealogia / Poszukiwanie przodków</item>
+        <item>Inwestowanie / Finanse osobiste</item>
+    </string-array>
+</resources>

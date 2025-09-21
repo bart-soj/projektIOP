@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,7 +30,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.projektiop.R
+import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.formelements.OutlinedTextFieldWithClearAndError
+import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterScreen(navController: NavController) {
@@ -40,6 +43,8 @@ fun RegisterScreen(navController: NavController) {
     var usernameError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+    var registrationError by remember { mutableStateOf<String?>(null) }
 
     // --- Validation Logic (Example) ---
     // W rzeczywistej aplikacji walidacja byłaby bardziej złożona (np. w ViewModel)
@@ -150,17 +155,19 @@ fun RegisterScreen(navController: NavController) {
                     onClick = {
                         validateFields() // Uruchom walidację
                         if (isUsernameValid && isEmailValid && isPasswordValid) {
-                            // Tutaj powinna znaleźć się logika rejestracji użytkownika
-                            // (np. wywołanie funkcji w ViewModel)
-                            // Po pomyślnej rejestracji, nawiguj dalej
-                            navController.navigate("scanner") // Lub np. z powrotem do logowania: navController.popBackStack()
+                            coroutineScope.launch {
+                                val result = AuthRepository.register(username, email, password)
+                                result.onSuccess {
+                                    navController.navigate("scanner")
+                                }.onFailure {
+                                    registrationError = it.message
+                                }
+                            }
                         } else {
-                            // Opcjonalnie: Pokaż komunikat o błędach (np. Snackbar)
+                            registrationError = "Popraw dane w formularzu."
                         }
                     },
-                    modifier = Modifier.weight(1f).padding(start = 8.dp), // Daj wagę i odstęp
-                    // Opcjonalnie: wyłącz przycisk, jeśli dane są niepoprawne
-                    // enabled = isUsernameValid && isEmailValid && isPasswordValid,
+                    modifier = Modifier.weight(1f).padding(start = 8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorScheme.primary,
                         contentColor = colorScheme.onPrimary
@@ -168,6 +175,9 @@ fun RegisterScreen(navController: NavController) {
                 ) {
                     Text(stringResource(R.string.register_button_text))
                 }
+            }
+            if (registrationError != null) {
+                Text(registrationError!!, color = colorScheme.error)
             }
         }
     }

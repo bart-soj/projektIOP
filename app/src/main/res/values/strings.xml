@@ -1,5 +1,7 @@
 <resources>
-    <string name="app_name">projektIOP</string>
+    <string name="app_name">HelloBeacon</string>
+
+
     <string name="clear_content_description">Wyczyść</string>
     <string name="return_button_text">Powrót</string>
     <string name="username_error">Podana nazwa użykownika jest już zajęta</string>
@@ -18,8 +20,13 @@
     <string name="start_screen_scanner_button">Skaner</string>
     <string name="start_screen_main_button">main</string>
 
+    <string name="app_name_placeholder">HelloBeacon</string>
+    <string name="start_screen_welcome">Witamy!</string>
+    <string name="login">Zaloguj się</string>
+    <string name="register">Zarejestruj się</string>
+    <string name="background_image_description">Obraz tła ekranu startowego</string>
 
-    <string name="profile_name_placeholder">Jan Kowalski</string> <!-- Przykładowa nazwa -->
+    <string name="profile_name_placeholder">John Doe</string> <!-- Przykładowa nazwa -->
     <string name="profile_description_placeholder">Krótki opis o mnie, co lubię robić i czego szukam.</string> <!-- Przykładowy opis -->
     <string name="profile_interests_label">Zainteresowania:</string>
     <string name="profile_interest_placeholder_1">Sport</string> <!-- Przykładowe zainteresowanie -->
@@ -34,10 +41,31 @@
     <!-- Stringi dla dolnego paska nawigacji (Bottom Navigation Bar) -->
     <string name="bottom_nav_home">Ekran Główny</string>
     <string name="bottom_nav_profile">Profil</string>
+    <string name="bottom_nav_friends">Znajomi</string>
     <string name="bottom_nav_chats">Czaty</string>
     <string name="bottom_nav_broadcast">Rozgłaszanie</string>
     <string name="bottom_nav_settings">Ustawienia</string>
     <string name="profile_interest_1">Sample 1</string>
     <string name="profile_interest_2">Sample 2</string>
     <string name="profile_interest_3">Sample 3</string>
+    <string name="search_label">Szukaj...</string>
+    <string name="search_icon_desc">Dostępność</string>
+    <string name="profile_picture_desc">Opis</string>
+    <string name="profile_section_description">Opis Profilu</string>
+    <string name="profile_section_interests">Zainteresowania</string>
+    <string name="profile_section_stats">Statystyki profilu</string>
+    <string name="profile_settings_button_desc">Ustawienia profilu</string>
+
+    <string name="scanner_screen_title">Skaner BLE</string>
+    <string name="scanner_your_identifier_label">Twój identyfikator: %s</string>
+    <string name="scanner_start_scanning">Rozpocznij skanowanie</string>
+    <string name="scanner_stop_scanning">Zatrzymaj skanowanie</string>
+    <string name="scanner_start_advertising">Rozpocznij rozgłaszanie</string>
+    <string name="scanner_stop_advertising">Zatrzymaj Rozgłaszanie</string>
+    <string name="ble_status_label">Status BLE: %s</string>
+    <string name="ble_status_scanning_and_advertising">Skanowanie i Rozgłaszanie aktywne</string>
+    <string name="ble_status_scanning">Skanowanie aktywne</string>
+    <string name="ble_status_advertising">Rozgłaszanie aktywne</string>
+    <string name="ble_status_inactive">Nieaktywne</string>
+    <string name="dark_mode_label">Tryb ciemny</string>
 </resources>
