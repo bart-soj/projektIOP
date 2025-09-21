@@ -57,6 +57,8 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
     val currentRoute = navBackStackEntry?.destination?.route
 
     val devices by viewModel.foundDeviceIds.collectAsState()
+    val isScanning by viewModel.isScanning.collectAsState()
+    val isAdvertising by viewModel.isAdvertising.collectAsState()
 
     Scaffold(
         bottomBar = {
@@ -87,12 +89,14 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
             // Wyświetlanie przekazanego imienia/identyfikatora
             // Usunięto 'modifier = modifier' stąd, bo główny modifier jest na Column
 
+            /*
             Text(
-                text = stringResource(R.string.scanner_your_identifier_label, viewModel.getUserId()), // Dodaj zasób string "Twój identyfikator: %s"
+                text = stringResource(R.string.scanner_your_identifier_label, ""), // Dodaj zasób string "Twój identyfikator: %s"
                 style = MaterialTheme.typography.bodyLarge
             )
+            */
 
-            Spacer(modifier = Modifier.height(24.dp))
+            //Spacer(modifier = Modifier.height(24.dp))
 
             // Status BLE - Wyświetlamy go przed przyciskami dla lepszej widoczności
             ScanStatus(viewModel)
@@ -101,27 +105,39 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
 
             // Przyciski sterujące BLE
 
-            Button(onClick = { viewModel.startScan() }) {
-                Text(stringResource(R.string.scanner_start_scanning)) // Dodaj zasób string
+            Button(onClick = {
+                if (!isScanning) {
+                    viewModel.startScan()
+                } else {
+                    viewModel.stopScan()
+                }
+            }
+            ) {
+                if (!isScanning) {
+                    Text(stringResource(R.string.scanner_start_scanning)) // Dodaj zasób string
+                } else {
+                    Text(stringResource(R.string.scanner_stop_scanning)) // Dodaj zasób string
+                }
             }
             Spacer(modifier = Modifier.height(8.dp)) // Odstęp między przyciskami
 
-            Button(onClick = { viewModel.stopScan() }) {
-                Text(stringResource(R.string.scanner_stop_scanning)) // Dodaj zasób string
+
+            Button(onClick = {
+                if (!isAdvertising) {
+                    viewModel.startAdvertising()
+                } else {
+                    viewModel.stopAdvertising()
+                }
+            }
+            ) {
+                if (!isAdvertising) {
+                    Text(stringResource(R.string.scanner_start_advertising)) // Dodaj zasób string
+                } else {
+                    Text(stringResource(R.string.scanner_stop_advertising)) // Dodaj zasób string
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp)) // Większy odstęp między grupami przycisków
-
-            Button(onClick = { viewModel.startAdvertising() }) {
-                Text(stringResource(R.string.scanner_start_advertising)) // Dodaj zasób string
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(onClick = { viewModel.stopAdvertising() }) {
-                Text(stringResource(R.string.scanner_stop_advertising)) // Dodaj zasób string
-            }
-
-            // Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             // CertificateRequester(AuthRepository.getToken().toString())
             ScannedUsersList(deviceIds = devices) { user ->
                 navController.navigate(
@@ -310,6 +326,7 @@ fun ScannedUserRow(
                     Text(user.profile?.displayName ?: user.username.toString(), style = MaterialTheme.typography.titleMedium)
                     Text(user.username.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                     Text(user.email.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    /*
                     if (!user.interests.isNullOrEmpty()) {
                         Text(
                             text = "Zainteresowania: ${user.interests.joinToString { it.interest.name }}",
@@ -317,6 +334,7 @@ fun ScannedUserRow(
                             color = Color.Gray
                         )
                     }
+                    */
                 }
 
                 Button(onClick = {

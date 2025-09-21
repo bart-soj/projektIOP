@@ -302,4 +302,4 @@ fun MainScreenPreview() {
     }
 }
 
-private data class InfoItem(val icon: ImageVector, val text: String)
+internal data class InfoItem(val icon: ImageVector, val text: String)

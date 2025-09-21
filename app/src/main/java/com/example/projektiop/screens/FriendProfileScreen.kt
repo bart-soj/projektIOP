@@ -26,10 +26,20 @@ import java.time.Period
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.data.api.Profile
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.data.repositories.UserRepository
+import java.time.format.DateTimeParseException
 
 private const val BASE_URL_KEY: String = "BASE_URL"
 
@@ -51,7 +61,15 @@ fun FriendProfileScreen(
         scope.launch {
             loading = true
             error = null
-            // Backend nie ma endpointu /users/{id}; spróbujmy profil własny tylko jeśli to my, inaczej wyszukiwanie.
+            UserRepository.fetchUserById(userId)
+                .onSuccess { profile = it }
+                .onFailure { error = it.message }
+            loading = false
+        }
+        /*
+        scope.launch {
+            loading = true
+            error = null
             try {
                 // Najpierw spróbuj wyszukiwania jeśli brak pełnych danych.
                 if (profile == null) {
@@ -82,11 +100,13 @@ fun FriendProfileScreen(
                             }
                         }
                     }
-                }
+                } // TODO() use new /api/users/{id} endpoint to fetch full user data
             } catch (e: Exception) { error = e.message }
             loading = false
         }
+         */
     }
+
 
     Scaffold(
         topBar = {
@@ -105,7 +125,7 @@ fun FriendProfileScreen(
         } else if (profile == null) {
             Box(Modifier.fillMaxSize().padding(paddingValues)) { Text("Brak danych", modifier = Modifier.align(Alignment.Center)) }
         } else {
-                val p = profile!!
+            val p = profile!!
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -180,3 +200,4 @@ fun FriendProfileScreen(
         }
     }
 }
+
