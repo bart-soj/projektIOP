@@ -21,6 +21,12 @@ import com.example.projektiop.data.mapping.toUserProfileResponse
 import com.example.projektiop.data.repositories.DBRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
@@ -35,12 +41,15 @@ object UserRepository {
     private var id: String? = null
     private var email: String? = null
     private var prefs: SharedPreferences? = null
+    private val _MyProfile = MutableStateFlow<UserProfileResponse?>(null)
+    val MyProfile: StateFlow<UserProfileResponse?> = _MyProfile.asStateFlow()
 
     fun init(context: Context) {
         if (prefs == null) {
             prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             email = prefs?.getString(EMAIL, null) ?: ""
         }
+        GlobalScope.launch { _MyProfile.value = fetchMyProfile().getOrNull() }
     }
 
     suspend fun fetchMyProfile(): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
@@ -125,7 +134,7 @@ object UserRepository {
                         Exception("Error saving to database: $e")
                     )
                 }
-
+                _MyProfile.value = response.body()!!
                 Result.success(response.body()!!)
             } else {
                 val errBody = try { response.errorBody()?.string() } catch (_: Exception) { null }
@@ -307,3 +316,4 @@ object UserRepository {
         }
     }
 }
+
