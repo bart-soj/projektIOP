@@ -32,11 +32,13 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.projektiop.BluetoothLE.BLEViewModel
 import com.example.projektiop.R
+import com.example.projektiop.activeHandshake.NFC.ActiveHandshakeButton
 import com.example.projektiop.data.api.CertificateRequest
 import com.example.projektiop.data.api.InterestDto
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.util.CertificateUtils
 import com.example.projektiop.data.api.UserProfileResponse
+import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
@@ -56,7 +58,7 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val devices by viewModel.foundDeviceIds.collectAsState()
+    val users by viewModel.userProfiles.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
     val isAdvertising by viewModel.isAdvertising.collectAsState()
 
@@ -124,11 +126,15 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            ScannedUsersList(deviceIds = devices) { user ->
-                navController.navigate(
-                    "friend_profile/${user._id}?username=${user.username}&displayName=${user.profile?.displayName}&avatarUrl=${user.profile?.avatarUrl}"
-                )
+            Spacer(modifier = Modifier.height(8.dp))
+            Column {
+                ScannedUsersList(users = users) { user ->
+                    navController.navigate(
+                        "friend_profile/${user._id}?username=${user.username}&displayName=${user.profile?.displayName}&avatarUrl=${user.profile?.avatarUrl}"
+                    )
+                }
+                ActiveHandshakeButton { }
+                //CertificateRequester(AuthRepository.getToken().toString())
             }
 
             Spacer(modifier = Modifier.height(16.dp)) // Odstęp na dole
@@ -245,87 +251,76 @@ fun CertificateRequester(
 
 @Composable
 fun ScannedUserRow(
-    userId: String,
+    user: UserProfileResponse,
     onClick: (UserProfileResponse) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val userState = produceState<UserProfileResponse?>(initialValue = null, userId) {
-        value = try {
-            val result = UserRepository.fetchUserById(userId)
-            result.getOrNull()
-        } catch (e: Exception) {
-            null
-        }
-    }
 
-    userState.value?.let { user ->
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp)
-                .clickable { onClick(user) },
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val rawUrl = user.profile?.avatarUrl
-                val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it" }
-                if (fullUrl != null) {
-                    val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
-                        .data(fullUrl)
-                        .crossfade(true)
-                        .apply {
-                            val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
-                            if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
-                        }
-                        .build()
-                    AsyncImage(
-                        model = req,
-                        contentDescription = null,
-                        placeholder = painterResource(R.drawable.avatar_placeholder),
-                        error = painterResource(R.drawable.avatar_placeholder),
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(80.dp).clip(CircleShape)
-                    )
-                } else {
-                    Image(
-                        painter = painterResource(id = R.drawable.avatar_placeholder),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(80.dp).clip(CircleShape)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(user.profile?.displayName ?: user.username.toString(), style = MaterialTheme.typography.titleMedium)
-                    Text(user.username.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                    Text(user.email.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                }
-
-                Button(onClick = {
-                    coroutineScope.launch{ FriendshipRepository.sendFriendRequest(user._id.toString()) }
-                }
-                ) {
-                    Text("Dodaj") // TODO() better repository add function that takes already existing friend into account
-                }
-
-            }
-        }
-    } ?: run {
-        // Loading placeholder
-        Box(
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable { onClick(user) },
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
-            contentAlignment = Alignment.Center
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            val rawUrl = user.profile?.avatarUrl
+            val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it" }
+            if (fullUrl != null) {
+                val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                    .data(fullUrl)
+                    .crossfade(true)
+                    .apply {
+                        val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                        if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
+                    }
+                    .build()
+                AsyncImage(
+                    model = req,
+                    contentDescription = null,
+                    placeholder = painterResource(R.drawable.avatar_placeholder),
+                    error = painterResource(R.drawable.avatar_placeholder),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(80.dp).clip(CircleShape)
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.avatar_placeholder),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(80.dp).clip(CircleShape)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(user.profile?.displayName ?: user.username.toString(), style = MaterialTheme.typography.titleMedium)
+                Text(user.username.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                Text(user.email.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                /*
+                if (!user.interests.isNullOrEmpty()) {
+                    Text(
+                        text = "Zainteresowania: ${user.interests.joinToString { it.interest.name }}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+                */
+            }
+
+            Button(onClick = {
+                coroutineScope.launch{ FriendshipRepository.sendFriendRequest(user._id.toString()) }
+            }
+            ) {
+                Text("Dodaj") // TODO() better repository add function that takes already existing friend into account
+            }
+
         }
     }
 }
@@ -333,40 +328,27 @@ fun ScannedUserRow(
 
 @Composable
 fun ScannedUsersList(
-    deviceIds: List<String>,
+    users: List<UserProfileResponse>?,
     onUserClick: (UserProfileResponse) -> Unit
 ) {
-    val myProfile by produceState<UserProfileResponse?>(initialValue = null) {
-        value = UserRepository.fetchMyProfile().getOrNull()
-    }
-    // Fetch and map deviceIds → UserProfileResponse
-    val users by produceState<List<UserProfileResponse>?>(initialValue = emptyList<UserProfileResponse>(), key1 = deviceIds) {
-        value = deviceIds.mapNotNull { _id ->
-            UserRepository.fetchUserById(_id).getOrNull()
-        }.sortedByDescending { user ->
-            cosineSimilarity<InterestDto>(user.interests?.map{ it.interest.name }?.toSet() ?: emptySet(),
-                myProfile?.interests?.map{ it.interest.name }
-                    ?.toSet() ?: emptySet())
-        }
-    }
 
     if (users == null) {
         CircularProgressIndicator()
     } else {
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(16.dp)
         ) {
-            items(users!!, key = { it._id!! }) { user ->
-                ScannedUserRow(userId = user._id.toString(), onClick = { onUserClick(user) })
+            items(users) { user ->
+                ScannedUserRow(user, onClick = { onUserClick(user) })
             }
         }
     }
 }
 
 
-fun <T> cosineSimilarity(a: Set<Any?>, b: Set<Any?>): Double {
+fun cosineSimilarity(a: Set<String>, b: Set<String>): Double {
     if (a.isEmpty() || b.isEmpty()) return 0.0
 
     val intersectionSize = a.intersect(b).size

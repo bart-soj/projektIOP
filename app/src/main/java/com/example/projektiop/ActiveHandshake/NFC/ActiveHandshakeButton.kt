@@ -106,13 +106,20 @@ fun ActiveHandshakeButton(
                                     change.consume()
                                 },
                                 onDragEnd = {
-                                    val dragAmount = abs(totalDragAmount.x)
+                                    val dragAmmount_y = abs(totalDragAmount.y)
+                                    val dragAmount_x = abs(totalDragAmount.x)
 
-                                    if (dragAmount > swipeThresholdPx) {
+                                    if (dragAmount_x > swipeThresholdPx) {
                                         if (totalDragAmount.x < 0) {
                                             launchActivity(context, HostBasedCardEmulatorActivity::class.java) // left
                                         } else {
                                             launchActivity(context, ReadNFCActivity::class.java) // right
+                                        }
+                                    }
+
+                                    if (dragAmmount_y > swipeThresholdPx) {
+                                        if (totalDragAmount.y > 0) {
+                                            expanded = false
                                         }
                                     }
                                     totalDragAmount = Offset.Zero
