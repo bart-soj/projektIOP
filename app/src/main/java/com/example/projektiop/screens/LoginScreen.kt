@@ -1,5 +1,6 @@
 package com.example.projektiop.screens
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,89 +31,82 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(navController: NavController) {
-    // --- State Management ---
+    val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
-    var emailError by remember { mutableStateOf<String?>(null) } // Przechowuje komunikat błędu lub null
-    var passwordError by remember { mutableStateOf<String?>(null) } // Przechowuje komunikat błędu lub null
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
     var apiError by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
-
     val scope = rememberCoroutineScope()
-
-    // --- Validation Logic (Example) ---
-    // W rzeczywistej aplikacji walidacja byłaby bardziej złożona i prawdopodobnie w ViewModel
     val isEmailValid = remember(email) { email.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() }
     val isPasswordValid = remember(password) { password.isNotEmpty() }
 
-    // Prosta logika ustawiania błędów (można ją wywołać np. przy próbie logowania)
-    fun validateFields() {
-        emailError = if (!isEmailValid) "Niepoprawny format email" else null
-        passwordError = if (!isPasswordValid) "Hasło jest wymagane" else null
+    fun validateFields(context: Context) {
+        emailError = if (!isEmailValid) context.getString(R.string.invalid_email_format) else null
+        passwordError = if (!isPasswordValid) context.getString(R.string.password_required) else null
     }
 
     // --- UI ---
     Surface(
-        modifier = Modifier.fillMaxSize(), // Wypełnij cały dostępny obszar
-        color = MaterialTheme.colorScheme.background // Użyj koloru tła z motywu
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 32.dp) // Dodaj padding do całej kolumny
+                .padding(horizontal = 16.dp, vertical = 32.dp)
             ,
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center // Wyśrodkuj zawartość pionowo
+            verticalArrangement = Arrangement.Center
         ) {
             // Tytuł
             Text(
                 text = stringResource(R.string.login_screen_title),
                 style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(bottom = 24.dp) // Odstęp pod tytułem
+                modifier = Modifier.padding(bottom = 24.dp)
             )
-
             // Pole Email
             OutlinedTextFieldWithClearAndError(
                 value = email,
                 onValueChange = {
                     email = it
-                    emailError = null // Resetuj błąd przy zmianie
+                    emailError = null
                     apiError = null
                 },
                 label = stringResource(R.string.email_label),
-                errorMessage = emailError ?: stringResource(R.string.email_error), // Pokaż błąd walidacji lub domyślny
-                modifier = Modifier.fillMaxWidth(), // Wypełnij szerokość
-                isError = emailError != null, // Pokaż błąd, jeśli istnieje
+                errorMessage = emailError ?: stringResource(R.string.email_error),
+                modifier = Modifier.fillMaxWidth(),
+                isError = emailError != null,
             )
 
-            Spacer(modifier = Modifier.height(16.dp)) // Odstęp między polami
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Pole Hasło
             OutlinedTextFieldWithClearAndError(
                 value = password,
                 onValueChange = {
                     password = it
-                    passwordError = null // Resetuj błąd przy zmianie
+                    passwordError = null
                     apiError = null
                 },
                 label = stringResource(R.string.password_label),
-                errorMessage = passwordError ?: stringResource(R.string.password_error), // Pokaż błąd walidacji lub domyślny
-                modifier = Modifier.fillMaxWidth(), // Wypełnij szerokość
-                isError = passwordError != null, // Pokaż błąd, jeśli istnieje
-                visualTransformation = PasswordVisualTransformation(), // Ukryj hasło
+                errorMessage = passwordError ?: stringResource(R.string.password_error),
+                modifier = Modifier.fillMaxWidth(),
+                isError = passwordError != null,
+                visualTransformation = PasswordVisualTransformation(),
             )
 
-            Spacer(modifier = Modifier.height(16.dp)) // Odstęp
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Przełącznik "Zapamiętaj mnie" - Wyrównany do lewej
             Row(
-                modifier = Modifier.fillMaxWidth(), // Wypełnij szerokość, aby móc wyrównać
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 SwitchWithText(
                     checked = rememberMe,
-                    text = stringResource(R.string.remember_me_label),
+                    text = stringResource(R.string.remember_me),
                     onCheckedChange = { rememberMe = it }
                 )
             }
@@ -130,11 +124,10 @@ fun LoginScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Wiersz z przyciskami
             Row (
-                modifier = Modifier.fillMaxWidth(), // Wypełnij szerokość
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween // Rozłóż przyciski
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 // Przycisk Powrót
                 Button(
@@ -155,7 +148,7 @@ fun LoginScreen(navController: NavController) {
                 Button(
                     onClick = {
                         if (isLoading) return@Button
-                        validateFields()
+                        validateFields(context)
                         if (isEmailValid && isPasswordValid) {
                             isLoading = true
                             apiError = null
@@ -163,12 +156,11 @@ fun LoginScreen(navController: NavController) {
                                 val result = AuthRepository.login(email, password)
                                 result.onSuccess { token ->
                                     if (!token.isNullOrBlank()) AuthRepository.saveToken(token, remember = rememberMe)
-                                    // Przykład: przejście do głównego ekranu dopiero po sukcesie
                                     navController.navigate("main") {
                                         popUpTo("login") { inclusive = true }
                                     }
                                 }.onFailure { e ->
-                                    apiError = e.message ?: "Nieudane logowanie"
+                                    apiError = e.message ?: context.getString(R.string.login_failed)
                                 }
                                 isLoading = false
                             }
@@ -184,7 +176,7 @@ fun LoginScreen(navController: NavController) {
                     ),
                     enabled = isEmailValid && isPasswordValid && !isLoading
                 ) {
-                    Text(if (isLoading) "Logowanie..." else stringResource(R.string.login_button_text))
+                    Text(if (isLoading) stringResource(R.string.logging_in) else stringResource(R.string.login_button_text))
                 }
             }
         }

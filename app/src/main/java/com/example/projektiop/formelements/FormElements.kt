@@ -54,9 +54,8 @@ fun OutlinedTextFieldWithClearAndError(
                     Icon(
                         imageVector = Icons.Filled.Clear, // Ikona z Material Icons
                         contentDescription = stringResource(
-                            R.string.clear_content_description, // Dostosuj nazwę zasobu
-                            label // Opcjonalnie: dodaj label do opisu dla kontekstu
-                            // Alternatywnie: Prostszy opis, np. stringResource(R.string.clear_text_action)
+                            R.string.clear_content_description,
+                            label
                         )
                     )
                 }
@@ -64,9 +63,8 @@ fun OutlinedTextFieldWithClearAndError(
         },
         isError = isError,
         supportingText = {
-            // Pokaż tekst błędu tylko jeśli isError jest true i errorMessage nie jest null
             if (isError && errorMessage != null) {
-                Text(text = errorMessage) // Nie ma potrzeby używania Row, jeśli jest tylko jeden element
+                Text(text = errorMessage)
             }
         },
         visualTransformation = visualTransformation
@@ -87,11 +85,7 @@ fun SwitchWithText(
     )
     {
         Text(text)
-        // add some space between the text and the switch, could also be done with padding
         Spacer(modifier = Modifier.padding(8.dp))
-        // The switch composable the most important parameters are checked and onCheckedChange
-        // checked is the state of the switch and onCheckedChange is the callback that is called
-        // when the switch is toggled
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

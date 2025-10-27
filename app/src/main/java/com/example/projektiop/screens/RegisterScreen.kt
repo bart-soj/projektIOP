@@ -1,5 +1,6 @@
 package com.example.projektiop.screens
 
+import android.content.Context
 import android.util.Patterns
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,7 +37,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterScreen(navController: NavController) {
-    // --- State Management ---
+    val context = LocalContext.current
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -45,10 +46,7 @@ fun RegisterScreen(navController: NavController) {
     var passwordError by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
     var registrationError by remember { mutableStateOf<String?>(null) }
-
-    // --- Validation Logic (Example) ---
-    // W rzeczywistej aplikacji walidacja byłaby bardziej złożona (np. w ViewModel)
-    val isUsernameValid = remember(username) { username.isNotBlank() } // Proste sprawdzenie czy nie jest pusty
+    val isUsernameValid = remember(username) { username.isNotBlank() }
     val isEmailValid = remember(email) { email.isNotEmpty() && Patterns.EMAIL_ADDRESS.matcher(email).matches() }
     val isPasswordValid = remember(password) {
         val hasMinimumLength = password.length >= 8
@@ -58,16 +56,15 @@ fun RegisterScreen(navController: NavController) {
         hasMinimumLength && hasLowercase && hasUppercase && hasDigit
     }
 
-    // Funkcja do walidacji pól, wywoływana przy próbie rejestracji
-    fun validateFields() {
-        usernameError = if (!isUsernameValid) "Niepoprawna nazwa użytkownika" else null
-        emailError = if (!isEmailValid) "Niepoprawny format email" else null
+    fun validateFields(context: Context) {
+        usernameError = if (!isUsernameValid) context.getString(R.string.error_invalid_username) else null
+        emailError = if (!isEmailValid) context.getString(R.string.error_invalid_email) else null
         passwordError = if (!isPasswordValid) {
-            "Hasło musi mieć min. 8 znaków, zawierać dużą i małą literę oraz cyfrę."
+            context.getString(R.string.error_invalid_password)
         } else null
     }
 
-    // --- UI ---
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = colorScheme.background
@@ -91,57 +88,55 @@ fun RegisterScreen(navController: NavController) {
                 value = username,
                 onValueChange = {
                     username = it
-                    usernameError = null // Resetuj błąd przy zmianie
+                    usernameError = null
                 },
                 label = stringResource(R.string.username_label),
-                errorMessage = usernameError, // Pokaż błąd walidacji lub null
+                errorMessage = usernameError,
                 isError = usernameError != null,
-                modifier = Modifier.fillMaxWidth(), // Wypełnij szerokość
+                modifier = Modifier.fillMaxWidth(),
             )
 
-            Spacer(modifier = Modifier.height(16.dp)) // Odstęp
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Pole Email
             OutlinedTextFieldWithClearAndError(
                 value = email,
                 onValueChange = {
                     email = it
-                    emailError = null // Resetuj błąd przy zmianie
+                    emailError = null
                 },
                 label = stringResource(R.string.email_label),
-                errorMessage = emailError, // Pokaż błąd walidacji lub null
+                errorMessage = emailError,
                 isError = emailError != null,
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Spacer(modifier = Modifier.height(16.dp)) // Odstęp
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Pole Hasło
             OutlinedTextFieldWithClearAndError(
                 value = password,
                 onValueChange = {
                     password = it
-                    passwordError = null // Resetuj błąd przy zmianie
+                    passwordError = null
                 },
                 label = stringResource(R.string.password_label),
-                errorMessage = passwordError, // Pokaż błąd walidacji lub null
+                errorMessage = passwordError,
                 isError = passwordError != null,
                 modifier = Modifier.fillMaxWidth(),
-                visualTransformation = PasswordVisualTransformation() // Maskowanie hasła
+                visualTransformation = PasswordVisualTransformation()
             )
 
-            Spacer(modifier = Modifier.height(24.dp)) // Większy odstęp przed przyciskami
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Wiersz z przyciskami
             Row (
-                modifier = Modifier.fillMaxWidth(), // Wypełnij szerokość
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween // Rozłóż przyciski
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Przycisk Powrót
                 Button(
                     onClick = { navController.popBackStack() },
-                    modifier = Modifier.weight(1f).padding(end = 8.dp), // Daj wagę i odstęp
+                    modifier = Modifier.weight(1f).padding(end = 8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorScheme.errorContainer,
                         contentColor = colorScheme.error
@@ -150,10 +145,9 @@ fun RegisterScreen(navController: NavController) {
                     Text(stringResource(R.string.return_button_text))
                 }
 
-                // Przycisk Zarejestruj
                 Button(
                     onClick = {
-                        validateFields() // Uruchom walidację
+                        validateFields(context)
                         if (isUsernameValid && isEmailValid && isPasswordValid) {
                             coroutineScope.launch {
                                 val result = AuthRepository.register(username, email, password)
@@ -164,7 +158,7 @@ fun RegisterScreen(navController: NavController) {
                                 }
                             }
                         } else {
-                            registrationError = "Popraw dane w formularzu."
+                            registrationError = context.getString(R.string.form_fields_invalid)
                         }
                     },
                     modifier = Modifier.weight(1f).padding(start = 8.dp),

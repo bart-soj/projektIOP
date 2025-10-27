@@ -43,35 +43,30 @@ import com.example.projektiop.data.repositories.SharedPreferencesRepository
 private const val BASE_URL_KEY: String = "BASE_URL"
 
 
-@OptIn(ExperimentalMaterial3Api::class) // Dla Scaffold, Card, etc.
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(navController: NavController) {
-    // Stan dla dolnego paska nawigacji (który element jest aktywny)
-    // W prawdziwej aplikacji ten stan byłby powiązany z aktualną ścieżką NavController
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
     Scaffold(
         bottomBar = {
-            // Definicja dolnego paska nawigacji
             BottomNavigationBar(navController = navController, currentRoute = currentRoute)
         }
-    ) { paddingValues -> // paddingValues zawiera padding od Scaffold (np. dla bottomBar)
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues) // Zastosuj padding od Scaffold
+                .padding(paddingValues)
                 .verticalScroll(rememberScrollState()) // Umożliw przewijanie, jeśli treść jest dłuższa
-                .padding(horizontal = 16.dp) // Dodatkowy padding poziomy dla treści
+                .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(16.dp)) // Odstęp od góry
+            Spacer(modifier = Modifier.height(16.dp))
 
             // 1. Dynamiczna karta profilu
             ProfileCardDynamic(navController)
 
-            Spacer(modifier = Modifier.height(24.dp))
-            // Usunięto sekcje filtrów, rozgłaszania oraz przeniesiono przycisk listy znajomych do dolnej nawigacji
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
@@ -129,7 +124,7 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                                 }
                             }
                             .build(),
-                        contentDescription = "Zdjęcie profilowe",
+                        contentDescription = stringResource(R.string.profile_photo),
                         placeholder = painterResource(id = R.drawable.avatar_placeholder),
                         error = painterResource(id = R.drawable.avatar_placeholder),
                         modifier = Modifier
@@ -140,7 +135,7 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 } else {
                     Image(
                         painter = painterResource(id = R.drawable.avatar_placeholder),
-                        contentDescription = "Zdjęcie profilowe",
+                        contentDescription = stringResource(R.string.profile_photo),
                         modifier = Modifier
                             .size(64.dp)
                             .clip(CircleShape),
@@ -150,8 +145,8 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = when {
-                        loading -> "Ładowanie..."
-                        error != null -> "Błąd"
+                        loading -> stringResource(R.string.profile_loading)
+                        error != null -> stringResource(R.string.profile_error)
                         !profile?.effectiveDisplayName.isNullOrBlank() -> profile?.effectiveDisplayName ?: ""
                         else -> stringResource(R.string.profile_name_placeholder)
                     },
@@ -159,21 +154,20 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                     modifier = Modifier.weight(1f)
                 )
                 IconButton(onClick = { navController.navigate("edit_profile") }) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edytuj profil")
+                    Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_profile))
                 }
             }
             // --- Pasek z płcią, miastem i wiekiem ---
             val genderRaw = profile?.profile?.gender
             val genderLabel = when (genderRaw) {
-                "male" -> "Mężczyzna"
-                "female" -> "Kobieta"
-                "other" -> "Inna"
-                "prefer_not_to_say" -> "Nie podano"
+                "male" -> stringResource(R.string.gender_male)
+                "female" -> stringResource(R.string.gender_female)
+                "other" -> stringResource(R.string.gender_other)
+                "prefer_not_to_say" -> stringResource(R.string.gender_prefer_not_to_say)
                 else -> null
             }
             val locationVal = profile?.profile?.location?.takeIf { it.isNotBlank() }
             val ageVal = profile?.profile?.birthDate?.let { bd ->
-                // Obsłuż format ISO – weź tylko YYYY-MM-DD
                 val datePart = bd.take(10)
                 try {
                     val ld = LocalDate.parse(datePart, DateTimeFormatter.ISO_DATE)
@@ -208,8 +202,8 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = when {
-                    loading -> "Pobieranie opisu..."
-                    error != null -> error ?: "Błąd pobierania"
+                    loading -> stringResource(R.string.profile_loading_description)
+                    error != null -> error ?: stringResource(R.string.profile_error_description)
                     !profile?.effectiveDescription.isNullOrBlank() -> profile?.effectiveDescription ?: ""
                     else -> stringResource(R.string.profile_description_placeholder)
                 },
@@ -217,7 +211,7 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Zainteresowania",
+                text = stringResource(R.string.profile_interests_title),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -230,10 +224,12 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 if (loading) {
                     InterestTag(text = "...")
                 } else if (interests.isEmpty()) {
-                    InterestTag(text = "Brak")
+                    InterestTag(text = stringResource(R.string.profile_no_interests))
                 } else {
                     interests.forEach { ui ->
-                        val label = ui.interest.name.ifBlank { "?" }
+                        val label = ui.interest.name.ifBlank {
+                            stringResource(R.string.profile_unknown_interest)
+                        }
                         InterestTag(text = label)
                     }
                 }
@@ -244,29 +240,25 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InterestTag(text: String) { // Prosty Chip/Tag
+fun InterestTag(text: String) { // TODO: zrobic z tego bardziej rozbudowany komponent
     SuggestionChip(onClick = { /* Nic nie rób lub pozwól na interakcję */ }, label = { Text(text) })
 }
 
-// Usunięto BroadcastToggle
-
-
 // --- Dolny Pasek Nawigacji (element 9) ---
 
-// Definicja elementów paska
 data class BottomNavItem(
     val labelResId: Int, // ID zasobu string
     val icon: ImageVector,
-    val route: String // Ścieżka nawigacji
+    val route: String
 )
 
 @Composable
 fun BottomNavigationBar(navController: NavController, currentRoute: String?) {
     val items = listOf(
-        BottomNavItem(R.string.bottom_nav_home, Icons.Default.Home, "main"), // Main
-        BottomNavItem(R.string.bottom_nav_friends, Icons.Default.Group, "friends_list"), // Nowy: lista znajomych
+        BottomNavItem(R.string.bottom_nav_home, Icons.Default.Home, "main"),
+        BottomNavItem(R.string.bottom_nav_friends, Icons.Default.Group, "friends_list"),
         BottomNavItem(R.string.bottom_nav_chats, Icons.Default.Chat, "chats"),
-        BottomNavItem(R.string.bottom_nav_broadcast, Icons.Default.BroadcastOnPersonal, "scanner"), // scanner pozostaje
+        BottomNavItem(R.string.bottom_nav_broadcast, Icons.Default.BroadcastOnPersonal, "scanner"),
         BottomNavItem(R.string.bottom_nav_settings, Icons.Default.Settings, "settings")
     )
 
@@ -297,7 +289,7 @@ fun BottomNavigationBar(navController: NavController, currentRoute: String?) {
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {
-    MaterialTheme { // Użyj swojego motywu
+    MaterialTheme {
         MainScreen(navController = rememberNavController())
     }
 }

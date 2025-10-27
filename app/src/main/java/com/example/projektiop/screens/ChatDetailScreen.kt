@@ -22,17 +22,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.projektiop.data.api.MessageDto
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
+import com.example.projektiop.R
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 
 private const val BASE_URL_KEY: String = "BASE_URL"
 
-// Prosty ekran szczegółów czatu (placeholder) – do zastąpienia real-time logiką.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: String?) {
@@ -57,10 +58,9 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
         if (!id.isNullOrBlank()) {
             loading = true
             ChatRepository.loadMessages(id)
-                .onSuccess { messages = it } // już w kolejności rosnącej po dacie
+                .onSuccess { messages = it }
                 .onFailure { error = it.message }
             loading = false
-            // Mark read using last message timestamp
             val lastTimestamp = messages.lastOrNull()?.createdAt
             ChatRepository.markChatRead(id, lastTimestamp)
         } else {
@@ -116,9 +116,9 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
             val blockedByMe = blockInfo?.blockedByMe == true
             if (isBlocked) {
                 val msg = if (blockedByMe) {
-                    "Zablokowałeś tego użytkownika. Odblokuj go aby wysłać wiadomość."
+                    stringResource(R.string.blocked_by_me)
                 } else {
-                    "Nie możesz wysłać wiadomości – zostałeś zablokowany przez tego użytkownika."
+                    stringResource(R.string.blocked_by_other)
                 }
                 Surface(color = MaterialTheme.colorScheme.errorContainer, modifier = Modifier.fillMaxWidth()) {
                     Text(msg, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.padding(12.dp))
@@ -130,7 +130,14 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                     onValueChange = { input = it },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    placeholder = { Text(if (isBlocked) "Wysyłanie niedostępne" else "Napisz wiadomość...") },
+                    placeholder = {
+                        Text(
+                            if (isBlocked)
+                                stringResource(R.string.send_unavailable)
+                            else
+                                stringResource(R.string.write_message)
+                        )
+                    },
                     enabled = !isBlocked
                 )
                 Spacer(Modifier.width(8.dp))
@@ -146,7 +153,7 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                         val lastTimestamp = messages.lastOrNull()?.createdAt
                         ChatRepository.markChatRead(id, lastTimestamp)
                     }
-                }, enabled = !resolvedChatId.isNullOrBlank() && !isBlocked) { Text("Wyślij") }
+                }, enabled = !resolvedChatId.isNullOrBlank() && !isBlocked) { Text(stringResource(R.string.send_message))}
             }
         }
     }

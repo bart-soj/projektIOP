@@ -111,9 +111,16 @@ fun FriendProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(profile?.effectiveDisplayName ?: "Profil") },
+                title = {
+                    Text(profile?.effectiveDisplayName ?: stringResource(R.string.profile))
+                },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.ArrowBack, contentDescription = "Wstecz") }
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
+                    }
                 }
             )
         }
@@ -121,9 +128,20 @@ fun FriendProfileScreen(
         if (loading) {
             Box(Modifier.fillMaxSize().padding(paddingValues)) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
         } else if (error != null) {
-            Box(Modifier.fillMaxSize().padding(paddingValues)) { Text(error ?: "Błąd", color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.Center)) }
+            Box(Modifier.fillMaxSize().padding(paddingValues)) {
+                Text(
+                text = error ?: stringResource(R.string.error),
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.align(Alignment.Center)
+                )
+            }
         } else if (profile == null) {
-            Box(Modifier.fillMaxSize().padding(paddingValues)) { Text("Brak danych", modifier = Modifier.align(Alignment.Center)) }
+            Box(Modifier.fillMaxSize().padding(paddingValues)) {
+                Text(
+                text = stringResource(R.string.no_data),
+                modifier = Modifier.align(Alignment.Center)
+                )
+            }
         } else {
             val p = profile!!
             Column(
@@ -170,10 +188,10 @@ fun FriendProfileScreen(
                             try { val ld = LocalDate.parse(datePart, DateTimeFormatter.ISO_DATE); Period.between(ld, LocalDate.now()).years.takeIf { it in 0..150 } } catch (_: Exception) { null }
                         }
                         val gender = when (p.profile?.gender) {
-                            "male" -> "Mężczyzna"
-                            "female" -> "Kobieta"
-                            "other" -> "Inna"
-                            "prefer_not_to_say" -> "Nie podano"
+                            "male" -> stringResource(R.string.gender_male)
+                            "female" -> stringResource(R.string.gender_female)
+                            "other" -> stringResource(R.string.gender_other)
+                            "prefer_not_to_say" -> stringResource(R.string.gender_prefer_not_to_say)
                             else -> null
                         }
                         val location = p.profile?.location
@@ -186,7 +204,11 @@ fun FriendProfileScreen(
                 }
                 if (!p.interests.isNullOrEmpty()) {
                     Column {
-                        Text("Zainteresowania", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = stringResource(R.string.interests),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
                         Spacer(Modifier.height(4.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             p.interests!!.forEach { ui ->

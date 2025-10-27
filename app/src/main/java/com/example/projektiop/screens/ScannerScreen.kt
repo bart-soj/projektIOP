@@ -52,7 +52,7 @@ private const val BASE_URL_KEY: String = "BASE_URL"
 fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, viewModel: BLEViewModel) {
     val context = LocalContext.current
 
-    // Pobranie aktualnej ścieżki dla dolnego paska nawigacji
+    // Pobranie aktualnej ścieżki
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -62,32 +62,24 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
 
     Scaffold(
         bottomBar = {
-            // Użyj tego samego komponentu BottomNavigationBar co w MainScreen
-            // Upewnij się, że BottomNavigationBar jest zdefiniowany w dostępnym miejscu
-            // (np. w osobnym pliku lub w MainScreen.kt, jeśli ScannerScreen jest w tym samym pakiecie
-            // lub BottomNavigationBar jest zadeklarowany jako public)
             BottomNavigationBar(navController = navController, currentRoute = currentRoute)
         }
-    ) { paddingValues -> // paddingValues zawiera padding od Scaffold
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues) // Zastosuj padding od Scaffold
-                 // .verticalScroll(rememberScrollState()) // Umożliw przewijanie
-                .padding(16.dp), // Dodatkowy padding wewnętrzny (poziomy i pionowy)
-            horizontalAlignment = Alignment.CenterHorizontally // Wycentruj elementy w kolumnie
+                .padding(paddingValues)
+                .padding(16.dp), // Dodatkowy padding wewnętrzny
+            horizontalAlignment = Alignment.CenterHorizontally // Wycentruj elementy
         ) {
             Spacer(modifier = Modifier.height(16.dp)) // Odstęp od góry
 
-            // Tytuł Ekranu (opcjonalnie, dla lepszej orientacji)
+            // Tytuł Ekranu
             Text(
-                text = stringResource(R.string.scanner_screen_title), // Dodaj zasób string dla "Skaner BLE"
+                text = stringResource(R.string.scanner_screen_title),
                 style = MaterialTheme.typography.headlineMedium
             )
             Spacer(modifier = Modifier.height(8.dp))
-
-            // Wyświetlanie przekazanego imienia/identyfikatora
-            // Usunięto 'modifier = modifier' stąd, bo główny modifier jest na Column
 
             /*
             Text(
@@ -96,14 +88,10 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
             )
             */
 
-            //Spacer(modifier = Modifier.height(24.dp))
-
-            // Status BLE - Wyświetlamy go przed przyciskami dla lepszej widoczności
+            // Status BLE
             ScanStatus(viewModel)
 
             Spacer(modifier = Modifier.height(24.dp))
-
-            // Przyciski sterujące BLE
 
             Button(onClick = {
                 if (!isScanning) {
@@ -114,13 +102,12 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
             }
             ) {
                 if (!isScanning) {
-                    Text(stringResource(R.string.scanner_start_scanning)) // Dodaj zasób string
+                    Text(stringResource(R.string.scanner_start_scanning))
                 } else {
-                    Text(stringResource(R.string.scanner_stop_scanning)) // Dodaj zasób string
+                    Text(stringResource(R.string.scanner_stop_scanning))
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp)) // Odstęp między przyciskami
-
+            Spacer(modifier = Modifier.height(8.dp))
 
             Button(onClick = {
                 if (!isAdvertising) {
@@ -131,32 +118,29 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
             }
             ) {
                 if (!isAdvertising) {
-                    Text(stringResource(R.string.scanner_start_advertising)) // Dodaj zasób string
+                    Text(stringResource(R.string.scanner_start_advertising))
                 } else {
-                    Text(stringResource(R.string.scanner_stop_advertising)) // Dodaj zasób string
+                    Text(stringResource(R.string.scanner_stop_advertising))
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            // CertificateRequester(AuthRepository.getToken().toString())
             ScannedUsersList(deviceIds = devices) { user ->
                 navController.navigate(
                     "friend_profile/${user._id}?username=${user.username}&displayName=${user.profile?.displayName}&avatarUrl=${user.profile?.avatarUrl}"
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp)) // Odstęp na dole przed końcem scrolla/bottom bar
+            Spacer(modifier = Modifier.height(16.dp)) // Odstęp na dole
         }
     }
 }
 
-// Komponent ScanStatus pozostaje bez zmian
 @Composable
 fun ScanStatus(viewModel: BLEViewModel, modifier: Modifier = Modifier) {
     val isScanning = viewModel.isScanning.collectAsState().value
     val isAdvertising = viewModel.isAdvertising.collectAsState().value
 
-    // Użyj zasobów string dla lepszej internacjonalizacji
     val statusText = when {
         isScanning && isAdvertising -> stringResource(R.string.ble_status_scanning_and_advertising)
         isScanning -> stringResource(R.string.ble_status_scanning)
@@ -165,7 +149,7 @@ fun ScanStatus(viewModel: BLEViewModel, modifier: Modifier = Modifier) {
     }
 
     Text(
-        text = stringResource(R.string.ble_status_label, statusText), // Np. "Status BLE: %s"
+        text = stringResource(R.string.ble_status_label, statusText),
         style = MaterialTheme.typography.bodyMedium,
         modifier = modifier.padding(vertical = 8.dp)
     )
@@ -174,7 +158,7 @@ fun ScanStatus(viewModel: BLEViewModel, modifier: Modifier = Modifier) {
 
 @Composable
 fun CertificateRequester(
-    authToken: String,   // Bearer token from your login
+    authToken: String,
 ) {
     var result by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
@@ -208,7 +192,6 @@ fun CertificateRequester(
 
                        profileResult.fold(
                             onSuccess = { profileData ->
-                                // Successfully fetched user profile
                                 val userEmail: String = profileData.email.toString()
                                 println("User email: $userEmail")
                                 try {
@@ -234,9 +217,7 @@ fun CertificateRequester(
                                 }
                             },
                             onFailure = { exception ->
-                                // Handle the error state
                                 println("Error fetching user profile: ${exception.message}")
-                                // Cannot generate CSR because profile fetching failed
                             })
 
 
@@ -268,10 +249,9 @@ fun ScannedUserRow(
     onClick: (UserProfileResponse) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    // Use produceState to fetch user profile asynchronously
     val userState = produceState<UserProfileResponse?>(initialValue = null, userId) {
         value = try {
-            val result = UserRepository.fetchUserById(userId) // suspend fun returning Result<UserProfileResponse>
+            val result = UserRepository.fetchUserById(userId)
             result.getOrNull()
         } catch (e: Exception) {
             null
@@ -326,15 +306,6 @@ fun ScannedUserRow(
                     Text(user.profile?.displayName ?: user.username.toString(), style = MaterialTheme.typography.titleMedium)
                     Text(user.username.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                     Text(user.email.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                    /*
-                    if (!user.interests.isNullOrEmpty()) {
-                        Text(
-                            text = "Zainteresowania: ${user.interests.joinToString { it.interest.name }}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
-                        )
-                    }
-                    */
                 }
 
                 Button(onClick = {

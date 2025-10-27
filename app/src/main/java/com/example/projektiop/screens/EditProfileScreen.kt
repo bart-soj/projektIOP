@@ -24,6 +24,7 @@ import com.example.projektiop.R
 import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.projektiop.data.repositories.AuthRepository
@@ -37,23 +38,20 @@ fun EditProfileScreen(
 ) {
     var name by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
-    var birthDate by remember { mutableStateOf("") } // YYYY-MM-DD
+    var birthDate by remember { mutableStateOf("") }
     var gender by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var interests by remember { mutableStateOf("") } // legacy text field
-    var allInterests by remember {
-        mutableStateOf(
-            listOf(
-                "Programowanie",
-                "Gry Komputerowe",
-                "Cyberbezpieczeństwo",
-                "Technologia i IT",
-                "Sport i Aktywność Fizyczna",
-                "Sztuka i Kultura",
-                "Podróże i Odkrywanie"
-            )
-        )
-    }
+    var interests by remember { mutableStateOf("") }
+    val defAllInterests = listOf(
+        stringResource(R.string.interest_programming),
+        stringResource(R.string.interest_gaming),
+        stringResource(R.string.interest_cybersecurity),
+        stringResource(R.string.interest_technology),
+        stringResource(R.string.interest_sport),
+        stringResource(R.string.interest_art),
+        stringResource(R.string.interest_travel)
+    )
+    var allInterests by remember { mutableStateOf(defAllInterests) }
     var selectedInterests by remember { mutableStateOf<Set<String>>(emptySet()) }
     var interestsSaving by remember { mutableStateOf(false) }
     var broadcastMessage by remember { mutableStateOf("") }
@@ -106,7 +104,10 @@ fun EditProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Edycja profilu", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                text = stringResource(R.string.edit_profile),
+                style = MaterialTheme.typography.headlineMedium
+            )
             if (loadingInitial) {
                 Spacer(Modifier.height(8.dp))
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -134,7 +135,7 @@ fun EditProfileScreen(
                         val sizeOk = (avatarPreviewBytes?.size ?: 0) <= 5 * 1024 * 1024
                         if (!sizeOk) {
                             uploading = false
-                            uploadError = "Plik jest zbyt duży (max 5MB)."
+                            uploadError = context.getString(R.string.file_too_large)
                             return@launch
                         }
                         val result = UserRepository.uploadAvatar(
@@ -150,9 +151,9 @@ fun EditProfileScreen(
                             // Update current avatar to freshly returned one and bump version tag to refresh cache
                             currentAvatarUrl = it.profile?.avatarUrl
                             avatarVersionTag = it.updatedAt?.hashCode()?.toString()
-                        }.onFailure {
+                        }.onFailure { exception ->
                             uploading = false
-                            uploadError = it.message ?: "Nie udało się wgrać avatara"
+                            uploadError = exception.message ?: context.getString(R.string.avatar_upload_error)
                         }
                     }
                 },
@@ -166,8 +167,8 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { if (it.length <= 50) name = it },
-                label = { Text("Nick (1-50)") },
-                supportingText = { Text("${name.length}/50") },
+                label = { Text(stringResource(R.string.nickname_label)) },
+                supportingText = { Text(stringResource(R.string.nickname_count, name.length)) },
                 isError = name.isBlank() || name.length > 50,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -175,18 +176,17 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = location,
                 onValueChange = { if (it.length <= 100) location = it },
-                label = { Text("Miejscowość (max 100)") },
-                supportingText = { Text("${location.length}/100") },
+                label = { Text(stringResource(R.string.location_label)) },
+                supportingText = { Text(stringResource(R.string.location_count, location.length)) },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = birthDate,
                 onValueChange = {
-                    // Prosta walidacja format YYYY-MM-DD (pozwól wpisywać częściowo)
                     if (it.length <= 10 && it.matches(Regex("^\\d{0,4}-?\\d{0,2}-?\\d{0,2}$"))) birthDate = it
                 },
-                label = { Text("Data urodzenia (YYYY-MM-DD)") },
+                label = { Text(stringResource(R.string.birthdate_label)) },
                 isError = birthDate.isNotBlank() && !birthDate.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$")),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -196,8 +196,8 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = description,
                 onValueChange = { if (it.length <= 500) description = it },
-                label = { Text("Opis (max 500)") },
-                supportingText = { Text("${description.length}/500") },
+                label = { Text(stringResource(R.string.description_label)) },
+                supportingText = { Text(stringResource(R.string.description_count, description.length)) },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
@@ -214,8 +214,8 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = broadcastMessage,
                 onValueChange = { if (it.length <= 280) broadcastMessage = it },
-                label = { Text("Wiadomość (max 280)") },
-                supportingText = { Text("${broadcastMessage.length}/280") },
+                label = { Text(stringResource(R.string.broadcast_message_label)) },
+                supportingText = { Text(stringResource(R.string.broadcast_message_count, broadcastMessage.length)) },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(16.dp))
@@ -232,7 +232,6 @@ fun EditProfileScreen(
                             birthDate = if (birthDate.isBlank()) null else birthDate,
                             broadcastMessage = broadcastMessage
                         ).onSuccess {
-                            // After base profile is saved, sync interests if changed
                             interestsSaving = true
                             val syncRes = UserRepository.syncMyInterestsByNames(selectedInterests)
                             interestsSaving = false
@@ -252,9 +251,9 @@ fun EditProfileScreen(
                 enabled = !loadingInitial && !isLoading && name.isNotBlank() && name.length in 1..50 && (birthDate.isBlank() || birthDate.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$")))
             ) {
                 val label = when {
-                    isLoading && interestsSaving -> "Zapisywanie (zainteresowania)..."
-                    isLoading -> "Zapisywanie..."
-                    else -> "Zapisz zmiany"
+                    isLoading && interestsSaving -> stringResource(R.string.saving_interests)
+                    isLoading -> stringResource(R.string.saving)
+                    else -> stringResource(R.string.save_changes)
                 }
                 Text(label)
             }
@@ -263,24 +262,24 @@ fun EditProfileScreen(
                 onClick = { showConfirmDialog = true },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Powrót")
+                Text(stringResource(R.string.back))
             }
             if (showConfirmDialog) {
                 AlertDialog(
                     onDismissRequest = { showConfirmDialog = false },
-                    title = { Text("Potwierdzenie") },
-                    text = { Text("Czy na pewno chcesz wrócić? Niezapisane zmiany zostaną utracone.") },
+                    title = { Text(stringResource(R.string.confirmation)) },
+                    text = { Text(stringResource(R.string.confirm_back_message)) },
                     confirmButton = {
                         Button(onClick = {
                             showConfirmDialog = false
                             navController.popBackStack()
                         }) {
-                            Text("Tak, wróć")
+                            Text(stringResource(R.string.yes_go_back))
                         }
                     },
                     dismissButton = {
                         Button(onClick = { showConfirmDialog = false }) {
-                            Text("Anuluj")
+                            Text(stringResource(R.string.cancel))
                         }
                     }
                 )
@@ -298,13 +297,13 @@ private fun GenderDropdown(gender: String, onGenderChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     // Map backend values to Polish labels
     val options = listOf(
-        "" to "(brak)",
-        "male" to "Mężczyzna",
-        "female" to "Kobieta",
-        "other" to "Inna",
-        "prefer_not_to_say" to "Wolę nie podawać"
+        "" to stringResource(R.string.gender_none),
+        "male" to stringResource(R.string.gender_male),
+        "female" to stringResource(R.string.gender_female),
+        "other" to stringResource(R.string.gender_other),
+        "prefer_not_to_say" to stringResource(R.string.gender_prefer_not_to_say)
     )
-    val currentLabel = options.firstOrNull { it.first == gender }?.second ?: "(brak)"
+    val currentLabel = options.firstOrNull { it.first == gender }?.second ?: stringResource(R.string.gender_none)
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded }
@@ -342,7 +341,8 @@ private fun MultiSelectInterestsDropdown(
     onChange: (Set<String>) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val summary = if (selected.isEmpty()) "Wybierz zainteresowania" else selected.joinToString(limit = 3, truncated = "…")
+    val summary = if (selected.isEmpty()) stringResource(R.string.interests_choose)
+    else selected.joinToString(limit = 3, truncated = "…")
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded }
@@ -351,7 +351,7 @@ private fun MultiSelectInterestsDropdown(
             value = summary,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Zainteresowania") },
+            label = { Text(stringResource(R.string.interests_label)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier.menuAnchor().fillMaxWidth()
         )
@@ -391,7 +391,7 @@ private fun MultiSelectInterestsDropdown(
             TextButton(
                 onClick = { expanded = false },
                 modifier = Modifier.fillMaxWidth()
-            ) { Text("Zamknij") }
+            ) { Text(stringResource(R.string.close)) }
         }
     }
 }
@@ -407,22 +407,25 @@ private fun AvatarPicker(
     uploading: Boolean
 ) {
     val context = LocalContext.current
-    val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        if (uri != null) {
-            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-            onPick(uri, bytes)
+    val pickImage =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            if (uri != null) {
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                onPick(uri, bytes)
+            }
         }
-    }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         val bitmap = remember(avatarPreviewBytes) {
             avatarPreviewBytes?.let { bytes ->
-                kotlin.runCatching { BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap() }.getOrNull()
+                kotlin.runCatching {
+                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+                }.getOrNull()
             }
         }
         if (bitmap != null) {
             Image(
                 bitmap = bitmap,
-                contentDescription = "Podgląd avatara",
+                contentDescription = stringResource(R.string.avatar_preview),
                 modifier = Modifier.size(96.dp).clip(CircleShape),
                 contentScale = ContentScale.Crop
             )
@@ -430,7 +433,12 @@ private fun AvatarPicker(
             // Show current avatar if available, otherwise a placeholder
             val rawUrl = currentAvatarUrl?.takeIf { it.isNotBlank() }
             val fullUrl = rawUrl?.let {
-                if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it"
+                if (it.startsWith("http")) it else "${
+                    SharedPreferencesRepository.get(
+                        BASE_URL_KEY,
+                        ""
+                    )
+                }$it"
             }
             val displayUrl = fullUrl?.let { url ->
                 versionTag?.let { v -> if (url.contains('?')) "$url&v=$v" else "$url?v=$v" } ?: url
@@ -448,7 +456,7 @@ private fun AvatarPicker(
                     .build()
                 AsyncImage(
                     model = request,
-                    contentDescription = "Aktualny avatar",
+                    contentDescription = stringResource(R.string.current_avatar),
                     placeholder = painterResource(R.drawable.avatar_placeholder),
                     error = painterResource(R.drawable.avatar_placeholder),
                     modifier = Modifier.size(96.dp).clip(CircleShape),
@@ -457,17 +465,20 @@ private fun AvatarPicker(
             } else {
                 Image(
                     painter = painterResource(id = R.drawable.avatar_placeholder),
-                    contentDescription = "Brak avatara",
+                    contentDescription = stringResource(R.string.no_avatar),
                     modifier = Modifier.size(96.dp).clip(CircleShape),
                     contentScale = ContentScale.Crop
                 )
             }
-        }
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(enabled = !uploading, onClick = { pickImage.launch("image/*") }) { Text("Wybierz zdjęcie") }
-            Button(enabled = !uploading && avatarPreviewUri != null, onClick = onUpload) {
-                Text(if (uploading) "Wgrywanie..." else "Wgraj")
+            Spacer(Modifier.height(8.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(enabled = !uploading, onClick = { pickImage.launch("image/*") }) {
+                    Text(stringResource(R.string.choose_image))
+                }
+                Button(enabled = !uploading && avatarPreviewUri != null, onClick = onUpload) {
+                    Text(if (uploading) stringResource(R.string.uploading) else stringResource(R.string.upload))
+                }
             }
         }
     }

@@ -1,4 +1,4 @@
-package com.example.projektiop.screens // Użyj swojej właściwej nazwy pakietu
+package com.example.projektiop.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -19,54 +19,55 @@ import com.example.projektiop.R // Importuj zasoby R z twojego pakietu
 @Composable
 fun StartScreen(navController: NavController) {
 
-    Box( // Używamy Box, aby umieścić obraz tła za innymi elementami
+    Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // 1. Obraz tła
+        // Obraz tła
+        /* TODO: Obraz tła ładny
         Image(
-            painter = painterResource(id = R.drawable.start_background), // <<<--- ZMIEŃ NA NAZWĘ SWOJEGO PLIKU
+            painter = painterResource(id = R.drawable.start_background),
             contentDescription = stringResource(R.string.background_image_description),
-            modifier = Modifier.fillMaxSize(), // Rozciągnij obraz na cały ekran
-            contentScale = ContentScale.Crop // Dopasuj obraz (Crop przytnie, Fit dostosuje)
-            // Możesz eksperymentować z ContentScale.FillBounds, ContentScale.Fit itp.
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
         )
-
-        // 2. Zawartość na wierzchu (przyciski, logo itp.)
+        */
+        // Zawartość na wierzchu (przyciski, logo itp.)
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp, vertical = 64.dp), // Dodaj padding, aby treść nie dotykała krawędzi
-            horizontalAlignment = Alignment.CenterHorizontally, // Wycentruj elementy w kolumnie
-            verticalArrangement = Arrangement.Bottom // Umieść elementy na dole (lub .Center, .SpaceBetween, itp.)
+                .padding(horizontal = 32.dp, vertical = 64.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Bottom
         ) {
-
-            // Opcjonalnie: Logo aplikacji lub tytuł
-            // Możesz tu dodać Image z logo lub Text
+            Image(
+                painter = painterResource(id = R.drawable.app_logo),
+                contentDescription = stringResource(R.string.app_logo_image_description),
+                modifier = Modifier.size(128.dp)
+            )
             Text(
-                text = stringResource(R.string.app_name_placeholder), // Lub R.string.start_screen_welcome
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onPrimary // Użyj koloru pasującego do tła
-                // Pamiętaj, że kolor musi być czytelny na tle obrazka! Możesz potrzebować dodać półprzezroczyste tło pod tekstem/przyciskami.
+                color = MaterialTheme.colorScheme.onPrimary
             )
 
-            Spacer(modifier = Modifier.height(128.dp)) // Odstęp między tytułem a przyciskami (dostosuj)
+            Spacer(modifier = Modifier.height(96.dp)) // Odstęp między tytułem a przyciskami
 
-            // 3. Przycisk Zaloguj się
+            // Przycisk Zaloguj się
             Button(
                 onClick = {
                     navController.navigate("login")
                 },
                 modifier = Modifier
-                    .fillMaxWidth() // Przycisk na całą szerokość (z uwzględnieniem paddingu kolumny)
-                    .height(50.dp) // Stała wysokość przycisku
+                    .fillMaxWidth()
+                    .height(50.dp)
             ) {
-                Text(text = stringResource(R.string.login))
+                Text(text = stringResource(R.string.start_screen_login_button))
             }
 
-            Spacer(modifier = Modifier.height(16.dp)) // Odstęp między przyciskami
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // 4. Przycisk Zarejestruj się
-            OutlinedButton( // Użyj OutlinedButton dla wizualnego rozróżnienia
+            // Przycisk Zarejestruj się
+            OutlinedButton(
                 onClick = {
                     navController.navigate("register")
                 },
@@ -74,8 +75,7 @@ fun StartScreen(navController: NavController) {
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                // Możesz dostosować kolory obramowania/tekstu, jeśli domyślne nie pasują do tła
-                Text(text = stringResource(R.string.register))
+                Text(text = stringResource(R.string.start_screen_register_button))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -85,7 +85,7 @@ fun StartScreen(navController: NavController) {
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Text(text = "Przejdź do Main Screen")
+                Text(text = stringResource(R.string.go_to_main_screen))
             }
 
             Spacer(modifier = Modifier.height(32.dp)) // Dodatkowy odstęp od dołu
@@ -98,9 +98,7 @@ fun StartScreen(navController: NavController) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun StartScreenPreview() {
-    MaterialTheme { // Użyj swojego motywu
-        // W podglądzie obrazek tła może się nie załadować poprawnie
-        // jeśli nie masz go jeszcze w projekcie. Podgląd pokaże układ.
+    MaterialTheme {
         StartScreen(navController = rememberNavController())
     }
 }

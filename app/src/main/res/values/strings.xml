@@ -1,33 +1,8 @@
 <resources>
+
     <string name="app_name">HelloBeacon</string>
-
-
-    <string name="clear_content_description">Wyczyść</string>
     <string name="return_button_text">Powrót</string>
-    <string name="username_error">Podana nazwa użykownika jest już zajęta</string>
-    <string name="email_error">Błędny adres e-mail</string>
-    <string name="password_error">Błędne hasło</string>
-    <string name="password_label">Hasło</string>
-    <string name="email_label">E-mail</string>
-    <string name="username_label">Nazwa użytkownika</string>
-    <string name="register_button_text">Zarejestruj się</string>
-    <string name="login_button_text">Zaloguj się</string>
-    <string name="remember_me_label">Zapamiętaj mnie</string>
-    <string name="login_screen_title">Ekran logowania</string>
-    <string name="register_screen_title">Zarejestruj się</string>
-    <string name="start_screen_register_button">Rejestracja</string>
-    <string name="start_screen_login_button">Logowanie</string>
-    <string name="start_screen_scanner_button">Skaner</string>
-    <string name="start_screen_main_button">main</string>
-
-    <string name="app_name_placeholder">HelloBeacon</string>
-    <string name="start_screen_welcome">Witamy!</string>
-    <string name="login">Zaloguj się</string>
-    <string name="register">Zarejestruj się</string>
-    <string name="background_image_description">Obraz tła ekranu startowego</string>
-
-    <string name="profile_name_placeholder">John Doe</string> <!-- Przykładowa nazwa -->
-    <string name="profile_description_placeholder">Krótki opis o mnie, co lubię robić i czego szukam.</string> <!-- Przykładowy opis -->
+    <string name="clear_content_description">Wyczyść</string>
     <string name="profile_interests_label">Zainteresowania:</string>
     <string name="profile_interest_placeholder_1">Sport</string> <!-- Przykładowe zainteresowanie -->
     <string name="profile_interest_placeholder_2">Muzyka</string> <!-- Przykładowe zainteresowanie -->
@@ -38,7 +13,83 @@
     <string name="filter_icon_content_description">Filtry</string> <!-- Opis ikony filtrów -->
     <string name="broadcasting_label">Rozgłaszanie</string>
     <string name="broadcasting_status_icon_content_description">Status rozgłaszania</string> <!-- Opis ikony statusu -->
-    <!-- Stringi dla dolnego paska nawigacji (Bottom Navigation Bar) -->
+    <string name="error">Błąd</string>
+
+    <!-- Start Screen -->
+    <string name="start_screen_welcome">Witamy!</string>
+    <string name="start_screen_register_button">Rejestracja</string>
+    <string name="start_screen_login_button">Logowanie</string>
+    <string name="go_to_main_screen">Przejdź do main screen</string>
+    <string name="background_image_description">Obraz tła ekranu startowego</string>
+    <string name="app_logo_image_description">Logo</string>
+
+    <!-- Main Screen -->
+    <string name="profile_loading_description">Pobieranie opisu...</string>
+    <string name="profile_error_description">Błąd pobierania</string>
+    <string name="profile_description_placeholder">Brak opisu profilu</string>
+    <string name="profile_interests_title">Zainteresowania</string>
+    <string name="profile_no_interests">Brak</string>
+    <string name="profile_unknown_interest">/?</string>
+    <string name="profile_loading">Ładowanie...</string>
+    <string name="profile_error">Błąd</string>
+    <string name="profile_name_placeholder">Brak imienia</string>
+    <string name="edit_profile">Edytuj profil</string>
+    <string name="gender_male">Mężczyzna</string>
+    <string name="gender_female">Kobieta</string>
+    <string name="gender_other">Inna</string>
+    <string name="gender_prefer_not_to_say">Nie podano</string>
+    <string name="profile_photo">Zdjęcie profilowe</string>
+    <string name="interests">Zainteresowania</string>
+    <string name="file_too_large">Plik jest zbyt duży (max 5MB).</string>
+
+    <!-- Friend List Screen -->
+    <string name="friends_list_title">Lista znajomych</string>
+    <string name="search_users">Szukaj użytkowników</string>
+    <string name="retry">Spróbuj ponownie</string>
+    <string name="no_friends">Brak znajomych</string>
+    <string name="pending_requests">Oczekujące zaproszenia</string>
+    <string name="friends_header">Znajomi</string>
+
+    <!-- Friend Profile Screen -->
+    <string name="profile">Profil</string>
+    <string name="back">Wstecz</string>
+    <string name="no_data">Brak danych</string>
+
+    <!-- Edit Profile Screen -->
+    <string name="interest_programming">Programowanie</string>
+    <string name="interest_gaming">Gry Komputerowe</string>
+    <string name="interest_cybersecurity">Cyberbezpieczeństwo</string>
+    <string name="interest_technology">Technologia i IT</string>
+    <string name="interest_sport">Sport i Aktywność Fizyczna</string>
+    <string name="interest_art">Sztuka i Kultura</string>
+    <string name="interest_travel">Podróże i Odkrywanie</string>
+    <string name="avatar_upload_error">Nie udało się wgrać avatara</string>
+    <string name="nickname_label">Nick (1-50)</string>
+    <string name="location_label">Miejscowość (max 100)</string>
+    <string name="nickname_count">%1$d/50</string>
+    <string name="location_count">%1$d/100</string>
+    <string name="birthdate_label">Data urodzenia (YYYY-MM-DD)</string>
+    <string name="description_label">Opis (max 500)</string>
+    <string name="description_count">%1$d/500</string>
+    <string name="broadcast_message_count">%1$d/280</string>
+    <string name="saving_interests">Zapisywanie (zainteresowania)...</string>
+    <string name="saving">Zapisywanie...</string>
+    <string name="save_changes">Zapisz zmiany</string>
+    <string name="confirmation">Potwierdzenie</string>
+    <string name="confirm_back_message">Czy na pewno chcesz wrócić? Niezapisane zmiany zostaną utracone.</string>
+    <string name="yes_go_back">Tak, wróć</string>
+    <string name="cancel">Anuluj</string>
+    <string name="gender_none">(brak)</string>
+    <string name="interests_label">Zainteresowania</string>
+    <string name="interests_choose">Wybierz zainteresowania</string>
+    <string name="avatar_preview">Podgląd avatara</string>
+    <string name="current_avatar">Aktualny avatar</string>
+    <string name="no_avatar">Brak avatara</string>
+    <string name="choose_image">Wybierz zdjęcie</string>
+    <string name="uploading">Wgrywanie...</string>
+    <string name="upload">Wgraj</string>
+
+    <!-- Bottom Navigation Bar -->
     <string name="bottom_nav_home">Ekran Główny</string>
     <string name="bottom_nav_profile">Profil</string>
     <string name="bottom_nav_friends">Znajomi</string>
@@ -56,6 +107,7 @@
     <string name="profile_section_stats">Statystyki profilu</string>
     <string name="profile_settings_button_desc">Ustawienia profilu</string>
 
+    <!-- Scanner Screen -->
     <string name="scanner_screen_title">Skaner BLE</string>
     <string name="scanner_your_identifier_label">Twój identyfikator: %s</string>
     <string name="scanner_start_scanning">Rozpocznij skanowanie</string>
@@ -67,5 +119,42 @@
     <string name="ble_status_scanning">Skanowanie aktywne</string>
     <string name="ble_status_advertising">Rozgłaszanie aktywne</string>
     <string name="ble_status_inactive">Nieaktywne</string>
+
+    <!-- Settings Screen -->
     <string name="dark_mode_label">Tryb ciemny</string>
+    <string name="no_blocked_users">Brak zablokowanych użytkowników</string>
+    <string name="blocked_users">Zablokowani użytkownicy</string>
+    <string name="close">Zamknij</string>
+    <string name="three_dots">...</string>
+    <string name="unlock">Odblokuj</string>
+    <string name="blocked">Zablokowany</string>
+
+    <!-- Register/Login Screen -->
+    <string name="username_error">Podana nazwa użykownika jest już zajęta</string>
+    <string name="email_error">Błędny adres e-mail</string>
+    <string name="password_error">Błędne hasło</string>
+    <string name="password_label">Hasło</string>
+    <string name="email_label">E-mail</string>
+    <string name="username_label">Nazwa użytkownika</string>
+    <string name="register_button_text">Zarejestruj się</string>
+    <string name="error_invalid_username">Niepoprawna nazwa użytkownika</string>
+    <string name="error_invalid_email">Niepoprawny format email</string>
+    <string name="error_invalid_password">Hasło musi mieć min. 8 znaków, zawierać dużą i małą literę oraz cyfrę.</string>
+    <string name="form_fields_invalid">Popraw dane w formularzu</string>
+    <string name="register_screen_title">Rejestracja</string>
+    <string name="invalid_email_format">Niepoprawny format e-mail</string>
+    <string name="password_required">Hasło jest wymagane</string>
+    <string name="login_screen_title">Logowanie</string>
+    <string name="remember_me">Zapamiętaj mnie</string>
+    <string name="login_failed">Nieudane logowanie</string>
+    <string name="login_button_text">Zaloguj się</string>
+    <string name="logging_in">Logowanie...</string>
+
+    <!-- Chat Detail Screen -->
+    <string name="blocked_by_me">Zablokowałeś tego użytkownika. Odblokuj go, aby wysłać wiadomość.</string>
+    <string name="blocked_by_other">Nie możesz wysłać wiadomości – zostałeś zablokowany przez tego użytkownika.</string>
+    <string name="send_unavailable">Wysyłanie niedostępne</string>
+    <string name="write_message">Napisz wiadomość...</string>
+    <string name="send_message">Wyślij</string>
+
 </resources>

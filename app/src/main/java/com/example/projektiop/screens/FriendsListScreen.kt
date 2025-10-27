@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -75,11 +76,14 @@ fun FriendsListScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Lista znajomych") },
+                title = { Text(stringResource(R.string.friends_list_title)) },
                 actions = {
                     var showSearch by remember { mutableStateOf(false) }
                     IconButton(onClick = { showSearch = true }) {
-                        Icon(Icons.Default.Search, contentDescription = "Szukaj użytkowników")
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(R.string.search_users)
+                        )
                     }
                     if (showSearch) {
                         UserSearchDialog(onClose = { showSearch = false })
@@ -107,10 +111,16 @@ fun FriendsListScreen(navController: NavController) {
                     ) {
                         Text(error ?: "Błąd", color = MaterialTheme.colorScheme.error)
                         Spacer(Modifier.height(8.dp))
-                        Button(onClick = { refreshAll() }) { Text("Spróbuj ponownie") }
+                        Button(onClick = { refreshAll() }) {
+                            Text(stringResource(R.string.retry))
+                        }
                     }
                 }
-                friends.isEmpty() && incoming.isEmpty() -> Text("Brak znajomych", modifier = Modifier.align(Alignment.Center))
+                friends.isEmpty() && incoming.isEmpty() ->
+                    Text(
+                        stringResource(R.string.no_friends),
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 else -> {
                     LazyColumn(
                         modifier = Modifier
@@ -121,7 +131,11 @@ fun FriendsListScreen(navController: NavController) {
                     ) {
                         if (incoming.isNotEmpty()) {
                             item("pending_header") {
-                                Text("Oczekujące zaproszenia", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 4.dp))
+                                Text(
+                                    stringResource(R.string.pending_requests),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
                             }
                             items(incoming, key = { it.friendshipId }) { req ->
                                 PendingRequestCard(
@@ -142,7 +156,11 @@ fun FriendsListScreen(navController: NavController) {
                         }
                         if (friends.isNotEmpty()) {
                             item("friends_header") {
-                                Text("Znajomi", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 4.dp))
+                                Text(
+                                    stringResource(R.string.friends_header),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
                             }
                             items(friends, key = { it.id }) { friend ->
                                 FriendCard(

@@ -23,13 +23,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark: () -> Unit) {
 
-    var animationPlayed by remember { mutableStateOf(false) } // Flaga, by animacja zagrała raz
+    var animationPlayed by remember { mutableStateOf(false) }
     val alphaAnimation = animateFloatAsState(
-        targetValue = if (animationPlayed) 1f else 0f, // Cel: 1 (widoczne) lub 0 (niewidocne)
-        animationSpec = tween(durationMillis = 1000) // Czas trwania animacji (1 sekunda)
+        targetValue = if (animationPlayed) 1f else 0f, // 1 (widoczne) lub 0 (niewidocne)
+        animationSpec = tween(durationMillis = 1000) // Czas trwania animacji
     )
 
-    // Uruchom zmianę targetValue, gdy kompozycja się pojawi po raz pierwszy
     LaunchedEffect(Unit) {
         animationPlayed = true
     }
@@ -55,7 +54,7 @@ fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
             ) {
-                // Dark mode toggle
+                // Tryb ciemny
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -106,7 +105,6 @@ private fun BlockedUsersDialog(onClose: () -> Unit) {
     LaunchedEffect(Unit) {
         scope.launch {
             loading = true
-            // fetch profile for current user id
             com.example.projektiop.data.repositories.UserRepository.fetchMyProfile().onSuccess { myUserId = it._id }
             FriendshipRepository.fetchBlocked()
                 .onSuccess { items = it }
@@ -118,13 +116,13 @@ private fun BlockedUsersDialog(onClose: () -> Unit) {
     AlertDialog(
         onDismissRequest = onClose,
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onClose) { Text("Zamknij") } },
-        title = { Text("Zablokowani użytkownicy") },
+        dismissButton = { TextButton(onClick = onClose) { Text(text = stringResource(id = R.string.close)) } },
+        title = { Text(text = stringResource(id = R.string.blocked_users)) },
         text = {
             when {
                 loading -> { CircularProgressIndicator() }
-                error != null -> { Text(error ?: "Błąd", color = MaterialTheme.colorScheme.error) }
-                items.isEmpty() -> { Text("Brak zablokowanych użytkowników") }
+                error != null -> { Text(error ?: stringResource(id = R.string.error), color = MaterialTheme.colorScheme.error) }
+                items.isEmpty() -> { Text(text = stringResource(id = R.string.no_blocked_users)) }
                 else -> {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         items.forEach { u ->
@@ -152,9 +150,9 @@ private fun BlockedUsersDialog(onClose: () -> Unit) {
                                                     }
                                                 processingId = null
                                             }
-                                        }) { Text(if (isProcessing) "..." else "Odblokuj") }
+                                        }) { Text(if (isProcessing) stringResource(id = R.string.three_dots) else stringResource(id = R.string.unlock)) }
                                     } else {
-                                        Text("Zablokowany", style = MaterialTheme.typography.bodySmall)
+                                        Text(text = stringResource(id = R.string.blocked), style = MaterialTheme.typography.bodySmall)
                                     }
                                 }
                             }
