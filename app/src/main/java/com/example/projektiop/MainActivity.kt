@@ -1,8 +1,12 @@
 package com.example.projektiop // Upewnij się, że pakiet jest poprawny
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.os.Build
 import android.content.pm.PackageManager
+import android.util.Log
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
@@ -21,11 +25,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.example.projektiop.data.ThemePreference
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
-import com.example.projektiop.BluetoothLE.BluetoothManagerUtils.Companion.requestBluetoothPermissions
-import com.example.projektiop.BluetoothLE.BluetoothManagerUtils.Companion.showPermissionDeniedMessage
+import com.example.projektiop.BluetoothLE.BLEService
+import com.example.projektiop.BluetoothLE.BLEService.Actions
 import com.example.projektiop.screens.ChatsScreen
 
 import com.example.projektiop.screens.StartScreen
@@ -58,6 +64,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+    private val localBLEViewModel: BLEViewModel by viewModels()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,7 +74,7 @@ class MainActivity : ComponentActivity() {
             MyApp()
         }
         // Pass the correct context (this) and the permissionsLauncher
-        requestBluetoothPermissions(this, permissionsLauncher)
+        // requestBluetoothPermissions(this, permissionsLauncher)
 
         // Request notification permission on Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -75,9 +83,54 @@ class MainActivity : ComponentActivity() {
                 notificationPermissionLauncher.launch(perm)
             }
         }
+
+        lifecycleScope.launchWhenCreated {
+            localBLEViewModel.uiEvents.collect { event ->
+                when (event) {
+                    BLEViewModel.Actions.STOP -> {
+                        val intent = Intent(this@MainActivity, BLEService::class.java).apply {
+                            action = Actions.STOP.toString()
+                        }
+                        startService(intent)
+                    }
+                    BLEViewModel.Actions.START_SCAN -> {
+                        val intent = Intent(this@MainActivity, BLEService::class.java).apply {
+                            action = Actions.START_SCAN.toString()
+                        }
+                        startService(intent)
+                    }
+                    BLEViewModel.Actions.STOP_SCAN -> {
+                        val intent = Intent(this@MainActivity, BLEService::class.java).apply {
+                            action = Actions.STOP_SCAN.toString()
+                        }
+                        startService(intent)
+                    }
+                    BLEViewModel.Actions.START_ADVERTISE -> {
+                        val intent = Intent(this@MainActivity, BLEService::class.java).apply {
+                            action = Actions.START_ADVERTISE.toString()
+                        }
+                        startService(intent)
+                    }
+                    BLEViewModel.Actions.STOP_ADVERTISE -> {
+                        val intent = Intent(this@MainActivity, BLEService::class.java).apply {
+                            action = Actions.STOP_ADVERTISE.toString()
+                        }
+                        startService(intent)
+                    }
+                }
+            }
+        }
     }
 
+
+
 }
+
+private fun MainActivity.showPermissionDeniedMessage(context: Context, permission: String) {
+    Log.w("BLE_PERMISSIONS", "Użytkownik odmówił uprawnienia: $permission. Funkcjonalność może być ograniczona.")
+    Toast.makeText(context, "Odmówiono uprawnienia: $permission", Toast.LENGTH_SHORT).show()
+}
+
 
 @Composable
 fun MyApp() {
@@ -97,7 +150,7 @@ fun MyApp() {
                     viewModel = viewModel(LocalActivity.current as ComponentActivity)
                 )
             }
-            composable("main") { MainScreen(navController) }
+            composable("main") { MainScreen(navController, viewModel = viewModel(LocalActivity.current as ComponentActivity)) }
             composable("chats") { ChatsScreen(navController) }
             composable("chat_detail?chatId={chatId}&friendId={friendId}",
                 arguments = listOf(
@@ -107,7 +160,8 @@ fun MyApp() {
             ) { backStack ->
                 val chatId = backStack.arguments?.getString("chatId")
                 val friendId = backStack.arguments?.getString("friendId")
-                com.example.projektiop.screens.ChatDetailScreen(navController, chatId, friendId)
+                val friendName = backStack.arguments?.getString("friendName")
+                com.example.projektiop.screens.ChatDetailScreen(navController, chatId, friendId, friendName)
             }
             composable("settings") { SettingsScreen(navController, darkMode = darkMode, onToggleDark = {
                 darkMode = !darkMode

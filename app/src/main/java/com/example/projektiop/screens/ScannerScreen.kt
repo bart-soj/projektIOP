@@ -154,7 +154,6 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
     }
 }
 
-// Komponent ScanStatus pozostaje bez zmian
 @Composable
 fun ScanStatus(viewModel: BLEViewModel, modifier: Modifier = Modifier) {
     val isScanning = viewModel.isScanning.collectAsState().value
