@@ -1,14 +1,13 @@
 package com.example.projektiop
 
 import android.app.Application
+import com.example.projektiop.BluetoothLE.BluetoothRepository
 import com.example.projektiop.data.db.RealmProvider
 import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.data.ThemePreference
 import com.example.projektiop.data.repositories.DBRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.util.NotificationHelper
-import io.realm.kotlin.Realm
 
 /**
  * Application class for the HelloBeacon Application
@@ -17,6 +16,7 @@ import io.realm.kotlin.Realm
 
 class HelloBeaconApp : Application() {
 
+    val bluetoothRepository by lazy { BluetoothRepository(this) }
     override fun onCreate() {
         super.onCreate()
         RealmProvider.init(this)

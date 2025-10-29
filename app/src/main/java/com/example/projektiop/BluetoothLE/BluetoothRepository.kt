@@ -4,9 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
-import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
-import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.AdvertisingSet
 import android.bluetooth.le.AdvertisingSetCallback
 import android.bluetooth.le.AdvertisingSetParameters
@@ -32,28 +30,32 @@ import androidx.core.location.LocationManagerCompat
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.nio.charset.Charset
 import java.util.UUID
 
-private val SERVICE_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB") // Użyj własnego stałego UUID
+private val SERVICE_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB") // temporary
 
 // Tagi do filtrowania logów w Logcat
 private const val TAG_SCAN = "BLE_SCAN_DEBUG"
 private const val TAG_ADVERTISE = "BLE_ADVERTISE_DEBUG"
 private const val TAG_LOCATION = "BLE_LOCATION_CHECK"
-private const val TAG_PERMISSIONS = "BLE_PERMISSIONS" // Tag dla logów uprawnień
+private const val TAG_PERMISSIONS = "BLE_PERMISSIONS"
 
-class BluetoothManagerUtils(
-    private val context: Context,
-    private val ownUserId: String // Przekazujemy ID użytkownika do rozgłaszania
-) {
+private const val ID: String = "_id"
 
+class BluetoothRepository(private val context: Context) {
 
-    private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-    private val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
-    private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    private val ownUserId = SharedPreferencesRepository.get(ID, "brak")
+    private val bluetoothManager: BluetoothManager by lazy {
+        context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+    }
+    private val bluetoothAdapter: BluetoothAdapter? by lazy {
+        bluetoothManager.adapter
+    }
+    private val locationManager: LocationManager by lazy {
+        context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    }
 
     // --- Stany obserwowane przez UI ---
     private val _isScanning = MutableStateFlow(false)
@@ -69,6 +71,7 @@ class BluetoothManagerUtils(
     // --- Zbiór do przechowywania unikalnych ID znalezionych urządzeń podczas jednego skanowania ---
     private val _foundDeviceIds = MutableStateFlow<List<String>>(emptyList())
     val foundDeviceIds: StateFlow<List<String>> = _foundDeviceIds.asStateFlow()
+
 
     // --- Skanowanie ---
     private var bluetoothLeScanner: BluetoothLeScanner? = null
@@ -154,7 +157,7 @@ class BluetoothManagerUtils(
             super.onAdvertisingSetStarted(advertisingSet, txPower, status)
             if (status == ADVERTISE_SUCCESS) {
                 Log.i(TAG_ADVERTISE, ">>> Rozgłaszanie rozpoczęte pomyślnie (ID: $ownUserId, UUID: $SERVICE_UUID) <<<")
-                this@BluetoothManagerUtils.advertisingSet = advertisingSet
+                this@BluetoothRepository.advertisingSet = advertisingSet
                 _isAdvertising.value = true
             } else {
                 Log.e(TAG_ADVERTISE, "Rozgłaszanie nie powiodło się, kod błędu: $status")
@@ -209,7 +212,9 @@ class BluetoothManagerUtils(
         }
 
         // 5. Inicjalizacja skanera
-        bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
+        bluetoothLeScanner = bluetoothAdapter?.let { adapter ->
+            adapter.bluetoothLeScanner
+        }
         if (bluetoothLeScanner == null) {
             Log.e(TAG_SCAN, "Nie można uzyskać dostępu do skanera BLE (czy urządzenie wspiera BLE?).")
             _foundDeviceStatus.value = "Status: Błąd inicj. skanera"
@@ -320,7 +325,7 @@ class BluetoothManagerUtils(
         }
 
         // 5. Inicjalizacja rozgłaszacza
-        bluetoothLeAdvertiser = bluetoothAdapter.bluetoothLeAdvertiser
+        bluetoothLeAdvertiser = bluetoothAdapter?.bluetoothLeAdvertiser
         if (bluetoothLeAdvertiser == null) {
             Log.e(TAG_ADVERTISE, "Nie można uzyskać dostępu do rozgłaszacza BLE (czy urządzenie wspiera rozgłaszanie?).")
             _foundDeviceStatus.value = "Status: Błąd inicj. rozgłaszacza"
@@ -482,42 +487,38 @@ class BluetoothManagerUtils(
         return hasAll
     }
 
-    // --- Companion Object dla funkcji statycznych ---
-    companion object {
-        // Żąda brakujących uprawnień
-        fun requestBluetoothPermissions(activity: ComponentActivity, launcher: ActivityResultLauncher<Array<String>>) {
-            // Użyj tymczasowego obiektu tylko do pobrania listy WSZYSTKICH potencjalnie potrzebnych uprawnień
-            val allRequiredPermissions = BluetoothManagerUtils(activity, "").getRequiredPermissions()
-            val missingPermissions = allRequiredPermissions.filter {
-                ActivityCompat.checkSelfPermission(activity, it) != PackageManager.PERMISSION_GRANTED
-            }.toTypedArray()
+    fun requestBluetoothPermissions(activity: ComponentActivity, launcher: ActivityResultLauncher<Array<String>>) {
+        val allRequiredPermissions = this.getRequiredPermissions()
+        val missingPermissions = allRequiredPermissions.filter {
+            ActivityCompat.checkSelfPermission(activity, it) != PackageManager.PERMISSION_GRANTED
+        }.toTypedArray()
 
-            if (missingPermissions.isNotEmpty()) {
-                Log.i(TAG_PERMISSIONS, "Żądanie brakujących uprawnień: ${missingPermissions.joinToString()}")
-                launcher.launch(missingPermissions)
-            } else {
-                Log.d(TAG_PERMISSIONS, "Wszystkie wymagane uprawnienia (${allRequiredPermissions.joinToString()}) są już przyznane.")
-            }
+        if (missingPermissions.isNotEmpty()) {
+            Log.i(TAG_PERMISSIONS, "Żądanie brakujących uprawnień: ${missingPermissions.joinToString()}")
+            launcher.launch(missingPermissions)
+        } else {
+            Log.d(TAG_PERMISSIONS, "Wszystkie wymagane uprawnienia (${allRequiredPermissions.joinToString()}) są już przyznane.")
         }
+    }
 
-        // Pokazuje wiadomość o odmowie (można rozbudować)
-        fun showPermissionDeniedMessage(context: Context, permission: String) {
-            Log.w(TAG_PERMISSIONS, "Użytkownik odmówił uprawnienia: $permission. Funkcjonalność może być ograniczona.")
-            Toast.makeText(context, "Odmówiono uprawnienia: $permission", Toast.LENGTH_SHORT).show()
-        }
+    // Pokazuje wiadomość o odmowie (można rozbudować)
+    fun showPermissionDeniedMessage(context: Context, permission: String) {
+        Log.w(TAG_PERMISSIONS, "Użytkownik odmówił uprawnienia: $permission. Funkcjonalność może być ograniczona.")
+        Toast.makeText(context, "Odmówiono uprawnienia: $permission", Toast.LENGTH_SHORT).show()
+    }
 
-        // Otwiera ustawienia lokalizacji systemowej
-        fun openLocationSettings(context: Context) {
-            Log.d(TAG_LOCATION, "Otwieranie ustawień lokalizacji systemowej...")
-            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-            // Sprawdź, czy jest aktywność obsługująca ten intent
-            if (intent.resolveActivity(context.packageManager) != null) {
-                context.startActivity(intent)
-            } else {
-                Log.e(TAG_LOCATION, "Nie można znaleźć aktywności obsługującej ACTION_LOCATION_SOURCE_SETTINGS.")
-                Toast.makeText(context, "Nie można otworzyć ustawień lokalizacji.", Toast.LENGTH_SHORT).show()
-            }
+    // Otwiera ustawienia lokalizacji systemowej
+    fun openLocationSettings(context: Context) {
+        Log.d(TAG_LOCATION, "Otwieranie ustawień lokalizacji systemowej...")
+        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+        // Sprawdź, czy jest aktywność obsługująca ten intent
+        if (intent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(intent)
+        } else {
+            Log.e(TAG_LOCATION, "Nie można znaleźć aktywności obsługującej ACTION_LOCATION_SOURCE_SETTINGS.")
+            Toast.makeText(context, "Nie można otworzyć ustawień lokalizacji.", Toast.LENGTH_SHORT).show()
         }
-    } // Koniec companion object
+    }
+
 
 } // Koniec klasy BluetoothManagerUtils

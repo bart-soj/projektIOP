@@ -1,27 +1,26 @@
 package com.example.projektiop.BluetoothLE
 
 import android.app.Application
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projektiop.HelloBeaconApp
 import com.example.projektiop.data.api.UserProfileResponse
-import com.example.projektiop.data.db.objects.UserProfile
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.screens.cosineSimilarity
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.collections.mapNotNull
 import kotlin.collections.plus
-import kotlin.jvm.optionals.getOrNull
+
 
 private const val ID: String = "_id"
 
@@ -32,7 +31,11 @@ class BLEViewModel(application: Application) : AndroidViewModel(application) {
     private val userId: String = SharedPreferencesRepository.get(ID, "brak")
 
     // Instancja BLE managera z kontekstem aplikacji, aby uniknąć wycieków pamięci
-    private val bleManager = BluetoothManagerUtils(application.applicationContext, userId)
+    private val bleManager: BluetoothRepository = (application as HelloBeaconApp).bluetoothRepository
+
+    private val _uiEvents = MutableSharedFlow<Actions>()
+    val uiEvents = _uiEvents.asSharedFlow<Actions>()
+
 
     // Publiczne StateFlow do obserwowania w UI
     val isScanning: StateFlow<Boolean> = bleManager.isScanning
@@ -49,12 +52,12 @@ class BLEViewModel(application: Application) : AndroidViewModel(application) {
         val myInterests = myProfile.value?.interests?.map{ userInterest ->
             userInterest.interest.name
         }
-        _userProfiles.value.sortedByDescending { profile->
+        _userProfiles.value.sortedByDescending { profile ->
             val profileInterests = profile.interests?.map { userInterest ->
                 userInterest.interest.name
             }
-            cosineSimilarity(profileInterests?.toSet() ?: emptySet(), myInterests?.toSet() ?: emptySet())
-        }
+            cosineSimilarity(profileInterests?.toSet() ?: emptySet(), myInterests?.toSet() ?: emptySet()) // sorts by this
+        } // returns this
 
     }.stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = emptyList<UserProfileResponse>())
 
@@ -80,14 +83,33 @@ class BLEViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-
     // Akcje BLE
-    fun startScan() = bleManager.startScan()
-    fun stopScan() = bleManager.stopScan()
-    fun startAdvertising() = bleManager.startAdvertising()
-    fun stopAdvertising() = bleManager.stopAdvertising()
+    fun startScan() {
+        viewModelScope.launch {
+            _uiEvents.emit(Actions.START_SCAN)
+        }
+    }
+    fun stopScan() {
+        viewModelScope.launch {
+            _uiEvents.emit(Actions.STOP_SCAN)
+        }
+    }
+    fun startAdvertising() {
+        viewModelScope.launch {
+            _uiEvents.emit(Actions.START_ADVERTISE)
+        }
+    }
+    fun stopAdvertising() {
+        viewModelScope.launch {
+            _uiEvents.emit(Actions.STOP_ADVERTISE)
+        }
+    }
 
     fun getUserId(): String = userId
+
+    enum class Actions {
+       STOP, START_SCAN, STOP_SCAN, START_ADVERTISE, STOP_ADVERTISE
+    }
 }
 
 
