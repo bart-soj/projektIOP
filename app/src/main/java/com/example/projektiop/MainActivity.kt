@@ -161,7 +161,7 @@ fun MyApp() {
                 val chatId = backStack.arguments?.getString("chatId")
                 val friendId = backStack.arguments?.getString("friendId")
                 val friendName = backStack.arguments?.getString("friendName")
-                com.example.projektiop.screens.ChatDetailScreen(navController, chatId, friendId, friendName)
+                com.example.projektiop.screens.ChatDetailScreen(navController, chatId, friendId)
             }
             composable("settings") { SettingsScreen(navController, darkMode = darkMode, onToggleDark = {
                 darkMode = !darkMode

@@ -154,7 +154,6 @@ fun ActiveHandshakeButton(
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun BeforeScreenPreview() {
@@ -162,7 +161,6 @@ fun BeforeScreenPreview() {
         ActiveHandshakeButton() {}
     }
 }
-
 
 private fun launchActivity(context: Context, activityClass: Class<out Activity>) {
     val intent = Intent(context, activityClass)

@@ -1,7 +1,6 @@
 package com.example.projektiop.activeHandshake.NFC
 
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.nfc.NfcAdapter
@@ -16,17 +15,14 @@ import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-// import com.example.projektiop.Greeting
 import com.example.projektiop.ui.theme.ProjektIOPTheme
 
 
@@ -94,7 +90,7 @@ class HostBasedCardEmulatorActivity : ComponentActivity() {
         val intent = Intent(Intent.ACTION_RUN).apply {
             component = ComponentName("com.example.projektiop", "com.example.projektiop.activeHandshake.NFC.HCEApduService")
         }
-        this.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        this.bindService(intent, serviceConnection, BIND_AUTO_CREATE)
     }
 }
 

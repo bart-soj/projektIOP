@@ -2,13 +2,10 @@ package com.example.projektiop.activeHandshake.NFC
 
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
-import android.nfc.NdefRecord
-import android.nfc.NdefMessage
-import java.nio.charset.StandardCharsets
 
 
 class HCEApduService : HostApduService() {
-    val NDEF_APPLICATION_AID = "FFAAFFAAFFAA"
+    val NDEF_APPLICATION_AID = "FFAAFFAAFFAA".toByteArray()
     val SELECT_APDU_HEADER = "00A40400".toByteArray()
     val NDEF_DATA_FILE_ID = "E104".toByteArray()
     val SW_SUCCESS = byteArrayOf(0x90.toByte(), 0x00.toByte())

@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -34,11 +33,9 @@ import com.example.projektiop.BluetoothLE.BLEViewModel
 import com.example.projektiop.R
 import com.example.projektiop.activeHandshake.NFC.ActiveHandshakeButton
 import com.example.projektiop.data.api.CertificateRequest
-import com.example.projektiop.data.api.InterestDto
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.util.CertificateUtils
 import com.example.projektiop.data.api.UserProfileResponse
-import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository

@@ -3,14 +3,10 @@ package com.example.projektiop.activeHandshake.NFC
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
-import android.nfc.NdefMessage
-import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
 import android.nfc.NfcAdapter.getDefaultAdapter
 import android.nfc.Tag
-import android.nfc.tech.NfcF
 import android.nfc.tech.IsoDep
-import android.nfc.tech.TagTechnology
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -27,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.example.projektiop.ui.theme.ProjektIOPTheme
-import java.nio.charset.Charset
 
 class ReadNFCActivity : ComponentActivity() {
     lateinit var adapter : NfcAdapter
@@ -106,7 +101,7 @@ class ReadNFCActivity : ComponentActivity() {
 
     }
 
-    private fun initNfcExchange(tag: android.nfc.Tag) {
+    private fun initNfcExchange(tag: Tag) {
         val isoDep = IsoDep.get(tag) ?: return  // Get the IsoDep interface for the tag
         isoDep.connect()
 
