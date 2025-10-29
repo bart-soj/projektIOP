@@ -1,5 +1,6 @@
 package com.example.projektiop.screens
 
+import android.app.Application
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,7 +26,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
 import com.example.projektiop.data.repositories.UserRepository
-import com.example.projektiop.data.api.UserProfileResponse
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import coil.compose.AsyncImage
@@ -36,8 +36,10 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import com.example.projektiop.data.api.RetrofitInstance
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.viewmodels.MainViewModel
 
 
 private const val BASE_URL_KEY: String = "BASE_URL"
@@ -45,7 +47,7 @@ private const val BASE_URL_KEY: String = "BASE_URL"
 
 @OptIn(ExperimentalMaterial3Api::class) // Dla Scaffold, Card, etc.
 @Composable
-fun MainScreen(navController: NavController) {
+fun MainScreen(navController: NavController, viewModel: MainViewModel) {
     // Stan dla dolnego paska nawigacji (który element jest aktywny)
     // W prawdziwej aplikacji ten stan byłby powiązany z aktualną ścieżką NavController
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -67,7 +69,10 @@ fun MainScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp)) // Odstęp od góry
 
             // 1. Dynamiczna karta profilu
-            ProfileCardDynamic(navController)
+            ProfileCardDynamic(
+                navController,
+                viewModel = viewModel
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
             // Usunięto sekcje filtrów, rozgłaszania oraz przeniesiono przycisk listy znajomych do dolnej nawigacji
@@ -79,24 +84,18 @@ fun MainScreen(navController: NavController) {
 // --- Komponenty pomocnicze ---
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifier) {
+fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifier, viewModel: MainViewModel) {
     val scope = rememberCoroutineScope()
-    var profile by remember { mutableStateOf<UserProfileResponse?>(null) }
-    var loading by remember { mutableStateOf(true) }
+    val profile by viewModel.myProfile.collectAsState()
+    val loading by viewModel.loading.collectAsState()
     var error by remember { mutableStateOf<String?>(null) }
 
     // Re-fetch on entering screen (including returning from edit) by keying effect to current route
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     LaunchedEffect(navBackStackEntry?.destination?.route) {
         if (navBackStackEntry?.destination?.route == "main") {
-            scope.launch {
-                loading = true
-                error = null
-                UserRepository.fetchMyProfile()
-                    .onSuccess { profile = it }
-                    .onFailure { error = it.message }
-                loading = false
-            }
+            error = null
+            viewModel.refreshProfile()
         }
     }
 
@@ -123,7 +122,7 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                             .data(displayUrl)
                             .crossfade(true)
                             .apply {
-                                val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                                val token = AuthRepository.getToken()
                                 if (!token.isNullOrBlank()) {
                                     addHeader("Authorization", "Bearer $token")
                                 }
@@ -248,8 +247,6 @@ fun InterestTag(text: String) { // Prosty Chip/Tag
     SuggestionChip(onClick = { /* Nic nie rób lub pozwól na interakcję */ }, label = { Text(text) })
 }
 
-// Usunięto BroadcastToggle
-
 
 // --- Dolny Pasek Nawigacji (element 9) ---
 
@@ -298,7 +295,7 @@ fun BottomNavigationBar(navController: NavController, currentRoute: String?) {
 @Composable
 fun MainScreenPreview() {
     MaterialTheme { // Użyj swojego motywu
-        MainScreen(navController = rememberNavController())
+        MainScreen(navController = rememberNavController(), viewModel = MainViewModel())
     }
 }
 
