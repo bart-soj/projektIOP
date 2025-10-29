@@ -13,14 +13,17 @@ import com.example.projektiop.R
 object NotificationHelper {
     const val CHANNEL_FRIEND = "friend_events"
     const val CHANNEL_MESSAGES = "chat_messages"
+    const val CHANNEL_BLE = "ble_service"
 
     fun initChannels(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val friend = NotificationChannel(CHANNEL_FRIEND, "Zaproszenia", NotificationManager.IMPORTANCE_DEFAULT)
+            val bleservice = NotificationChannel(CHANNEL_BLE, "Foreground Service", NotificationManager.IMPORTANCE_DEFAULT)
             val messages = NotificationChannel(CHANNEL_MESSAGES, "Wiadomości", NotificationManager.IMPORTANCE_HIGH)
             nm.createNotificationChannel(friend)
             nm.createNotificationChannel(messages)
+            nm.createNotificationChannel(bleservice)
         }
     }
 

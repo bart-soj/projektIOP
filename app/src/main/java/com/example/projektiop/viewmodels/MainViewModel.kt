@@ -1,0 +1,33 @@
+package com.example.projektiop.viewmodels
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.projektiop.data.api.UserProfileResponse
+import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.data.repositories.UserRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+
+private const val ID: String = "_id"
+
+
+class MainViewModel() : ViewModel() {
+
+    // userId z SharedPreferences
+    private val userId: String = SharedPreferencesRepository.get(ID, "brak")
+
+    val myProfile: StateFlow<UserProfileResponse?> = UserRepository.MyProfile
+    private val _loading = MutableStateFlow(false)
+    val loading: StateFlow<Boolean> = _loading.asStateFlow()
+
+    fun refreshProfile() {
+        _loading.value = true
+        viewModelScope.launch{
+            UserRepository.fetchMyProfile()
+        }
+        _loading.value = false
+    }
+}
