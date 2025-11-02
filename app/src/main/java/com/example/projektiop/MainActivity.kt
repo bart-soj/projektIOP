@@ -45,6 +45,7 @@ import com.example.projektiop.screens.FriendsListScreen
 import com.example.projektiop.screens.FriendProfileScreen
 
 import com.example.projektiop.BluetoothLE.BLEViewModel
+import com.example.projektiop.BluetoothLE.BTPermissionsManager
 
 class MainActivity : ComponentActivity() {
 
@@ -65,6 +66,9 @@ class MainActivity : ComponentActivity() {
         }
 
     private val localBLEViewModel: BLEViewModel by viewModels()
+    private val localBTPermissionsManager: BTPermissionsManager by lazy {
+        BTPermissionsManager(this)
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,8 +77,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyApp()
         }
-        // Pass the correct context (this) and the permissionsLauncher
-        // requestBluetoothPermissions(this, permissionsLauncher)
+
 
         // Request notification permission on Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -94,6 +97,8 @@ class MainActivity : ComponentActivity() {
                         startService(intent)
                     }
                     BLEViewModel.Actions.START_SCAN -> {
+                        localBTPermissionsManager.requestBluetoothPermissions(this@MainActivity, permissionsLauncher)
+                        localBTPermissionsManager.showBluetoothLocationSnackbar(this@MainActivity)
                         val intent = Intent(this@MainActivity, BLEService::class.java).apply {
                             action = Actions.START_SCAN.toString()
                         }
@@ -106,6 +111,8 @@ class MainActivity : ComponentActivity() {
                         startService(intent)
                     }
                     BLEViewModel.Actions.START_ADVERTISE -> {
+                        localBTPermissionsManager.requestBluetoothPermissions(this@MainActivity, permissionsLauncher)
+                        localBTPermissionsManager.showBluetoothLocationSnackbar(this@MainActivity)
                         val intent = Intent(this@MainActivity, BLEService::class.java).apply {
                             action = Actions.START_ADVERTISE.toString()
                         }

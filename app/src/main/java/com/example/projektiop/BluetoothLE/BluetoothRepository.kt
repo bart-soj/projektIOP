@@ -425,14 +425,10 @@ class BluetoothRepository(private val context: Context) {
 
     // --- Funkcje pomocnicze ---
 
-    // Sprawdza, czy lokalizacja systemowa jest włączona
     private fun isLocationEnabled(): Boolean {
         return LocationManagerCompat.isLocationEnabled(locationManager)
     }
 
-    // --- Funkcje pomocnicze do uprawnień (DEFINIOWANE TYLKO RAZ) ---
-
-    // Zwraca listę *wszystkich* potencjalnie wymaganych uprawnień
     fun getRequiredPermissions(): Array<String> {
         val permissions = mutableListOf<String>()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+
@@ -486,39 +482,4 @@ class BluetoothRepository(private val context: Context) {
         Log.d(TAG_PERMISSIONS, "Sprawdzenie uprawnień [${permissions.joinToString()}]: $hasAll")
         return hasAll
     }
-
-    fun requestBluetoothPermissions(activity: ComponentActivity, launcher: ActivityResultLauncher<Array<String>>) {
-        val allRequiredPermissions = this.getRequiredPermissions()
-        val missingPermissions = allRequiredPermissions.filter {
-            ActivityCompat.checkSelfPermission(activity, it) != PackageManager.PERMISSION_GRANTED
-        }.toTypedArray()
-
-        if (missingPermissions.isNotEmpty()) {
-            Log.i(TAG_PERMISSIONS, "Żądanie brakujących uprawnień: ${missingPermissions.joinToString()}")
-            launcher.launch(missingPermissions)
-        } else {
-            Log.d(TAG_PERMISSIONS, "Wszystkie wymagane uprawnienia (${allRequiredPermissions.joinToString()}) są już przyznane.")
-        }
-    }
-
-    // Pokazuje wiadomość o odmowie (można rozbudować)
-    fun showPermissionDeniedMessage(context: Context, permission: String) {
-        Log.w(TAG_PERMISSIONS, "Użytkownik odmówił uprawnienia: $permission. Funkcjonalność może być ograniczona.")
-        Toast.makeText(context, "Odmówiono uprawnienia: $permission", Toast.LENGTH_SHORT).show()
-    }
-
-    // Otwiera ustawienia lokalizacji systemowej
-    fun openLocationSettings(context: Context) {
-        Log.d(TAG_LOCATION, "Otwieranie ustawień lokalizacji systemowej...")
-        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-        // Sprawdź, czy jest aktywność obsługująca ten intent
-        if (intent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(intent)
-        } else {
-            Log.e(TAG_LOCATION, "Nie można znaleźć aktywności obsługującej ACTION_LOCATION_SOURCE_SETTINGS.")
-            Toast.makeText(context, "Nie można otworzyć ustawień lokalizacji.", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-
-} // Koniec klasy BluetoothManagerUtils
+}

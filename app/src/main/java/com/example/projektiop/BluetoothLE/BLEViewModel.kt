@@ -36,7 +36,6 @@ class BLEViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiEvents = MutableSharedFlow<Actions>()
     val uiEvents = _uiEvents.asSharedFlow<Actions>()
 
-
     // Publiczne StateFlow do obserwowania w UI
     val isScanning: StateFlow<Boolean> = bleManager.isScanning
     val isAdvertising: StateFlow<Boolean> = bleManager.isAdvertising

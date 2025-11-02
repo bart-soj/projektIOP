@@ -67,7 +67,7 @@ fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark
                 Button(
                     onClick = { showBlockedDialog = true },
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("Zablokowani użytkownicy") }
+                ) { Text(text = stringResource(id = R.string.blocked_users)) }
 
                 Spacer(modifier = Modifier.weight(1f))
                 Button(
@@ -83,7 +83,7 @@ fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark
                         contentColor = MaterialTheme.colorScheme.onError
                     )
                 ) {
-                    Text("Wyloguj się", style = MaterialTheme.typography.titleLarge)
+                    Text(stringResource(R.string.log_out), style = MaterialTheme.typography.titleLarge)
                 }
             }
         }
