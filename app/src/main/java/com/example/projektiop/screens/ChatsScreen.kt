@@ -29,11 +29,7 @@ import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.ChatUpdateManager
 import com.example.projektiop.data.repositories.UserRepository
 import coil.compose.AsyncImage
-import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import kotlinx.coroutines.launch
-
-private const val BASE_URL_KEY: String = "BASE_URL"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,19 +80,21 @@ fun ChatsScreen(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(paddingValues) // Zastosuj padding od Scaffold
+            // Nie dodajemy .verticalScroll(), bo użyjemy LazyColumn
         ) {
-            // 1 & 2. Pole wyszukiwania i przycisk
+            // 1 & 2. Pole wyszukiwania i przycisk (w jednym komponencie TextField)
             SearchBar(
                 searchText = searchText,
                 onSearchTextChanged = { searchText = it },
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
+            // Spacer między wyszukiwaniem a listą
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 3, 4, 5. Lista znajomych/czatów
-            // 6. Pasek przewijania
+            // 3, 4, 5. Lista znajomych/czatów (używamy LazyColumn dla wydajności)
+            // 6. Pasek przewijania jest automatycznie obsługiwany przez LazyColumn
             when {
                 loading -> {
                     Box(Modifier.fillMaxSize()) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
@@ -104,10 +102,7 @@ fun ChatsScreen(navController: NavController) {
                 error != null -> {
                     Box(Modifier.fillMaxSize()) {
                         Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = error ?: stringResource(R.string.error),
-                                color = MaterialTheme.colorScheme.error
-                            )
+                            Text(error ?: "Błąd", color = MaterialTheme.colorScheme.error)
                             Spacer(Modifier.height(8.dp))
                             Button(onClick = {
                                 scope.launch {
@@ -166,14 +161,14 @@ fun SearchBar(
         value = searchText,
         onValueChange = onSearchTextChanged,
         modifier = modifier.fillMaxWidth(),
-        label = { Text(stringResource(R.string.search_label)) },
-        leadingIcon = {
+        label = { Text(stringResource(R.string.search_label)) }, // Dodaj zasób string dla "Szukaj..."
+        leadingIcon = { // Ikona wewnątrz pola tekstowego
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = stringResource(R.string.search_icon_desc)
+                contentDescription = stringResource(R.string.search_icon_desc) // Dodaj opis dla dostępności
             )
         },
-        singleLine = true
+        singleLine = true // Zapobiega wieloliniowości
     )
 }
 
@@ -186,19 +181,19 @@ fun ChatItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
+            .clickable(onClick = onClick) // Cały wiersz klikalny
+            .padding(vertical = 8.dp), // Dodaj trochę pionowego paddingu
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 3. Zdjęcie profilowe znajomego
         val avatarUrl = chatData.avatarUrl
         val ctx = LocalContext.current
-        val fullUrl = avatarUrl?.let { if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY,"")}$it" }
+        val fullUrl = avatarUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
         val imageRequest = coil.request.ImageRequest.Builder(ctx)
             .data(fullUrl)
             .crossfade(true)
             .apply {
-                val token = AuthRepository.getToken()
+                val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
                 if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
             }
             .build()
@@ -230,7 +225,7 @@ fun ChatItem(
             Text(
                 text = chatData.lastMessage,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, // Stonowany kolor
                 maxLines = 1, // Maksymalnie jedna linia
                 overflow = TextOverflow.Ellipsis // Utnij, jeśli za długie
             )
@@ -250,10 +245,37 @@ fun ChatItem(
 
 // --- Podgląd ---
 
-@Preview(showBackground = true, widthDp = 360, heightDp = 640)
+@Preview(showBackground = true, widthDp = 360, heightDp = 640) // Podgląd na typowym rozmiarze telefonu
 @Composable
 fun ChatsScreenPreview() {
+    // Załóżmy, że masz zdefiniowany MaterialTheme w projekcie
+    // Jeśli nie, użyj domyślnego lub zastąp go swoim
     MaterialTheme {
         ChatsScreen(navController = rememberNavController())
     }
 }
+
+// --- Dodaj te zasoby string do pliku strings.xml ---
+/*
+<resources>
+    ... inne stringi ...
+    <string name="search_label">Szukaj...</string>
+    <string name="search_icon_desc">Ikona wyszukiwania</string>
+    <string name="profile_picture_desc">Zdjęcie profilowe %1$s</string> // %1$s zostanie zastąpione nazwą znajomego
+    // Dodaj stringi dla dolnego paska nawigacji jeśli jeszcze ich nie masz
+    <string name="bottom_nav_home">Główna</string>
+    <string name="bottom_nav_profile">Profil</string>
+    <string name="bottom_nav_chats">Czaty</string>
+    <string name="bottom_nav_broadcast">Rozgłaszanie</string>
+    <string name="bottom_nav_settings">Ustawienia</string>
+    // Dodaj stringi używane w MainScreen (jeśli ich nie ma)
+    <string name="filter_settings_label">Ustawienia filtrów</string>
+    <string name="profile_name_placeholder">Jan Kowalski</string>
+    <string name="profile_description_placeholder">Opis profilu użytkownika, może być dłuższy.</string>
+    <string name="profile_interests_label">Zainteresowania:</string>
+    <string name="profile_interest_1">Programowanie</string>
+    <string name="profile_interest_2">Gry</string>
+    <string name="profile_interest_3">Muzyka</string>
+    <string name="broadcasting_label">Rozgłaszanie lokalizacji</string>
+</resources>
+*/

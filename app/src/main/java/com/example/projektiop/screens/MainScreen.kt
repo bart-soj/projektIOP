@@ -226,9 +226,8 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                     InterestTag(text = stringResource(R.string.profile_no_interests))
                 } else {
                     interests.forEach { ui ->
-                        val label = ui.interest.name.ifBlank {
-                            stringResource(R.string.profile_unknown_interest)
-                        }
+                        val base = ui.interest.name.ifBlank { stringResource(R.string.profile_unknown_interest) }
+                        val label = if (!ui.customDescription.isNullOrBlank()) "$base — ${ui.customDescription}" else base
                         InterestTag(text = label)
                     }
                 }

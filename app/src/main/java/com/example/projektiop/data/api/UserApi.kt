@@ -28,6 +28,7 @@ interface UserApi {
     @PUT("users/profile/avatar")
     suspend fun uploadAvatar(@Part avatarImage: MultipartBody.Part): Response<UserProfileResponse>
 
+    // TODO() THIS DOES NOT EXIST SERVERSIDE YET
     // Profil innego użytkownika po ID: GET /api/users/{id}
     @GET("users/{id}")
     suspend fun getUserById(@Path("id") id: String): Response<UserProfileResponse>

@@ -13,10 +13,6 @@ import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.ChatListItem
 import com.example.projektiop.data.repositories.UserRepository
 
-/**
- * Periodically polls chats to detect new incoming messages and exposes a StateFlow for UI.
- * Uses unread flag from ChatRepository + lastMessageTime change to decide notifications.
- */
 object ChatUpdateManager {
     private const val POLL_INTERVAL_MS = 15000L
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -52,7 +48,6 @@ object ChatUpdateManager {
             val prevTime = lastMessageTimes[item.id]
             val currentTime = item.lastMessageTime
             if (prevTime != null && currentTime != null && currentTime > prevTime && item.unread) {
-                // New unread message arrived
                 NotificationHelper.notifyMessage(
                     context,
                     fromUser = item.title,

@@ -24,13 +24,8 @@ import com.example.projektiop.R
 import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.data.repositories.SharedPreferencesRepository
-
-private const val BASE_URL_KEY: String = "BASE_URL"
 
 @Composable
 fun EditProfileScreen(
@@ -42,17 +37,22 @@ fun EditProfileScreen(
     var gender by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var interests by remember { mutableStateOf("") }
-    val defAllInterests = listOf(
-        stringResource(R.string.interest_programming),
-        stringResource(R.string.interest_gaming),
-        stringResource(R.string.interest_cybersecurity),
-        stringResource(R.string.interest_technology),
-        stringResource(R.string.interest_sport),
-        stringResource(R.string.interest_art),
-        stringResource(R.string.interest_travel)
-    )
-    var allInterests by remember { mutableStateOf(defAllInterests) }
+    var allInterests by remember {
+        mutableStateOf(
+            listOf(
+                "Programowanie",
+                "Gry Komputerowe",
+                "Cyberbezpieczeństwo",
+                "Technologia i IT",
+                "Sport i Aktywność Fizyczna",
+                "Sztuka i Kultura",
+                "Podróże i Odkrywanie"
+            )
+        )
+    }
     var selectedInterests by remember { mutableStateOf<Set<String>>(emptySet()) }
+    // Map: interest name -> custom description
+    var selectedDescriptions by remember { mutableStateOf(mutableMapOf<String, String>()) }
     var interestsSaving by remember { mutableStateOf(false) }
     var broadcastMessage by remember { mutableStateOf("") }
     var loadingInitial by remember { mutableStateOf(true) }
@@ -72,7 +72,6 @@ fun EditProfileScreen(
         loadingInitial = true
         UserRepository.fetchMyProfile()
             .onSuccess { prof ->
-                // Preferuj dowolne wystąpienie displayName (top-level lub nested profile)
                 name = prof.effectiveDisplayName ?: prof.username ?: prof.email ?: ""
                 description = prof.effectiveDescription ?: ""
                 gender = prof.profile?.gender ?: ""
@@ -81,12 +80,19 @@ fun EditProfileScreen(
                 broadcastMessage = prof.profile?.broadcastMessage ?: ""
                 currentAvatarUrl = prof.profile?.avatarUrl
                 avatarVersionTag = prof.updatedAt?.hashCode()?.toString()
-                // Initialize interests selection from server-provided interests by name
                 val names = prof.interests?.mapNotNull { it.interest.name }?.toSet().orEmpty()
                 selectedInterests = names
+                // Prefill descriptions for selected interests
+                val descMap = mutableMapOf<String, String>()
+                prof.interests.orEmpty().forEach { ui ->
+                    val nm = ui.interest.name
+                    if (!nm.isNullOrBlank()) {
+                        descMap[nm] = ui.customDescription ?: ""
+                    }
+                }
+                selectedDescriptions = descMap
             }
             .onFailure { error = it.message }
-        // Fetch available interests from backend and sort by name
         UserRepository.fetchInterestsMap()
             .onSuccess { map ->
                 allInterests = map.keys.sorted()
@@ -98,16 +104,13 @@ fun EditProfileScreen(
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .verticalScroll(rememberScrollState())
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = stringResource(R.string.edit_profile),
-                style = MaterialTheme.typography.headlineMedium
-            )
+            Text("Edycja profilu", style = MaterialTheme.typography.headlineMedium)
             if (loadingInitial) {
                 Spacer(Modifier.height(8.dp))
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -127,15 +130,13 @@ fun EditProfileScreen(
                     coroutineScope.launch {
                         uploading = true
                         uploadError = null
-                        // Read metadata
                         val resolver = context.contentResolver
                         val name = queryDisplayName(context, avatarPreviewUri!!)
                         val type = resolver.getType(avatarPreviewUri!!)
-                        // Basic validation: <= 5MB as per backend
-                        val sizeOk = (avatarPreviewBytes?.size ?: 0) <= 5 * 1024 * 1024
+                        val sizeOk = avatarPreviewBytes?.size ?: 0 <= 5 * 1024 * 1024
                         if (!sizeOk) {
                             uploading = false
-                            uploadError = context.getString(R.string.file_too_large)
+                            uploadError = "Plik jest zbyt duży (max 5MB)."
                             return@launch
                         }
                         val result = UserRepository.uploadAvatar(
@@ -145,15 +146,13 @@ fun EditProfileScreen(
                         )
                         result.onSuccess {
                             uploading = false
-                            // Clear preview and maybe show a toast/snackbar
                             avatarPreviewUri = null
                             avatarPreviewBytes = null
-                            // Update current avatar to freshly returned one and bump version tag to refresh cache
                             currentAvatarUrl = it.profile?.avatarUrl
                             avatarVersionTag = it.updatedAt?.hashCode()?.toString()
-                        }.onFailure { exception ->
+                        }.onFailure {
                             uploading = false
-                            uploadError = exception.message ?: context.getString(R.string.avatar_upload_error)
+                            uploadError = it.message ?: "Nie udało się wgrać avatara"
                         }
                     }
                 },
@@ -167,8 +166,8 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { if (it.length <= 50) name = it },
-                label = { Text(stringResource(R.string.nickname_label)) },
-                supportingText = { Text(stringResource(R.string.nickname_count, name.length)) },
+                label = { Text("Nick (1-50)") },
+                supportingText = { Text("${name.length}/50") },
                 isError = name.isBlank() || name.length > 50,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -176,17 +175,18 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = location,
                 onValueChange = { if (it.length <= 100) location = it },
-                label = { Text(stringResource(R.string.location_label)) },
-                supportingText = { Text(stringResource(R.string.location_count, location.length)) },
+                label = { Text("Miejscowość (max 100)") },
+                supportingText = { Text("${location.length}/100") },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = birthDate,
                 onValueChange = {
+                    // Prosta walidacja format YYYY-MM-DD (pozwól wpisywać częściowo)
                     if (it.length <= 10 && it.matches(Regex("^\\d{0,4}-?\\d{0,2}-?\\d{0,2}$"))) birthDate = it
                 },
-                label = { Text(stringResource(R.string.birthdate_label)) },
+                label = { Text("Data urodzenia (YYYY-MM-DD)") },
                 isError = birthDate.isNotBlank() && !birthDate.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$")),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -196,8 +196,8 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = description,
                 onValueChange = { if (it.length <= 500) description = it },
-                label = { Text(stringResource(R.string.description_label)) },
-                supportingText = { Text(stringResource(R.string.description_count, description.length)) },
+                label = { Text("Opis (max 500)") },
+                supportingText = { Text("${description.length}/500") },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
@@ -205,17 +205,54 @@ fun EditProfileScreen(
                 all = allInterests,
                 selected = selectedInterests,
                 onChange = { updated ->
+                    // Track add/remove to keep descriptions map in sync
+                    val removed = selectedInterests.minus(updated)
+                    val added = updated.minus(selectedInterests)
+                    // Remove stale descriptions
+                    if (removed.isNotEmpty()) {
+                        selectedDescriptions = selectedDescriptions.toMutableMap().apply {
+                            removed.forEach { remove(it) }
+                        }
+                    }
+                    // Initialize new ones with empty if not present
+                    if (added.isNotEmpty()) {
+                        selectedDescriptions = selectedDescriptions.toMutableMap().apply {
+                            added.forEach { if (get(it) == null) put(it, "") }
+                        }
+                    }
                     selectedInterests = updated
                     interests = updated.joinToString(",")
                 }
             )
+            // Per-interest description editors
+            if (selectedInterests.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                Text("Opisy zainteresowań (opcjonalne)", style = MaterialTheme.typography.titleSmall)
+                Spacer(Modifier.height(4.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    selectedInterests.sorted().forEach { nameKey ->
+                        val value = selectedDescriptions[nameKey] ?: ""
+                        OutlinedTextField(
+                            value = value,
+                            onValueChange = { newVal ->
+                                if (newVal.length <= 200) {
+                                    selectedDescriptions = selectedDescriptions.toMutableMap().apply { put(nameKey, newVal) }
+                                }
+                            },
+                            label = { Text("$nameKey – opis (max 200)") },
+                            supportingText = { Text("${value.length}/200") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
             Spacer(Modifier.height(12.dp))
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = broadcastMessage,
                 onValueChange = { if (it.length <= 280) broadcastMessage = it },
-                label = { Text(stringResource(R.string.broadcast_message_label)) },
-                supportingText = { Text(stringResource(R.string.broadcast_message_count, broadcastMessage.length)) },
+                label = { Text("Wiadomość (max 280)") },
+                supportingText = { Text("${broadcastMessage.length}/280") },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(16.dp))
@@ -232,8 +269,12 @@ fun EditProfileScreen(
                             birthDate = if (birthDate.isBlank()) null else birthDate,
                             broadcastMessage = broadcastMessage
                         ).onSuccess {
+                            // After base profile is saved, sync interests if changed
                             interestsSaving = true
-                            val syncRes = UserRepository.syncMyInterestsByNames(selectedInterests)
+                            val desired = selectedInterests.associateWith { nm ->
+                                selectedDescriptions[nm]?.takeIf { it.isNotBlank() }
+                            }
+                            val syncRes = UserRepository.syncMyInterestsWithDescriptions(desired)
                             interestsSaving = false
                             isLoading = false
                             syncRes.onSuccess {
@@ -251,9 +292,9 @@ fun EditProfileScreen(
                 enabled = !loadingInitial && !isLoading && name.isNotBlank() && name.length in 1..50 && (birthDate.isBlank() || birthDate.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$")))
             ) {
                 val label = when {
-                    isLoading && interestsSaving -> stringResource(R.string.saving_interests)
-                    isLoading -> stringResource(R.string.saving)
-                    else -> stringResource(R.string.save_changes)
+                    isLoading && interestsSaving -> "Zapisywanie (zainteresowania)..."
+                    isLoading -> "Zapisywanie..."
+                    else -> "Zapisz zmiany"
                 }
                 Text(label)
             }
@@ -262,24 +303,24 @@ fun EditProfileScreen(
                 onClick = { showConfirmDialog = true },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(stringResource(R.string.back))
+                Text("Powrót")
             }
             if (showConfirmDialog) {
                 AlertDialog(
                     onDismissRequest = { showConfirmDialog = false },
-                    title = { Text(stringResource(R.string.confirmation)) },
-                    text = { Text(stringResource(R.string.confirm_back_message)) },
+                    title = { Text("Potwierdzenie") },
+                    text = { Text("Czy na pewno chcesz wrócić? Niezapisane zmiany zostaną utracone.") },
                     confirmButton = {
                         Button(onClick = {
                             showConfirmDialog = false
                             navController.popBackStack()
                         }) {
-                            Text(stringResource(R.string.yes_go_back))
+                            Text("Tak, wróć")
                         }
                     },
                     dismissButton = {
                         Button(onClick = { showConfirmDialog = false }) {
-                            Text(stringResource(R.string.cancel))
+                            Text("Anuluj")
                         }
                     }
                 )
@@ -297,13 +338,13 @@ private fun GenderDropdown(gender: String, onGenderChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     // Map backend values to Polish labels
     val options = listOf(
-        "" to stringResource(R.string.gender_none),
-        "male" to stringResource(R.string.gender_male),
-        "female" to stringResource(R.string.gender_female),
-        "other" to stringResource(R.string.gender_other),
-        "prefer_not_to_say" to stringResource(R.string.gender_prefer_not_to_say)
+        "" to "(brak)",
+        "male" to "Mężczyzna",
+        "female" to "Kobieta",
+        "other" to "Inna",
+        "prefer_not_to_say" to "Wolę nie podawać"
     )
-    val currentLabel = options.firstOrNull { it.first == gender }?.second ?: stringResource(R.string.gender_none)
+    val currentLabel = options.firstOrNull { it.first == gender }?.second ?: "(brak)"
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded }
@@ -341,8 +382,7 @@ private fun MultiSelectInterestsDropdown(
     onChange: (Set<String>) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val summary = if (selected.isEmpty()) stringResource(R.string.interests_choose)
-    else selected.joinToString(limit = 3, truncated = "…")
+    val summary = if (selected.isEmpty()) "Wybierz zainteresowania" else selected.joinToString(limit = 3, truncated = "…")
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded }
@@ -351,7 +391,7 @@ private fun MultiSelectInterestsDropdown(
             value = summary,
             onValueChange = {},
             readOnly = true,
-            label = { Text(stringResource(R.string.interests_label)) },
+            label = { Text("Zainteresowania") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier.menuAnchor().fillMaxWidth()
         )
@@ -391,7 +431,7 @@ private fun MultiSelectInterestsDropdown(
             TextButton(
                 onClick = { expanded = false },
                 modifier = Modifier.fillMaxWidth()
-            ) { Text(stringResource(R.string.close)) }
+            ) { Text("Zamknij") }
         }
     }
 }
@@ -407,39 +447,29 @@ private fun AvatarPicker(
     uploading: Boolean
 ) {
     val context = LocalContext.current
-    val pickImage =
-        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            if (uri != null) {
-                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                onPick(uri, bytes)
-            }
+    val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            onPick(uri, bytes)
         }
+    }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         val bitmap = remember(avatarPreviewBytes) {
             avatarPreviewBytes?.let { bytes ->
-                kotlin.runCatching {
-                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
-                }.getOrNull()
+                kotlin.runCatching { BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap() }.getOrNull()
             }
         }
         if (bitmap != null) {
             Image(
                 bitmap = bitmap,
-                contentDescription = stringResource(R.string.avatar_preview),
+                contentDescription = "Podgląd avatara",
                 modifier = Modifier.size(96.dp).clip(CircleShape),
                 contentScale = ContentScale.Crop
             )
         } else {
             // Show current avatar if available, otherwise a placeholder
             val rawUrl = currentAvatarUrl?.takeIf { it.isNotBlank() }
-            val fullUrl = rawUrl?.let {
-                if (it.startsWith("http")) it else "${
-                    SharedPreferencesRepository.get(
-                        BASE_URL_KEY,
-                        ""
-                    )
-                }$it"
-            }
+            val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
             val displayUrl = fullUrl?.let { url ->
                 versionTag?.let { v -> if (url.contains('?')) "$url&v=$v" else "$url?v=$v" } ?: url
             }
@@ -448,7 +478,7 @@ private fun AvatarPicker(
                     .data(displayUrl)
                     .crossfade(true)
                     .apply {
-                        val token = AuthRepository.getToken()
+                        val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
                         if (!token.isNullOrBlank()) {
                             addHeader("Authorization", "Bearer $token")
                         }
@@ -456,7 +486,7 @@ private fun AvatarPicker(
                     .build()
                 AsyncImage(
                     model = request,
-                    contentDescription = stringResource(R.string.current_avatar),
+                    contentDescription = "Aktualny avatar",
                     placeholder = painterResource(R.drawable.avatar_placeholder),
                     error = painterResource(R.drawable.avatar_placeholder),
                     modifier = Modifier.size(96.dp).clip(CircleShape),
@@ -465,20 +495,17 @@ private fun AvatarPicker(
             } else {
                 Image(
                     painter = painterResource(id = R.drawable.avatar_placeholder),
-                    contentDescription = stringResource(R.string.no_avatar),
+                    contentDescription = "Brak avatara",
                     modifier = Modifier.size(96.dp).clip(CircleShape),
                     contentScale = ContentScale.Crop
                 )
             }
-            Spacer(Modifier.height(8.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(enabled = !uploading, onClick = { pickImage.launch("image/*") }) {
-                    Text(stringResource(R.string.choose_image))
-                }
-                Button(enabled = !uploading && avatarPreviewUri != null, onClick = onUpload) {
-                    Text(if (uploading) stringResource(R.string.uploading) else stringResource(R.string.upload))
-                }
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(enabled = !uploading, onClick = { pickImage.launch("image/*") }) { Text("Wybierz zdjęcie") }
+            Button(enabled = !uploading && avatarPreviewUri != null, onClick = onUpload) {
+                Text(if (uploading) "Wgrywanie..." else "Wgraj")
             }
         }
     }

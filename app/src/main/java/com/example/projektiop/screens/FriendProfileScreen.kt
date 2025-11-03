@@ -26,22 +26,9 @@ import java.time.Period
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.material.icons.filled.Cake
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.data.api.Profile
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.projektiop.data.repositories.SharedPreferencesRepository
-import com.example.projektiop.data.repositories.UserRepository
-import java.time.format.DateTimeParseException
-
-private const val BASE_URL_KEY: String = "BASE_URL"
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -61,15 +48,7 @@ fun FriendProfileScreen(
         scope.launch {
             loading = true
             error = null
-            UserRepository.fetchUserById(userId)
-                .onSuccess { profile = it }
-                .onFailure { error = it.message }
-            loading = false
-        }
-        /*
-        scope.launch {
-            loading = true
-            error = null
+            // Backend nie ma endpointu /users/{id}; spróbujmy profil własny tylko jeśli to my, inaczej wyszukiwanie.
             try {
                 // Najpierw spróbuj wyszukiwania jeśli brak pełnych danych.
                 if (profile == null) {
@@ -100,27 +79,18 @@ fun FriendProfileScreen(
                             }
                         }
                     }
-                } // TODO() use new /api/users/{id} endpoint to fetch full user data
+                }
             } catch (e: Exception) { error = e.message }
             loading = false
         }
-         */
     }
-
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(profile?.effectiveDisplayName ?: stringResource(R.string.profile))
-                },
+                title = { Text(profile?.effectiveDisplayName ?: "Profil") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
-                        )
-                    }
+                    IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.ArrowBack, contentDescription = "Wstecz") }
                 }
             )
         }
@@ -128,22 +98,11 @@ fun FriendProfileScreen(
         if (loading) {
             Box(Modifier.fillMaxSize().padding(paddingValues)) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
         } else if (error != null) {
-            Box(Modifier.fillMaxSize().padding(paddingValues)) {
-                Text(
-                text = error ?: stringResource(R.string.error),
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.align(Alignment.Center)
-                )
-            }
+            Box(Modifier.fillMaxSize().padding(paddingValues)) { Text(error ?: "Błąd", color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.Center)) }
         } else if (profile == null) {
-            Box(Modifier.fillMaxSize().padding(paddingValues)) {
-                Text(
-                text = stringResource(R.string.no_data),
-                modifier = Modifier.align(Alignment.Center)
-                )
-            }
+            Box(Modifier.fillMaxSize().padding(paddingValues)) { Text("Brak danych", modifier = Modifier.align(Alignment.Center)) }
         } else {
-            val p = profile!!
+                val p = profile!!
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -154,7 +113,7 @@ fun FriendProfileScreen(
             ) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     val rawUrl = (p.profile?.avatarUrl ?: avatarUrlPrefill)?.takeIf { !it.isNullOrBlank() }
-                    val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it" }
+                    val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
                     if (fullUrl != null) {
                         val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
                             .data(fullUrl)
@@ -188,10 +147,10 @@ fun FriendProfileScreen(
                             try { val ld = LocalDate.parse(datePart, DateTimeFormatter.ISO_DATE); Period.between(ld, LocalDate.now()).years.takeIf { it in 0..150 } } catch (_: Exception) { null }
                         }
                         val gender = when (p.profile?.gender) {
-                            "male" -> stringResource(R.string.gender_male)
-                            "female" -> stringResource(R.string.gender_female)
-                            "other" -> stringResource(R.string.gender_other)
-                            "prefer_not_to_say" -> stringResource(R.string.gender_prefer_not_to_say)
+                            "male" -> "Mężczyzna"
+                            "female" -> "Kobieta"
+                            "other" -> "Inna"
+                            "prefer_not_to_say" -> "Nie podano"
                             else -> null
                         }
                         val location = p.profile?.location
@@ -204,15 +163,12 @@ fun FriendProfileScreen(
                 }
                 if (!p.interests.isNullOrEmpty()) {
                     Column {
-                        Text(
-                            text = stringResource(R.string.interests),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text("Zainteresowania", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(4.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             p.interests!!.forEach { ui ->
-                                val label = ui.interest.name.ifBlank { "?" }
+                                val base = ui.interest.name.ifBlank { "?" }
+                                val label = if (!ui.customDescription.isNullOrBlank()) "$base — ${ui.customDescription}" else base
                                 InterestTag(text = label)
                             }
                         }
@@ -222,4 +178,3 @@ fun FriendProfileScreen(
         }
     }
 }
-
