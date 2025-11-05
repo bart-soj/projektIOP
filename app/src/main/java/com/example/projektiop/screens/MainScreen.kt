@@ -56,13 +56,28 @@ fun MainScreen(navController: NavController, viewModel: MainViewModel) {
             BottomNavigationBar(navController = navController, currentRoute = currentRoute)
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState()) // Umożliw przewijanie, jeśli treść jest dłuższa
-                .padding(horizontal = 16.dp)
+        var isRefreshing by remember { mutableStateOf(false) }
+        val scope = rememberCoroutineScope()
+
+        com.example.projektiop.util.PullToRefresh(
+            refreshing = isRefreshing,
+            onRefresh = {
+                if (!isRefreshing) {
+                    isRefreshing = true
+                    scope.launch {
+                        viewModel.refreshProfile()
+                        isRefreshing = false
+                    }
+                }
+            }
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp)
+            ) {
             Spacer(modifier = Modifier.height(16.dp))
 
             // 1. Dynamiczna karta profilu
@@ -72,6 +87,7 @@ fun MainScreen(navController: NavController, viewModel: MainViewModel) {
             )
 
             Spacer(modifier = Modifier.height(40.dp))
+            }
         }
     }
 }
@@ -106,7 +122,6 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 val ctx = LocalContext.current
                 val rawUrl = profile?.profile?.avatarUrl?.takeIf { it.isNotBlank() }
                 val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it" }
-                // Cache-busting tied to user.updatedAt so image refreshes after avatar change but remains cacheable otherwise
                 val versionTag = profile?.updatedAt?.takeIf { !it.isNullOrBlank() }?.hashCode()?.toString()
                 val displayUrl = fullUrl?.let { url ->
                     versionTag?.let { v -> if (url.contains('?')) "$url&v=$v" else "$url?v=$v" } ?: url
@@ -221,14 +236,14 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
             ) {
                 val interests = profile?.interests ?: emptyList()
                 if (loading) {
-                    InterestTag(text = "...")
+                    InterestTag(base = "...")
                 } else if (interests.isEmpty()) {
-                    InterestTag(text = stringResource(R.string.profile_no_interests))
+                    InterestTag(base = stringResource(R.string.profile_no_interests))
                 } else {
                     interests.forEach { ui ->
                         val base = ui.interest.name.ifBlank { stringResource(R.string.profile_unknown_interest) }
-                        val label = if (!ui.customDescription.isNullOrBlank()) "$base — ${ui.customDescription}" else base
-                        InterestTag(text = label)
+                        val label = if (!ui.customDescription.isNullOrBlank()) ui.customDescription else ""
+                        InterestTag(base = base, label = label)
                     }
                 }
             }
@@ -238,8 +253,47 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InterestTag(text: String) { // TODO: zrobic z tego bardziej rozbudowany komponent
-    SuggestionChip(onClick = { /* Nic nie rób lub pozwól na interakcję */ }, label = { Text(text) })
+fun InterestTag(
+    base: String,
+    label : String = base
+) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    val full = if (label != "") "$base — $label" else base
+    val short = if (full.length > 50) full.take(50) + "…" else full
+
+    SuggestionChip(onClick = { showDialog = true },
+        label = {
+            Text(
+                text = short,
+                modifier = Modifier.padding(
+                    horizontal = 10.dp,
+                    vertical = 4.dp
+                )
+            )
+        }
+    )
+
+    if (showDialog) {
+        if (label != "") {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                confirmButton = {
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("OK")
+                    }
+                },
+                title = {
+                    Text(
+                        base,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                },
+                text = { Text(label) }
+            )
+        }
+        else showDialog = false
+    }
 }
 
 // --- Dolny Pasek Nawigacji (element 9) ---

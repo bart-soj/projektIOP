@@ -26,6 +26,7 @@ import java.time.Period
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.ui.res.stringResource
 import com.example.projektiop.data.api.Profile
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -43,6 +44,7 @@ fun FriendProfileScreen(
     var profile by remember { mutableStateOf<UserProfileResponse?>(null) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+    var isRefreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(userId) {
         scope.launch {
@@ -95,6 +97,49 @@ fun FriendProfileScreen(
             )
         }
     ) { paddingValues ->
+        com.example.projektiop.util.PullToRefresh(
+            refreshing = isRefreshing,
+            onRefresh = {
+                if (!isRefreshing) {
+                    isRefreshing = true
+                    error = null
+                    scope.launch {
+                        try {
+                            // Repeat lightweight enrichment logic
+                            if (displayNamePrefill != null || usernamePrefill != null) {
+                                profile = UserProfileResponse(
+                                    _id = null.toString(),
+                                    username = usernamePrefill.toString(),
+                                    profile = Profile(displayName = displayNamePrefill),
+                                    interests = emptyList(),
+                                    email = null.toString()
+                                )
+                            }
+                            val uname = usernamePrefill ?: displayNamePrefill
+                            if (!uname.isNullOrBlank()) {
+                                val searchResp = com.example.projektiop.data.api.RetrofitInstance.userApi.searchUsers(uname)
+                                if (searchResp.isSuccessful) {
+                                    val candidate = searchResp.body().orEmpty().firstOrNull { it._id == userId || it.username == uname }
+                                    if (candidate != null) {
+                                        profile = UserProfileResponse(
+                                            _id = candidate._id.toString(),
+                                            username = candidate.username.toString(),
+                                            profile = candidate.profile,
+                                            interests = emptyList(),
+                                            email = null.toString()
+                                        )
+                                    }
+                                }
+                            }
+                        } catch (e: Exception) {
+                            error = e.message
+                        } finally {
+                            isRefreshing = false
+                        }
+                    }
+                }
+            }
+        ) {
         if (loading) {
             Box(Modifier.fillMaxSize().padding(paddingValues)) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
         } else if (error != null) {
@@ -167,14 +212,16 @@ fun FriendProfileScreen(
                         Spacer(Modifier.height(4.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             p.interests!!.forEach { ui ->
-                                val base = ui.interest.name.ifBlank { "?" }
-                                val label = if (!ui.customDescription.isNullOrBlank()) "$base — ${ui.customDescription}" else base
-                                InterestTag(text = label)
+                                val base = ui.interest.name.ifBlank { stringResource(R.string.profile_unknown_interest) }
+                                val label = if (!ui.customDescription.isNullOrBlank()) "$ui.customDescription" else ""
+
+                                InterestTag(base = base, label = label)
                             }
                         }
                     }
                 }
             }
+        }
         }
     }
 }

@@ -51,7 +51,6 @@ fun EditProfileScreen(
         )
     }
     var selectedInterests by remember { mutableStateOf<Set<String>>(emptySet()) }
-    // Map: interest name -> custom description
     var selectedDescriptions by remember { mutableStateOf(mutableMapOf<String, String>()) }
     var interestsSaving by remember { mutableStateOf(false) }
     var broadcastMessage by remember { mutableStateOf("") }
@@ -82,7 +81,6 @@ fun EditProfileScreen(
                 avatarVersionTag = prof.updatedAt?.hashCode()?.toString()
                 val names = prof.interests?.mapNotNull { it.interest.name }?.toSet().orEmpty()
                 selectedInterests = names
-                // Prefill descriptions for selected interests
                 val descMap = mutableMapOf<String, String>()
                 prof.interests.orEmpty().forEach { ui ->
                     val nm = ui.interest.name
@@ -205,16 +203,13 @@ fun EditProfileScreen(
                 all = allInterests,
                 selected = selectedInterests,
                 onChange = { updated ->
-                    // Track add/remove to keep descriptions map in sync
                     val removed = selectedInterests.minus(updated)
                     val added = updated.minus(selectedInterests)
-                    // Remove stale descriptions
                     if (removed.isNotEmpty()) {
                         selectedDescriptions = selectedDescriptions.toMutableMap().apply {
                             removed.forEach { remove(it) }
                         }
                     }
-                    // Initialize new ones with empty if not present
                     if (added.isNotEmpty()) {
                         selectedDescriptions = selectedDescriptions.toMutableMap().apply {
                             added.forEach { if (get(it) == null) put(it, "") }
@@ -224,7 +219,6 @@ fun EditProfileScreen(
                     interests = updated.joinToString(",")
                 }
             )
-            // Per-interest description editors
             if (selectedInterests.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
                 Text("Opisy zainteresowań (opcjonalne)", style = MaterialTheme.typography.titleSmall)
