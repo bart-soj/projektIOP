@@ -74,12 +74,14 @@ object UserRepository {
                     )
                 }
 
+                _MyProfile.value = body
                 return@withContext Result.success(body)
             } else {
                 val tmpId: String = SharedPreferencesRepository.get(ID, "")
                 // API failed → fallback to DB
                 val localUser = DBRepository.getLocalUserById(tmpId)
                 if (localUser != null && !tmpId.isNullOrBlank()) {
+                    _MyProfile.value = localUser.toUserProfileResponse()
                     return@withContext Result.success(localUser.toUserProfileResponse())
                 }
                 return@withContext Result.failure(Exception("API failed and no local data available"))
@@ -90,6 +92,7 @@ object UserRepository {
             // API failed → fallback to DB
             val localUser = DBRepository.getLocalUserById(tmpId)
             if (localUser != null && !tmpId.isNullOrBlank()) {
+                _MyProfile.value = localUser.toUserProfileResponse()
                 return@withContext Result.success(localUser.toUserProfileResponse())
             }
             return@withContext Result.failure(Exception("API error and no local data available $e"))

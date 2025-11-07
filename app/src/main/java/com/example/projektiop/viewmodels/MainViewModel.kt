@@ -1,5 +1,6 @@
 package com.example.projektiop.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.api.UserProfileResponse
@@ -26,8 +27,13 @@ class MainViewModel() : ViewModel() {
     fun refreshProfile() {
         _loading.value = true
         viewModelScope.launch{
-            UserRepository.fetchMyProfile()
+            try {
+                UserRepository.fetchMyProfile()
+            } catch (e: Exception) {
+                Log.e("ProfileRefresh", "Error fetching profile", e)
+            } finally {
+                _loading.value = false
+            }
         }
-        _loading.value = false
     }
 }
