@@ -17,25 +17,30 @@ private const val ID: String = "_id"
 
 // FriendshipDto (API) → Friendship (Realm)
 fun FriendshipDto.toRealm(): Friendship {
-    val friendship = Friendship()
-    friendship.id = this.friendshipId ?: this._id ?: UUID.randomUUID().toString() // new UUID creation here is hacky
+    val id = this.friendshipId ?: this._id ?: return throw IllegalArgumentException("Missing friendship id")
+    val user1 = SharedPreferencesRepository.get(ID, "")
+    val user2 = this.user?._id ?: return throw IllegalArgumentException("Missing user2 id")
+    val requestedBy = this.requestedByUsername ?: user1
 
-    friendship.user1 = SharedPreferencesRepository.get(ID, "")
-    friendship.user2 = this.user?._id ?: ""
-
-    friendship.status = this.status
+    val status = this.status
         ?.let { runCatching { FriendshipStatus.valueOf(it) }.getOrDefault(FriendshipStatus.PENDING) }
         ?: FriendshipStatus.PENDING
 
-    friendship.friendshipType = this.friendshipType
+    val friendshipType = this.friendshipType
         ?.let { runCatching { FriendshipType.valueOf(it) }.getOrDefault(FriendshipType.UNVERIFIED) }
         ?: FriendshipType.UNVERIFIED
 
-    friendship.isBlocked = this.isBlocked ?: false
-    friendship.blockedBy = this.blockedBy
-    friendship.requestedBy = this.requestedByUsername.toString()
-    friendship.createdAt = mongoTimestampToRealmInstant(this.createdAt)
-    friendship.updatedAt = mongoTimestampToRealmInstant(this.updatedAt)
+    return Friendship.create(
+        id = id,
+        user1 = user1,
+        user2 = user2,
+        requestedBy = requestedBy,
+        status = status,
+        friendshipType = friendshipType,
+        blockedBy = this.blockedBy,
+        isBlocked = this.isBlocked == true,
+        createdAt = mongoTimestampToRealmInstant(this.createdAt),
+        updatedAt = mongoTimestampToRealmInstant(this.updatedAt)
+    )
 
-    return friendship
 }

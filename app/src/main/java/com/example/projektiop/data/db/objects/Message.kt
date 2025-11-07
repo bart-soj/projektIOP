@@ -25,4 +25,27 @@ class Message : RealmObject {
 
     var createdAt: RealmInstant? = null
     var updatedAt: RealmInstant? = null
+
+    companion object {
+        fun create(
+            id: String,
+            chatId: String,
+            senderId: String,
+            content: String = "",
+            readBy: RealmList<String> = realmListOf(),
+            createdAt: RealmInstant? = RealmInstant.now(),
+            updatedAt: RealmInstant? = null
+        ): Message {
+            return Message().apply {
+                this.id = id
+                this.chatId = chatId
+                this.senderId = senderId
+                this.content = content
+                this.readBy = readBy
+                this.createdAt = createdAt
+                this.updatedAt = updatedAt
+            }
+        }
+    }
 }
+

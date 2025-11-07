@@ -47,7 +47,8 @@ data class MessageDto(
     val content: String? = null,
     val senderId: ChatUserDto? = null,
     val readBy: List<ChatUserDto>? = null,
-    val createdAt: String? = null
+    val createdAt: String? = null,
+    val updatedAt: String? = null
 )
 
 data class MessagesPageDto(

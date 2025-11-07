@@ -190,8 +190,6 @@ class BluetoothRepository(private val context: Context) {
         if (bluetoothAdapter?.isEnabled != true) {
             Log.w(TAG_SCAN, "Bluetooth jest wyłączony.")
             _foundDeviceStatus.value = "Status: Włącz Bluetooth"
-            // Można tu dodać kod do żądania włączenia Bluetooth
-            // context.startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
             return
         }
 
@@ -199,8 +197,6 @@ class BluetoothRepository(private val context: Context) {
         if (!isLocationEnabled()) {
             Log.w(TAG_LOCATION, "Usługi lokalizacyjne systemu są wyłączone. Skanowanie BLE wymaga włączonej lokalizacji.")
             _foundDeviceStatus.value = "Status: Włącz Lokalizację"
-            // Informujemy użytkownika, ale pozwalamy na próbę startu - system może sam zablokować
-            // Jeśli chcesz całkowicie zablokować, dodaj: return
         } else {
             Log.d(TAG_LOCATION, "Usługi lokalizacyjne systemu są włączone.")
         }
@@ -351,10 +347,8 @@ class BluetoothRepository(private val context: Context) {
         }
 
         Log.d(TAG_ADVERTISE, "Rozmiar danych usługi (ID) do wysłania: ${serviceData.size} bajtów")
-        // Ostrożny limit, można dostosować; Długie UUID (16B) zajmuje dużo miejsca.
         if (serviceData.size > 20) {
             Log.w(TAG_ADVERTISE, "Dane rozgłaszania (ID) mogą być za długie: ${serviceData.size} bajtów. Może spowodować błąd ADVERTISE_FAILED_DATA_TOO_LARGE.")
-            // Nie blokujemy, ale ostrzegamy
         }
 
         val data = AdvertiseData.Builder()

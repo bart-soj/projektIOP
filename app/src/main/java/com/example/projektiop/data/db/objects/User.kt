@@ -69,5 +69,42 @@ class User : RealmObject {
 
     var createdAt: RealmInstant? = null
     var updatedAt: RealmInstant? = null
+
+    // use create method as constructor to ensure all necessary fields have values
+    companion object {
+        fun create(
+            id: String,
+            username: String,
+            email: String,
+            profile: UserProfile? = null,
+            role: UserRole = UserRole.USER,
+            isBanned: Boolean = false,
+            banReason: String? = null,
+            bannedAt: RealmInstant? = null,
+            isTestAccount: Boolean = false,
+            isEmailVerified: Boolean = false,
+            isDeleted: Boolean = false,
+            deletedAt: RealmInstant? = null,
+            createdAt: RealmInstant? = RealmInstant.now(),
+            updatedAt: RealmInstant? = null
+        ): User {
+            return User().apply {
+                this.id = id
+                this.username = username
+                this.email = email
+                this.profile = profile
+                this.role = role
+                this.isBanned = isBanned
+                this.banReason = banReason
+                this.bannedAt = bannedAt
+                this.isTestAccount = isTestAccount
+                this.isEmailVerified = isEmailVerified
+                this.isDeleted = isDeleted
+                this.deletedAt = deletedAt
+                this.createdAt = createdAt
+                this.updatedAt = updatedAt
+            }
+        }
+    }
 }
 
