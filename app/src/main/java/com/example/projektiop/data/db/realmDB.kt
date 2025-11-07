@@ -5,6 +5,8 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.db.objects.Friendship
+import com.example.projektiop.data.db.objects.Interest
+import com.example.projektiop.data.db.objects.InterestCategory
 import com.example.projektiop.data.db.objects.UserInterest
 import com.example.projektiop.data.db.objects.Message
 import com.example.projektiop.data.db.objects.UserProfile
@@ -21,7 +23,10 @@ object RealmProvider {
                 UserInterest::class,
                 Friendship::class,
                 User::class,
-                UserProfile::class
+                UserProfile::class,
+                Interest::class,
+                UserInterest::class,
+                InterestCategory::class
             )
         )
             .schemaVersion(1)
