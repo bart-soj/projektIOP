@@ -5,19 +5,28 @@ import com.example.projektiop.data.db.objects.Message
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import com.google.gson.JsonElement
+import io.realm.kotlin.ext.realmListOf
 
 fun MessageDto.toRealm(): Message {
-    var message = Message()
+    val id = this._id ?: throw IllegalArgumentException("Missing message id")
+    val chatId = extractIdFromElement(this.chatId).takeIf { it.isNotBlank() } ?: throw IllegalArgumentException("Missing chat id")
+    val senderId = this.senderId?._id ?: throw IllegalArgumentException("Missing sender id")
 
-    message.id = this._id ?: message.id
-    message.chatId = extractIdFromElement(this.chatId)
-    message.senderId = this.senderId?._id ?: message.senderId
-    message.content = this.content ?: ""
-    message.readBy = (this.readBy?.mapNotNull { it._id } ?: emptyList<String>()) as RealmList<String>
-    // createdAt is an ISO string in DTO; keep as null for now or parse if needed elsewhere
-    message.createdAt = null as RealmInstant?
+    val readByList = realmListOf<String>().apply {
+        addAll(this@toRealm.readBy?.mapNotNull { it._id } ?: emptyList())
+    }
+    val createdAt = mongoTimestampToRealmInstant(this.createdAt)
+    val updatedAt = mongoTimestampToRealmInstant(this.updatedAt)
 
-    return message
+    return Message.create(
+        id = id,
+        chatId = chatId,
+        senderId = senderId,
+        content = this.content ?: "",
+        readBy = readByList,
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
 }
 
 private fun extractIdFromElement(el: JsonElement?): String {
@@ -25,7 +34,7 @@ private fun extractIdFromElement(el: JsonElement?): String {
     return try {
         when {
             el.isJsonPrimitive && el.asJsonPrimitive.isString -> el.asString
-            el.isJsonObject && el.asJsonObject.has("_id") -> el.asJsonObject.get("_id").asString
+            el.isJsonObject && el.asJsonObject.has("_id") -> el.asJsonObject.get("*id").asString
             else -> el.toString()
         }
     } catch (_: Exception) {

@@ -1,22 +1,23 @@
 package com.example.projektiop.data.db.objects
 
-import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.annotations.PrimaryKey
-import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.Index
+import io.realm.kotlin.types.annotations.PrimaryKey
 import java.util.UUID
 
-class UserInterest : RealmObject {
+class Interest : RealmObject {
     @PrimaryKey
     var id: String = UUID.randomUUID().toString()
 
     @Index
-    var userId: String = "" // Reference to User
+    var name: String = ""
 
     @Index
-    var interestId: String = "" // Reference to Interest
+    var categoryId: String? = null // Reference to InterestCategory
 
-    var customDescription: String = ""
+    var description: String = ""
+    var isArchived: Boolean = false
 
     var createdAt: RealmInstant? = null
     var updatedAt: RealmInstant? = null
@@ -25,22 +26,22 @@ class UserInterest : RealmObject {
     companion object {
         fun create(
             id: String,
-            userId: String,
-            interestId: String,
-            customDescription: String = "",
+            name: String,
+            categoryId: String? = null,
+            description: String = "",
+            isArchived: Boolean = false,
             createdAt: RealmInstant? = RealmInstant.now(),
             updatedAt: RealmInstant? = null
-        ): UserInterest {
-            return UserInterest().apply {
+        ): Interest {
+            return Interest().apply {
                 this.id = id
-                this.userId = userId
-                this.interestId = interestId
-                this.customDescription = customDescription
+                this.name = name
+                this.categoryId = categoryId
+                this.description = description
+                this.isArchived = isArchived
                 this.createdAt = createdAt
                 this.updatedAt = updatedAt
             }
         }
     }
 }
-
-
