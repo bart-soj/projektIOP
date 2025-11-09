@@ -178,66 +178,78 @@ fun ChatItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick) // Cały wiersz klikalny
-            .padding(vertical = 8.dp), // Dodaj trochę pionowego paddingu
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // 3. Zdjęcie profilowe znajomego
-        val avatarUrl = chatData.avatarUrl
-        val ctx = LocalContext.current
-        val fullUrl = avatarUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
-        val imageRequest = coil.request.ImageRequest.Builder(ctx)
-            .data(fullUrl)
-            .crossfade(true)
-            .apply {
-                val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
-                if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
-            }
-            .build()
-        AsyncImage(
-            model = imageRequest,
-            contentDescription = stringResource(R.string.profile_picture_desc),
-            placeholder = painterResource(R.drawable.avatar_placeholder),
-            error = painterResource(R.drawable.avatar_placeholder),
-            fallback = painterResource(R.drawable.avatar_placeholder),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.size(56.dp).clip(CircleShape)
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
         )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        // Kolumna na nazwę i ostatnią wiadomość
-    Column(
-            modifier = Modifier.weight(1f) // Zajmij dostępną przestrzeń, aby tekst się zawijał/ucinał
+    ) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // 4. Nazwa znajomego
-            Text(
-                text = chatData.title,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1, // Maksymalnie jedna linia
-                overflow = TextOverflow.Ellipsis // Utnij, jeśli za długie
+            // 3. Zdjęcie profilowe znajomego
+            val avatarUrl = chatData.avatarUrl
+            val ctx = LocalContext.current
+            val fullUrl =
+                avatarUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
+            val imageRequest = coil.request.ImageRequest.Builder(ctx)
+                .data(fullUrl)
+                .crossfade(true)
+                .apply {
+                    val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                    if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
+                }
+                .build()
+            AsyncImage(
+                model = imageRequest,
+                contentDescription = stringResource(R.string.profile_picture_desc),
+                placeholder = painterResource(R.drawable.avatar_placeholder),
+                error = painterResource(R.drawable.avatar_placeholder),
+                fallback = painterResource(R.drawable.avatar_placeholder),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(56.dp).clip(CircleShape)
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            // 5. Ostatnia wiadomość z czatu
-            Text(
-                text = chatData.lastMessage,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, // Stonowany kolor
-                maxLines = 1, // Maksymalnie jedna linia
-                overflow = TextOverflow.Ellipsis // Utnij, jeśli za długie
-            )
-        }
-        if (chatData.unread) {
-            Spacer(Modifier.width(12.dp))
-            Surface(
-                color = MaterialTheme.colorScheme.primary,
-                shape = CircleShape,
-                tonalElevation = 0.dp,
-                modifier = Modifier.size(12.dp)
-            ) {}
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Kolumna na nazwę i ostatnią wiadomość
+            Column(
+                modifier = Modifier.weight(1f) // Zajmij dostępną przestrzeń, aby tekst się zawijał/ucinał
+            ) {
+                // 4. Nazwa znajomego
+                Text(
+                    text = chatData.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1, // Maksymalnie jedna linia
+                    overflow = TextOverflow.Ellipsis // Utnij, jeśli za długie
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                // 5. Ostatnia wiadomość z czatu
+                Text(
+                    text = chatData.lastMessage,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, // Stonowany kolor
+                    maxLines = 1, // Maksymalnie jedna linia
+                    overflow = TextOverflow.Ellipsis // Utnij, jeśli za długie
+                )
+            }
+            if (chatData.unread) {
+                Spacer(Modifier.width(12.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = CircleShape,
+                    tonalElevation = 0.dp,
+                    modifier = Modifier.size(12.dp)
+                ) {}
+            }
         }
     }
 }

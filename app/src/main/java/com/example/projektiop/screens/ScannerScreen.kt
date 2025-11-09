@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
+import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -92,13 +93,18 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Button(onClick = {
-                if (!isScanning) {
-                    viewModel.startScan()
-                } else {
-                    viewModel.stopScan()
-                }
-            }
+            Button(
+                onClick = {
+                    if (!isScanning) {
+                        viewModel.startScan()
+                    } else {
+                        viewModel.stopScan()
+                    }
+                },
+                colors = buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
             ) {
                 if (!isScanning) {
                     Text(stringResource(R.string.scanner_start_scanning))
@@ -108,13 +114,18 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
             }
             Spacer(modifier = Modifier.height(8.dp))
 
-            Button(onClick = {
-                if (!isAdvertising) {
-                    viewModel.startAdvertising()
-                } else {
-                    viewModel.stopAdvertising()
-                }
-            }
+            Button(
+                onClick = {
+                    if (!isAdvertising) {
+                        viewModel.startAdvertising()
+                    } else {
+                        viewModel.stopAdvertising()
+                    }
+                },
+                colors = buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
             ) {
                 if (!isAdvertising) {
                     Text(stringResource(R.string.scanner_start_advertising))

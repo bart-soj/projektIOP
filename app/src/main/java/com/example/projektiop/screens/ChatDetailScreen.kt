@@ -2,6 +2,7 @@ package com.example.projektiop.screens
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -86,26 +87,43 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when {
                     loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                    error != null -> Text(error ?: "Błąd", color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.Center))
-                    messages.isEmpty() -> Text("Tutaj pojawi się nowa historia", modifier = Modifier.align(Alignment.Center))
-                    else -> LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        state = listState,
-                        contentPadding = PaddingValues(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        itemsIndexed(messages, key = { _, m -> m._id ?: m.hashCode().toString() }) { index, m ->
-                            val isIncoming = m.senderId?._id == friendId
-                            val prevSame = index > 0 && (messages[index - 1].senderId?._id == m.senderId?._id)
-                            MessageBubble(
-                                text = m.content ?: "",
-                                incoming = isIncoming,
-                                groupedWithPrev = prevSame,
-                                avatarUrl = if (isIncoming && !prevSame) m.senderId?.profile?.avatarUrl else null,
-                                timestampIso = m.createdAt
-                            )
+                    error != null -> Text(
+                        error ?: "Błąd",
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+
+                    messages.isEmpty() -> Text(
+                        "Tutaj pojawi się nowa historia",
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+
+                    else ->
+                        Box(Modifier.fillMaxSize()) {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                state = listState,
+                                contentPadding = PaddingValues(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                itemsIndexed(
+                                    messages,
+                                    key = { _, m ->
+                                        m._id ?: m.hashCode().toString()
+                                    }) { index, m ->
+                                    val isIncoming = m.senderId?._id == friendId
+                                    val prevSame =
+                                        index > 0 && (messages[index - 1].senderId?._id == m.senderId?._id)
+                                    MessageBubble(
+                                        text = m.content ?: "",
+                                        incoming = isIncoming,
+                                        groupedWithPrev = prevSame,
+                                        avatarUrl = if (isIncoming && !prevSame) m.senderId?.profile?.avatarUrl else null,
+                                        timestampIso = m.createdAt
+                                    )
+                                }
+                            }
                         }
-                    }
                 }
             }
             val isBlocked = blockInfo?.isBlocked == true
@@ -157,9 +175,8 @@ private fun MessageBubble(
     avatarUrl: String?,
     timestampIso: String?
 ) {
-    // Kolory i kształt zależne od kierunku
-    val bg = if (incoming) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primary
-    val contentColor = if (incoming) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
+    val bg = if (incoming) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primary
+    val contentColor = if (incoming) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onPrimary
     val baseShape = RoundedCornerShape(18.dp)
     val shape = if (incoming) {
         RoundedCornerShape(
@@ -198,19 +215,22 @@ private fun MessageBubble(
                     fallback = painterResource(com.example.projektiop.R.drawable.avatar_placeholder),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
+                        .padding(end = 6.dp)
                         .size(32.dp)
                         .clip(CircleShape)
-                        .padding(end = 6.dp)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                 )
             } else if (!groupedWithPrev) {
                 // explicit placeholder avatar icon instead of plain background
                 androidx.compose.foundation.Image(
                     painter = painterResource(id = com.example.projektiop.R.drawable.avatar_placeholder),
                     contentDescription = "avatar",
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
+                        .padding(end = 6.dp)
                         .size(32.dp)
                         .clip(CircleShape)
-                        .padding(end = 6.dp)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                 )
             } else Spacer(Modifier.width(38.dp))
         }
