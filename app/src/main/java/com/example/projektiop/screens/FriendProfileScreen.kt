@@ -44,45 +44,47 @@ fun FriendProfileScreen(
     var profile by remember { mutableStateOf<UserProfileResponse?>(null) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
-    var isRefreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(userId) {
         scope.launch {
             loading = true
             error = null
-            // Backend nie ma endpointu /users/{id}; spróbujmy profil własny tylko jeśli to my, inaczej wyszukiwanie.
             try {
-                // Najpierw spróbuj wyszukiwania jeśli brak pełnych danych.
-                if (profile == null) {
-                    // Jeśli mamy wstępne dane wyświetl je minimalnie bez requestu.
-                    if (displayNamePrefill != null || usernamePrefill != null) {
-                        profile = UserProfileResponse(
-                            _id = null.toString(),
-                            username = usernamePrefill.toString(),
-                            profile = Profile(displayName = displayNamePrefill),
-                            interests = emptyList(),
-                            email = null.toString()
-                        )
-                    }
-                    // Spróbuj wzbogacić poprzez search (jeśli username znany)
-                    val uname = usernamePrefill ?: displayNamePrefill
-                    if (!uname.isNullOrBlank()) {
-                        val searchResp = RetrofitInstance.userApi.searchUsers(uname)
-                        if (searchResp.isSuccessful) {
-                            val candidate = searchResp.body().orEmpty().firstOrNull { it._id == userId || it.username == uname }
-                            if (candidate != null) {
-                                profile = UserProfileResponse(
-                                    _id = candidate._id.toString(),
-                                    username = candidate.username.toString(),
-                                    profile = candidate.profile,
-                                    interests = emptyList(),
-                                    email = null.toString()
-                                )
+                val fullResp = RetrofitInstance.userApi.getUserById(userId)
+                if (fullResp.isSuccessful && fullResp.body() != null) {
+                    profile = fullResp.body()
+                } else {
+                    if (profile == null) {
+                        if (displayNamePrefill != null || usernamePrefill != null) {
+                            profile = UserProfileResponse(
+                                _id = userId,
+                                username = usernamePrefill,
+                                profile = Profile(displayName = displayNamePrefill),
+                                interests = emptyList(),
+                                email = null
+                            )
+                        }
+                        val uname = usernamePrefill ?: displayNamePrefill
+                        if (!uname.isNullOrBlank()) {
+                            val searchResp = RetrofitInstance.userApi.searchUsers(uname)
+                            if (searchResp.isSuccessful) {
+                                val candidate = searchResp.body().orEmpty().firstOrNull { it._id == userId || it.username == uname }
+                                if (candidate != null) {
+                                    profile = UserProfileResponse(
+                                        _id = candidate._id,
+                                        username = candidate.username,
+                                        profile = candidate.profile,
+                                        interests = emptyList(),
+                                        email = null
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            } catch (e: Exception) { error = e.message }
+            } catch (e: Exception) {
+                error = e.message
+            }
             loading = false
         }
     }
@@ -97,55 +99,12 @@ fun FriendProfileScreen(
             )
         }
     ) { paddingValues ->
-        com.example.projektiop.util.PullToRefresh(
-            refreshing = isRefreshing,
-            onRefresh = {
-                if (!isRefreshing) {
-                    isRefreshing = true
-                    error = null
-                    scope.launch {
-                        try {
-                            // Repeat lightweight enrichment logic
-                            if (displayNamePrefill != null || usernamePrefill != null) {
-                                profile = UserProfileResponse(
-                                    _id = null.toString(),
-                                    username = usernamePrefill.toString(),
-                                    profile = Profile(displayName = displayNamePrefill),
-                                    interests = emptyList(),
-                                    email = null.toString()
-                                )
-                            }
-                            val uname = usernamePrefill ?: displayNamePrefill
-                            if (!uname.isNullOrBlank()) {
-                                val searchResp = com.example.projektiop.data.api.RetrofitInstance.userApi.searchUsers(uname)
-                                if (searchResp.isSuccessful) {
-                                    val candidate = searchResp.body().orEmpty().firstOrNull { it._id == userId || it.username == uname }
-                                    if (candidate != null) {
-                                        profile = UserProfileResponse(
-                                            _id = candidate._id.toString(),
-                                            username = candidate.username.toString(),
-                                            profile = candidate.profile,
-                                            interests = emptyList(),
-                                            email = null.toString()
-                                        )
-                                    }
-                                }
-                            }
-                        } catch (e: Exception) {
-                            error = e.message
-                        } finally {
-                            isRefreshing = false
-                        }
-                    }
-                }
-            }
-        ) {
         if (loading) {
             Box(Modifier.fillMaxSize().padding(paddingValues)) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
         } else if (error != null) {
-            Box(Modifier.fillMaxSize().padding(paddingValues)) { Text(error ?: "Błąd", color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.Center)) }
+            Box(Modifier.fillMaxSize().padding(paddingValues)) { Text(error ?: stringResource(R.string.error), color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.Center)) }
         } else if (profile == null) {
-            Box(Modifier.fillMaxSize().padding(paddingValues)) { Text("Brak danych", modifier = Modifier.align(Alignment.Center)) }
+            Box(Modifier.fillMaxSize().padding(paddingValues)) { Text(stringResource(R.string.no_data), modifier = Modifier.align(Alignment.Center)) }
         } else {
                 val p = profile!!
             Column(
@@ -192,10 +151,10 @@ fun FriendProfileScreen(
                             try { val ld = LocalDate.parse(datePart, DateTimeFormatter.ISO_DATE); Period.between(ld, LocalDate.now()).years.takeIf { it in 0..150 } } catch (_: Exception) { null }
                         }
                         val gender = when (p.profile?.gender) {
-                            "male" -> "Mężczyzna"
-                            "female" -> "Kobieta"
-                            "other" -> "Inna"
-                            "prefer_not_to_say" -> "Nie podano"
+                            "male" -> stringResource(R.string.gender_male)
+                            "female" -> stringResource(R.string.gender_female)
+                            "other" -> stringResource(R.string.gender_other)
+                            "prefer_not_to_say" -> stringResource(R.string.gender_prefer_not_to_say)
                             else -> null
                         }
                         val location = p.profile?.location
@@ -213,15 +172,13 @@ fun FriendProfileScreen(
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             p.interests!!.forEach { ui ->
                                 val base = ui.interest.name.ifBlank { stringResource(R.string.profile_unknown_interest) }
-                                val label = if (!ui.customDescription.isNullOrBlank()) "$ui.customDescription" else ""
-
-                                InterestTag(base = base, label = label)
+                                val label = ui.customDescription?.takeIf { it.isNotBlank() } ?: ""
+                                com.example.projektiop.screens.InterestTag(base = base, label = label)
                             }
                         }
                     }
                 }
             }
-        }
         }
     }
 }

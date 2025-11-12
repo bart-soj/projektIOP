@@ -1,4 +1,4 @@
-package com.example.projektiop // Upewnij się, że pakiet jest poprawny
+package com.example.projektiop
 
 import android.content.Context
 import android.content.Intent
@@ -78,8 +78,6 @@ class MainActivity : ComponentActivity() {
             MyApp()
         }
 
-
-        // Request notification permission on Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val perm = android.Manifest.permission.POST_NOTIFICATIONS
             if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {

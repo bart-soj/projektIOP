@@ -118,7 +118,12 @@ fun ChatsScreen(navController: NavController) {
                     }
                 }
                 filteredChatList.isEmpty() -> {
-                    Box(Modifier.fillMaxSize()) { Text("Brak czatów", Modifier.align(Alignment.Center)) }
+                    Box(Modifier.fillMaxSize()) {
+                        Text(
+                            stringResource(R.string.no_chats),
+                            Modifier.align(Alignment.Center)
+                        )
+                    }
                 }
                 else -> {
                     LazyColumn(

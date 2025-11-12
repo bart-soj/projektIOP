@@ -46,7 +46,10 @@ fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark
     Scaffold(
         bottomBar = { BottomNavigationBar(navController = navController, currentRoute = currentRoute) }
     ) { paddingValues ->
-    var showBlockedDialog by remember { mutableStateOf(false) }
+
+        var showLogoutDialog by remember { mutableStateOf(false) }
+        var showBlockedDialog by remember { mutableStateOf(false) }
+
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -92,10 +95,10 @@ fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark
                             checkedBorderColor = MaterialTheme.colorScheme.onSecondaryContainer,
                             checkedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
 
-                            uncheckedThumbColor = MaterialTheme.colorScheme.secondaryContainer,
-                            uncheckedTrackColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                            uncheckedBorderColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                            uncheckedIconColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            uncheckedThumbColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            uncheckedTrackColor = MaterialTheme.colorScheme.secondaryContainer,
+                            uncheckedBorderColor = MaterialTheme.colorScheme.secondaryContainer,
+                            uncheckedIconColor = MaterialTheme.colorScheme.secondaryContainer
                         )
                     )
                 }
@@ -108,10 +111,7 @@ fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark
 
                 Spacer(modifier = Modifier.weight(1f))
                 Button(
-                    onClick = {
-                        AuthRepository.clearToken()
-                        navController.navigate("start")
-                    },
+                    onClick = { showLogoutDialog = true },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(64.dp),
@@ -126,6 +126,27 @@ fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark
         }
         if (showBlockedDialog) {
             BlockedUsersDialog(onClose = { showBlockedDialog = false })
+        }
+        if (showLogoutDialog) {
+            AlertDialog(
+                onDismissRequest = { showLogoutDialog = false },
+                title = { Text(stringResource(R.string.confirmation)) },
+                text = { Text(stringResource(R.string.logout_confirm_message)) },
+                confirmButton = {
+                    Button(onClick = {
+                        showLogoutDialog = false
+                        AuthRepository.clearToken()
+                        navController.navigate("start")
+                    }) {
+                        Text(stringResource(R.string.logout_confirm_yes))
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = { showLogoutDialog = false }) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
+            )
         }
     }
 }

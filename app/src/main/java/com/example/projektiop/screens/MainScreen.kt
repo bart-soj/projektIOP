@@ -112,8 +112,8 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -208,9 +208,9 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                     infoItems.forEachIndexed { index, item ->
                         if (index > 0) Spacer(Modifier.width(16.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(item.icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Icon(item.icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = color)
                             Spacer(Modifier.width(4.dp))
-                            Text(item.text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Text(item.text, style = MaterialTheme.typography.bodySmall, color = color)
                         }
                     }
                 }
@@ -267,8 +267,8 @@ fun InterestTag(
     SuggestionChip(
         onClick = { showDialog = true },
         colors = SuggestionChipDefaults.suggestionChipColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            labelColor = MaterialTheme.colorScheme.onSecondaryContainer
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            labelColor = MaterialTheme.colorScheme.onPrimaryContainer
         ),
         label = {
             Text(

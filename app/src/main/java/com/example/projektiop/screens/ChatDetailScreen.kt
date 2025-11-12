@@ -1,5 +1,6 @@
 package com.example.projektiop.screens
 
+import com.example.projektiop.R
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
@@ -14,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import androidx.compose.runtime.*
@@ -23,12 +23,41 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.projektiop.data.api.MessageDto
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
+import java.time.Duration
+import java.time.Instant
+
+@RequiresApi(Build.VERSION_CODES.O)
+private val timeFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+
+@RequiresApi(Build.VERSION_CODES.O)
+private val dateFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("d MMMM yyyy").withZone(ZoneId.systemDefault())
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun parseTimeShort(iso: String?): String {
+    if (iso.isNullOrBlank()) return ""
+    return try {
+        val inst = Instant.parse(iso)
+        timeFormatter.format(inst)
+    } catch (e: Exception) { "" }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun parseDate(iso: String?): String? {
+    if (iso.isNullOrBlank()) return null
+    return try {
+        val inst = Instant.parse(iso)
+        dateFormatter.format(inst)
+    } catch (e: Exception) { null }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,7 +97,7 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Czat") },
+                title = { Text(stringResource(R.string.chat)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Wstecz")
@@ -103,8 +132,7 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
                                 state = listState,
-                                contentPadding = PaddingValues(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                contentPadding = PaddingValues(12.dp)
                             ) {
                                 itemsIndexed(
                                     messages,
@@ -112,14 +140,38 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                                         m._id ?: m.hashCode().toString()
                                     }) { index, m ->
                                     val isIncoming = m.senderId?._id == friendId
-                                    val prevSame =
-                                        index > 0 && (messages[index - 1].senderId?._id == m.senderId?._id)
+
+                                    val showTime = index == messages.lastIndex || runCatching {
+                                        val diff = Duration.between(
+                                            Instant.parse(m.createdAt),
+                                            Instant.parse(messages[index + 1].createdAt)
+                                        ).toMinutes()
+                                        diff >= 1
+                                    }.getOrDefault(false)
+
+                                    val prevSame = index > 0 && runCatching {
+                                        val sameSender = messages[index - 1].senderId?._id == m.senderId?._id
+                                        if (!sameSender) false else {
+                                            val prevInstant = Instant.parse(messages[index - 1].createdAt)
+                                            val currInstant = Instant.parse(m.createdAt)
+                                            val diffMinutes = Duration.between(prevInstant, currInstant).toMinutes()
+                                            diffMinutes < 1
+                                        }
+                                    }.getOrDefault(false)
+
+                                    val currentDate = parseDate(m.createdAt)
+                                    val prevDate = if (index > 0) parseDate(messages[index - 1].createdAt) else null
+                                    val showDateHeader = currentDate != null && currentDate != prevDate
+                                    if (showDateHeader) {
+                                        DateSeparator(date = currentDate!!)
+                                        Spacer(Modifier.height(6.dp))
+                                    }
                                     MessageBubble(
                                         text = m.content ?: "",
                                         incoming = isIncoming,
                                         groupedWithPrev = prevSame,
                                         avatarUrl = if (isIncoming && !prevSame) m.senderId?.profile?.avatarUrl else null,
-                                        timestampIso = m.createdAt
+                                        timestampIso = if (showTime) m.createdAt else null
                                     )
                                 }
                             }
@@ -130,9 +182,9 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
             val blockedByMe = blockInfo?.blockedByMe == true
             if (isBlocked) {
                 val msg = if (blockedByMe) {
-                    "Zablokowałeś tego użytkownika. Odblokuj go aby wysłać wiadomość."
+                    stringResource(R.string.blocked_by_me)
                 } else {
-                    "Nie możesz wysłać wiadomości – zostałeś zablokowany przez tego użytkownika."
+                    stringResource(R.string.blocked_by_other)
                 }
                 Surface(color = MaterialTheme.colorScheme.errorContainer, modifier = Modifier.fillMaxWidth()) {
                     Text(msg, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.padding(12.dp))
@@ -144,7 +196,12 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                     onValueChange = { input = it },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    placeholder = { Text(if (isBlocked) "Wysyłanie niedostępne" else "Napisz wiadomość...") },
+                    placeholder = {
+                        Text(
+                            if (isBlocked) stringResource(R.string.sending_unavailable)
+                            else stringResource(R.string.write_message)
+                        )
+                    },
                     enabled = !isBlocked
                 )
                 Spacer(Modifier.width(8.dp))
@@ -160,7 +217,7 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                         val lastTimestamp = messages.lastOrNull()?.createdAt
                         ChatRepository.markChatRead(id, lastTimestamp)
                     }
-                }, enabled = !resolvedChatId.isNullOrBlank() && !isBlocked) { Text("Wyślij") }
+                }, enabled = !resolvedChatId.isNullOrBlank() && !isBlocked) { Text(stringResource(R.string.send)) }
             }
         }
     }
@@ -177,10 +234,9 @@ private fun MessageBubble(
 ) {
     val bg = if (incoming) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primary
     val contentColor = if (incoming) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onPrimary
-    val baseShape = RoundedCornerShape(18.dp)
     val shape = if (incoming) {
         RoundedCornerShape(
-            topStart = if (groupedWithPrev) 6.dp else 18.dp,
+            topStart = if (groupedWithPrev) 0.dp else 18.dp,
             topEnd = 18.dp,
             bottomEnd = 18.dp,
             bottomStart = 0.dp
@@ -188,7 +244,7 @@ private fun MessageBubble(
     } else {
         RoundedCornerShape(
             topStart = 18.dp,
-            topEnd = if (groupedWithPrev) 6.dp else 18.dp,
+            topEnd = if (groupedWithPrev) 0.dp else 18.dp,
             bottomEnd = 0.dp,
             bottomStart = 18.dp
         )
@@ -221,7 +277,6 @@ private fun MessageBubble(
                         .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                 )
             } else if (!groupedWithPrev) {
-                // explicit placeholder avatar icon instead of plain background
                 androidx.compose.foundation.Image(
                     painter = painterResource(id = com.example.projektiop.R.drawable.avatar_placeholder),
                     contentDescription = "avatar",
@@ -247,11 +302,14 @@ private fun MessageBubble(
                 }
             }
             Spacer(Modifier.height(2.dp))
-            Text(
-                timeText,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (timeText.isNotBlank()) {
+                Text(
+                    timeText,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(12.dp))
+            }
         }
         if (!incoming) {
             Spacer(Modifier.width(6.dp))
@@ -259,14 +317,25 @@ private fun MessageBubble(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-private val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
-
-@RequiresApi(Build.VERSION_CODES.O)
-private fun parseTimeShort(iso: String?): String {
-    if (iso.isNullOrBlank()) return ""
-    return try {
-        val inst = Instant.parse(iso)
-        timeFormatter.format(inst)
-    } catch (e: Exception) { "" }
+@Composable
+private fun DateSeparator(date: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            tonalElevation = 1.dp
+        ) {
+            Text(
+                text = date,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+            )
+        }
+    }
 }
