@@ -1,10 +1,12 @@
 package com.example.projektiop.data.db.objects
 
+import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.annotations.Ignore
 import java.util.UUID
 
@@ -56,12 +58,14 @@ class User : RealmObject {
 
     private var _role: String = UserRole.USER.name
 
+    var interests: RealmList<String> = realmListOf() // list of ids of user interests
+
     var isBanned: Boolean = false
     var banReason: String? = null
     var bannedAt: RealmInstant? = null
-
     var isTestAccount: Boolean = false
     var isEmailVerified: Boolean = false
+
 
     @Index
     var isDeleted: Boolean = false
@@ -78,6 +82,7 @@ class User : RealmObject {
             email: String,
             profile: UserProfile? = null,
             role: UserRole = UserRole.USER,
+            interests: RealmList<String> = realmListOf(),
             isBanned: Boolean = false,
             banReason: String? = null,
             bannedAt: RealmInstant? = null,
@@ -94,6 +99,7 @@ class User : RealmObject {
                 this.email = email
                 this.profile = profile
                 this.role = role
+                this.interests = interests
                 this.isBanned = isBanned
                 this.banReason = banReason
                 this.bannedAt = bannedAt

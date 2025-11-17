@@ -29,6 +29,7 @@ object RealmProvider {
                 InterestCategory::class
             )
         )
+            .deleteRealmIfMigrationNeeded() // deletes db when it changes, only for development
             .schemaVersion(1)
             .build()
 

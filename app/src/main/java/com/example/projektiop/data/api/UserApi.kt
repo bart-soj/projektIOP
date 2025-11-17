@@ -1,6 +1,5 @@
 package com.example.projektiop.data.api
 
-import com.google.gson.JsonElement
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.GET
@@ -79,7 +78,8 @@ data class UserProfileResponse(
 
 
 data class UserInterestDto(
-    val userInterestId: com.google.gson.JsonElement?,
+    val userInterestId: String?,
+    val userId: String?,
     val interest: InterestDto,
     val customDescription: String? = null
 )
@@ -87,7 +87,7 @@ data class UserInterestDto(
 data class InterestDto(
     val _id: String,                 // MongoDB ObjectId
     val name: String,
-    val category: JsonElement? = null,
+    val category: String? = null,
     val description: String? = null,
     val isArchived: Boolean = false,
     val createdAt: String? = null,

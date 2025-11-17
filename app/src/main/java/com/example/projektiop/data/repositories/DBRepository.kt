@@ -1,6 +1,8 @@
 package com.example.projektiop.data.repositories
 
 import com.example.projektiop.data.db.objects.Friendship
+import com.example.projektiop.data.db.objects.Interest
+import com.example.projektiop.data.db.objects.InterestCategory
 import com.example.projektiop.data.db.objects.Message
 import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.db.objects.UserInterest
@@ -123,13 +125,14 @@ object DBRepository {
     // ----------------------
     // UserInterest operations
     // ----------------------
-    fun getLocalUserInterests(): List<UserInterest> {
-        return realm.query<UserInterest>(UserInterest::class).find()
+
+    fun getLocalUserInterestsByUserId(userId: String): List<UserInterest> {
+        return realm.query<UserInterest>(UserInterest::class, "userId == $0").find()
     }
 
     fun addLocalUserInterest(userInterest: UserInterest) {
         realm.writeBlocking {
-            copyToRealm(userInterest)
+            copyToRealm(userInterest, updatePolicy = UpdatePolicy.ALL) // will overwrite existing entry with same id
         }
     }
 
@@ -147,4 +150,50 @@ object DBRepository {
             findLatest(userInterest)?.let { delete(it) }
         }
     }
+
+    // ----------------------
+    // Interest operations
+    // ----------------------
+
+    fun addLocalInterest(interest: Interest) {
+        realm.writeBlocking {
+            copyToRealm(interest, updatePolicy = UpdatePolicy.ALL) // will overwrite existing entry with same id
+        }
+    }
+
+    fun deleteLocalInterest(interest: Interest) {
+        realm.writeBlocking {
+            findLatest(interest)?.let { delete(it) }
+        }
+    }
+
+    fun addLocalInterestPair(interest: Interest, userInterest: UserInterest) {
+        realm.writeBlocking {
+            copyToRealm(interest, updatePolicy = UpdatePolicy.ALL) // will overwrite existing entry with same id
+            copyToRealm(userInterest, updatePolicy = UpdatePolicy.ALL) // will overwrite existing entry with same id
+        }
+    }
+
+
+
+    // ----------------------
+    // InterestCategory operations
+    // ----------------------
+
+    fun addLocalInterestCategory(interestCategory: InterestCategory) {
+        realm.writeBlocking {
+            copyToRealm(interestCategory, updatePolicy = UpdatePolicy.ALL) // will overwrite existing entry with same id
+        }
+    }
+
+    fun getLocalInterestCategories(): List<InterestCategory> {
+        return realm.query<InterestCategory>(InterestCategory::class).find()
+    }
+
+    fun deleteLocalInterestCategory(interestCategory: InterestCategory) {
+        realm.writeBlocking {
+            findLatest(interestCategory)?.let { delete(it) }
+        }
+    }
+
 }

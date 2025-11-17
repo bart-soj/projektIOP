@@ -7,6 +7,7 @@ import com.example.projektiop.data.db.objects.Gender
 import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.db.objects.UserProfile
 import com.example.projektiop.data.db.objects.UserRole
+import io.realm.kotlin.ext.realmListOf
 
 
 fun UserProfileResponse.toRealm(): User {
@@ -33,12 +34,17 @@ fun UserProfileResponse.toRealm(): User {
         ?.let { runCatching { UserRole.valueOf(it) }.getOrDefault(UserRole.USER) }
         ?: UserRole.USER
 
+    val interests = realmListOf<String>().apply {
+        addAll(this@toRealm.interests?.mapNotNull { it.userInterestId } ?: emptyList())
+    }
+
     return User.create(
         id = id,
         username = username,
         email = email,
         profile = profile,
         role = roleEnum,
+        interests = interests,
         isBanned = this.isBanned ?: false,
         banReason = this.banReason,
         bannedAt = mongoTimestampToRealmInstant(this.bannedAt),

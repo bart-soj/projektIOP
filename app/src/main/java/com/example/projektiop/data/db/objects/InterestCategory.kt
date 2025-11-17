@@ -12,7 +12,7 @@ class InterestCategory : RealmObject {
     @Index
     var name: String = ""
 
-    var description: String = ""
+    // var description: String = ""
 
     var createdAt: RealmInstant? = null
     var updatedAt: RealmInstant? = null
@@ -22,14 +22,14 @@ class InterestCategory : RealmObject {
         fun create(
             id: String,
             name: String,
-            description: String = "",
+            // description: String = "",
             createdAt: RealmInstant? = RealmInstant.now(),
             updatedAt: RealmInstant? = null
         ): InterestCategory {
             return InterestCategory().apply {
                 this.id = id
                 this.name = name
-                this.description = description
+                // this.description = description
                 this.createdAt = createdAt
                 this.updatedAt = updatedAt
             }
