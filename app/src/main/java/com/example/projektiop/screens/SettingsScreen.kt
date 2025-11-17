@@ -3,7 +3,14 @@ package com.example.projektiop.screens
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.ShieldMoon
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.*
+import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,8 +32,8 @@ fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark
 
     var animationPlayed by remember { mutableStateOf(false) }
     val alphaAnimation = animateFloatAsState(
-        targetValue = if (animationPlayed) 1f else 0f, // 1 (widoczne) lub 0 (niewidocne)
-        animationSpec = tween(durationMillis = 1000) // Czas trwania animacji
+        targetValue = if (animationPlayed) 1f else 0f,
+        animationSpec = tween(durationMillis = 1000)
     )
 
     LaunchedEffect(Unit) {
@@ -39,7 +46,10 @@ fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark
     Scaffold(
         bottomBar = { BottomNavigationBar(navController = navController, currentRoute = currentRoute) }
     ) { paddingValues ->
-    var showBlockedDialog by remember { mutableStateOf(false) }
+
+        var showLogoutDialog by remember { mutableStateOf(false) }
+        var showBlockedDialog by remember { mutableStateOf(false) }
+
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -61,20 +71,47 @@ fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(stringResource(id = R.string.dark_mode_label), style = MaterialTheme.typography.titleMedium)
-                    Switch(checked = darkMode, onCheckedChange = { onToggleDark() })
+                    Switch(
+                        checked = darkMode,
+                        onCheckedChange = { onToggleDark() },
+                        thumbContent = {
+                            if (darkMode) {
+                                Icon(
+                                    imageVector = Icons.Filled.DarkMode,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Filled.LightMode,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                                )
+                            }
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.secondaryContainer,
+                            checkedTrackColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            checkedBorderColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            checkedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+
+                            uncheckedThumbColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            uncheckedTrackColor = MaterialTheme.colorScheme.secondaryContainer,
+                            uncheckedBorderColor = MaterialTheme.colorScheme.secondaryContainer,
+                            uncheckedIconColor = MaterialTheme.colorScheme.secondaryContainer
+                        )
+                    )
                 }
 
                 Button(
                     onClick = { showBlockedDialog = true },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+
                 ) { Text(text = stringResource(id = R.string.blocked_users)) }
 
                 Spacer(modifier = Modifier.weight(1f))
                 Button(
-                    onClick = {
-                        AuthRepository.clearToken()
-                        navController.navigate("start")
-                    },
+                    onClick = { showLogoutDialog = true },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(64.dp),
@@ -89,6 +126,27 @@ fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark
         }
         if (showBlockedDialog) {
             BlockedUsersDialog(onClose = { showBlockedDialog = false })
+        }
+        if (showLogoutDialog) {
+            AlertDialog(
+                onDismissRequest = { showLogoutDialog = false },
+                title = { Text(stringResource(R.string.confirmation)) },
+                text = { Text(stringResource(R.string.logout_confirm_message)) },
+                confirmButton = {
+                    Button(onClick = {
+                        showLogoutDialog = false
+                        AuthRepository.clearToken()
+                        navController.navigate("start")
+                    }) {
+                        Text(stringResource(R.string.logout_confirm_yes))
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = { showLogoutDialog = false }) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
+            )
         }
     }
 }

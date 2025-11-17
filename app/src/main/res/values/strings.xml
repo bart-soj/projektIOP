@@ -1,6 +1,4 @@
 <resources>
-    <string name="servicedesc">HCE service for the projektiop app</string>
-    <string name="aiddescription">HCE service AID for projektiop app</string>
     <string name="app_name">HelloBeacon</string>
     <string name="return_button_text">Powrót</string>
     <string name="clear_content_description">Wyczyść</string>
@@ -15,6 +13,9 @@
     <string name="broadcasting_label">Rozgłaszanie</string>
     <string name="broadcasting_status_icon_content_description">Status rozgłaszania</string> <!-- Opis ikony statusu -->
     <string name="error">Błąd</string>
+    <string name="servicedesc">Opis usługi NFC</string>
+    <string name="aiddescription">Grupa AID dla HelloBeacon</string>
+
 
     <!-- Start Screen -->
     <string name="start_screen_welcome">Witamy!</string>
@@ -50,6 +51,11 @@
     <string name="no_friends">Brak znajomych</string>
     <string name="pending_requests">Oczekujące zaproszenia</string>
     <string name="friends_header">Znajomi</string>
+    <string name="search_query_label">Fraza (min 1 znak)</string>
+    <string name="no_results">Brak wyników</string>
+    <string name="sent">Wysłano</string>
+    <string name="add">Dodaj</string>
+    <string name="no_name">(bez nazwy)</string>
 
     <!-- Friend Profile Screen -->
     <string name="profile">Profil</string>
@@ -89,6 +95,12 @@
     <string name="choose_image">Wybierz zdjęcie</string>
     <string name="uploading">Wgrywanie...</string>
     <string name="upload">Wgraj</string>
+    <string name="upload_error_file_too_large">Plik jest zbyt duży (max 5MB).</string>
+    <string name="interest_descriptions_label">Opisy zainteresowań (opcjonalne)</string>
+    <string name="interest_description_label">%1$s – opis (max 200)</string>
+    <string name="gender_label">Płeć</string>
+    <string name="choose_interests_empty">Wybierz zainteresowania</string>
+
 
     <!-- Bottom Navigation Bar -->
     <string name="bottom_nav_home">Ekran Główny</string>
@@ -130,6 +142,8 @@
     <string name="unlock">Odblokuj</string>
     <string name="blocked">Zablokowany</string>
     <string name="log_out">Wyloguj się</string>
+    <string name="logout_confirm_message">Czy na pewno chcesz się wylogować?</string>
+    <string name="logout_confirm_yes">Tak, wyloguj</string>
 
     <!-- Register/Login Screen -->
     <string name="username_error">Podana nazwa użykownika jest już zajęta</string>
@@ -152,12 +166,15 @@
     <string name="login_button_text">Zaloguj się</string>
     <string name="logging_in">Logowanie...</string>
 
+
     <!-- Chat Detail Screen -->
     <string name="blocked_by_me">Zablokowałeś tego użytkownika. Odblokuj go, aby wysłać wiadomość.</string>
     <string name="blocked_by_other">Nie możesz wysłać wiadomości – zostałeś zablokowany przez tego użytkownika.</string>
-    <string name="send_unavailable">Wysyłanie niedostępne</string>
+    <string name="sending_unavailable">Wysyłanie niedostępne</string>
     <string name="write_message">Napisz wiadomość...</string>
-    <string name="send_message">Wyślij</string>
+    <string name="send">Wyślij</string>
+    <string name="chat">Czat</string>
+    <string name="no_chats">Brak czatów</string>
 
     <string name="enable_bluetooth">Włącz Bluetooth!</string>
     <string name="enable_location">Włącz Lokalizację!</string>

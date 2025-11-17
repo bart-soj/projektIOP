@@ -3,6 +3,9 @@ package com.example.projektiop.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,7 +23,9 @@ import com.example.projektiop.R // Importuj zasoby R z twojego pakietu
 fun StartScreen(navController: NavController) {
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Obraz tła
         /* TODO: Obraz tła ładny
@@ -47,7 +52,7 @@ fun StartScreen(navController: NavController) {
             Text(
                 text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onPrimary
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.height(96.dp)) // Odstęp między tytułem a przyciskami
@@ -76,16 +81,6 @@ fun StartScreen(navController: NavController) {
                     .height(50.dp)
             ) {
                 Text(text = stringResource(R.string.start_screen_register_button))
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = { navController.navigate("main") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Text(text = stringResource(R.string.go_to_main_screen))
             }
 
             Spacer(modifier = Modifier.height(32.dp)) // Dodatkowy odstęp od dołu

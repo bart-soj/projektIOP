@@ -96,12 +96,10 @@ fun MainScreen(navController: NavController, viewModel: MainViewModel) {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifier, viewModel: MainViewModel) {
-    val scope = rememberCoroutineScope()
     val profile by viewModel.myProfile.collectAsState()
     val loading by viewModel.loading.collectAsState()
     var error by remember { mutableStateOf<String?>(null) }
 
-    // Re-fetch on entering screen (including returning from edit) by keying effect to current route
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     LaunchedEffect(navBackStackEntry?.destination?.route) {
         if (navBackStackEntry?.destination?.route == "main") {
@@ -112,7 +110,11 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -262,7 +264,12 @@ fun InterestTag(
     val full = if (label != "") "$base — $label" else base
     val short = if (full.length > 50) full.take(50) + "…" else full
 
-    SuggestionChip(onClick = { showDialog = true },
+    SuggestionChip(
+        onClick = { showDialog = true },
+        colors = SuggestionChipDefaults.suggestionChipColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+        ),
         label = {
             Text(
                 text = short,
@@ -316,9 +323,16 @@ fun BottomNavigationBar(navController: NavController, currentRoute: String?) {
 
     NavigationBar {
         items.forEach { item ->
+            val selected = currentRoute == item.route
+
             NavigationBarItem(
                 icon = { Icon(item.icon, contentDescription = stringResource(item.labelResId)) },
-                selected = currentRoute == item.route,
+                selected = selected,
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                ),
                 onClick = {
                     if (currentRoute != item.route) {
                         val popped = navController.popBackStack(item.route, inclusive = false)

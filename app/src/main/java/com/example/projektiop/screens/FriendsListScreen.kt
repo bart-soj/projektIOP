@@ -198,7 +198,11 @@ private fun FriendCard(
                     onTap = { onClick() }
                 )
             },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        )
     ) {
         Row(
             modifier = Modifier
@@ -243,10 +247,9 @@ private fun FriendCard(
                 Text(friend.displayName, style = MaterialTheme.typography.titleMedium)
             }
 
-            // Przykładowy przycisk akcji (np. czat)
-            TextButton(onClick = onChat) { Text("Czat") }
+            TextButton(onClick = onChat) { Text(stringResource(R.string.chat)) }
 
-            Box { // Dropdown anchor
+            Box {
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
                         text = { Text("Usuń znajomego") },
@@ -279,7 +282,10 @@ private fun PendingRequestCard(item: PendingRequestItem, onAccept: () -> Unit, o
     Card(
         modifier = Modifier
             .fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     ) {
         Row(
             modifier = Modifier
@@ -344,15 +350,17 @@ private fun UserSearchDialog(onClose: () -> Unit) {
         onDismissRequest = onClose,
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onClose) { Text("Zamknij") }
+            TextButton(onClick = onClose) {
+                Text(stringResource(R.string.close))
+            }
         },
-        title = { Text("Szukaj użytkowników") },
+        title = { Text(stringResource(R.string.search_users)) },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it },
-                    label = { Text("Fraza (min 1 znak)") },
+                    label = { Text(stringResource(R.string.search_query_label)) },
                     singleLine = true,
                     trailingIcon = {
                         IconButton(enabled = query.isNotBlank(), onClick = {
@@ -375,7 +383,7 @@ private fun UserSearchDialog(onClose: () -> Unit) {
                 } else if (error != null) {
                     Text(error!!, color = MaterialTheme.colorScheme.error)
                 } else if (results.isEmpty()) {
-                    Text("Brak wyników", style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.no_results), style = MaterialTheme.typography.bodySmall)
                 } else {
                     LazyColumn(
                         modifier = Modifier
@@ -385,7 +393,7 @@ private fun UserSearchDialog(onClose: () -> Unit) {
                             val userId = user._id ?: return@items
                             val alreadySent = userId in sentFor
                             ListItem(
-                                headlineContent = { Text(user.profile?.displayName ?: user.username ?: "(bez nazwy)") },
+                                headlineContent = { Text(user.profile?.displayName ?: user.username ?: stringResource(R.string.no_name)) },
                                 supportingContent = { Text(user.username ?: "") },
                                 trailingContent = {
                                     TextButton(enabled = !alreadySent, onClick = {
@@ -394,7 +402,9 @@ private fun UserSearchDialog(onClose: () -> Unit) {
                                                 .onSuccess { sentFor = sentFor + userId }
                                                 .onFailure { error = it.message }
                                         }
-                                    }) { Text(if (alreadySent) "Wysłano" else "Dodaj") }
+                                    }) {
+                                        Text(if (alreadySent) stringResource(R.string.sent) else stringResource(R.string.add))
+                                    }
                                 }
                             )
                             Divider()
