@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.projektiop.data.repositories.InterestRepository
 
 @Composable
 fun EditProfileScreen(
@@ -93,7 +94,7 @@ fun EditProfileScreen(
                 selectedDescriptions = descMap
             }
             .onFailure { error = it.message }
-        UserRepository.fetchInterestsMap()
+        InterestRepository.fetchInterestsMap()
             .onSuccess { map ->
                 allInterests = map.keys.sorted()
             }

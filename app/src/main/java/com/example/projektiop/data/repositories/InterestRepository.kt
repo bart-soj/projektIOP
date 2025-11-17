@@ -12,11 +12,15 @@ import com.example.projektiop.data.db.objects.UserInterest
 import com.example.projektiop.data.mapping.toDto
 import com.example.projektiop.data.mapping.toRealm
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 object InterestRepository {
 
-    // TODO() a flow of MyUserInterests or something similar to display in UI
+    private val _MyUserInterests = MutableStateFlow<List<UserInterestDto>?>(null)
+    val MyUserInterests: StateFlow<List<UserInterestDto>?> = _MyUserInterests.asStateFlow()
 
     suspend fun getPublicInterestCategories(): Result<List<PublicInterestCategoryDto>> = withContext(
         Dispatchers.IO) {
@@ -54,8 +58,21 @@ object InterestRepository {
         }
     }
 
+    // Fetch public interests catalog; returns map name->id for quick lookup
+    suspend fun fetchInterestsMap(): Result<Map<String, String>> = withContext(Dispatchers.IO) {
+        val resp = getPublicInterestCategories().fold(
+            onSuccess = { list ->
+                Result.success(list.associate { it.name to it._id })
+            },
+            onFailure = { exception ->
+                Result.failure(exception)
+            }
+        )
+        return@withContext resp
+    }
+
     suspend fun resolveIncomingUserInterests(userInterests: List<UserInterestDto>, userId: String) {
-        Log.d("INT", "resolving interests started!")
+        // Log.d("INT", "resolving interests started!")
         var localInterestCategories: List<String> = DBRepository.getLocalInterestCategories()
             .map{ it.id }
 
@@ -66,17 +83,22 @@ object InterestRepository {
                 val userInterestRealm = userInterestDto.toRealm(userId)
                 val interestCategory = userInterestDto.interest.category
                 if (interestCategory !in localInterestCategories) {
-                    getPublicInterestCategories().onSuccess { localInterestCategories = it.map{ it._id} }
+                    getPublicInterestCategories().onSuccess {
+                        localInterestCategories = it.map{ it._id } // just need a list of ids
+                    }
                     if (interestCategory !in localInterestCategories) {
                         throw Exception("invalid interest category id")
                     }
                 }
                 DBRepository.addLocalInterestPair(interestRealm, userInterestRealm)
             }.onFailure { e ->
-                Log.d("INT", "this one failed", e)
+                // Log.d("INT", "this one failed", e)
             }
         }
-        Log.d("INT", "resolving interests ended!")
+
+        _MyUserInterests.value = DBRepository.getLocalUserInterestsByUserId(userId).map{it.toDto()}
+
+        // Log.d("INT", "resolving interests ended!")
     }
 }
 

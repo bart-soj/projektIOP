@@ -97,6 +97,7 @@ fun MainScreen(navController: NavController, viewModel: MainViewModel) {
 @Composable
 fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifier, viewModel: MainViewModel) {
     val profile by viewModel.myProfile.collectAsState()
+    val interests by viewModel.myInterests.collectAsState()
     val loading by viewModel.loading.collectAsState()
     var error by remember { mutableStateOf<String?>(null) }
 
@@ -236,13 +237,12 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val interests = profile?.interests ?: emptyList()
                 if (loading) {
                     InterestTag(base = "...")
-                } else if (interests.isEmpty()) {
+                } else if (interests.isNullOrEmpty() ) {
                     InterestTag(base = stringResource(R.string.profile_no_interests))
                 } else {
-                    interests.forEach { ui ->
+                    interests!!.forEach { ui ->
                         val base = ui.interest.name.ifBlank { stringResource(R.string.profile_unknown_interest) }
                         val label = if (!ui.customDescription.isNullOrBlank()) ui.customDescription else ""
                         InterestTag(base = base, label = label)

@@ -79,7 +79,7 @@ data class UserProfileResponse(
 
 data class UserInterestDto(
     val userInterestId: String?,
-    val userId: String?,
+    // val userId: String?, TODO() add serverside
     val interest: InterestDto,
     val customDescription: String? = null
 )

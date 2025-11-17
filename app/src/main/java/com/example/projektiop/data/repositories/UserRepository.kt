@@ -60,10 +60,18 @@ object UserRepository {
                 // Save user in DB, mapper ensures mandatory fields present
                 try {
                     DBRepository.addLocalUser(body.toRealm())
-                    InterestRepository.resolveIncomingUserInterests(userInterests, tmpId!!)
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving user to database: $e")
+                    )
+                }
+
+                // Save interests in DB
+                try {
+                    InterestRepository.resolveIncomingUserInterests(userInterests, tmpId!!)
+                } catch (e: Exception) {
+                    return@withContext Result.failure<UserProfileResponse>(
+                        Exception("Error saving interests to database: $e")
                     )
                 }
 
@@ -127,12 +135,9 @@ object UserRepository {
             val response = RetrofitInstance.userApi.updateMyProfile(body)
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
-
-                // Save ID in SharedPreferences
+                val userInterests: List<UserInterestDto> =
+                    body.interests.orEmpty().filterNotNull().filter{ it.interest != null }
                 val tmpId: String? = body._id
-                if (!tmpId.isNullOrBlank()) {
-                    SharedPreferencesRepository.set(ID, tmpId.toString())
-                }
 
                 // Save user in DB
                 try {
@@ -142,6 +147,21 @@ object UserRepository {
                         Exception("Error saving to database: $e")
                     )
                 }
+
+                // Save interests in DB
+                try {
+                    InterestRepository.resolveIncomingUserInterests(userInterests, tmpId!!)
+                } catch (e: Exception) {
+                    return@withContext Result.failure<UserProfileResponse>(
+                        Exception("Error saving interests to database: $e")
+                    )
+                }
+
+                // Save ID in SharedPreferences
+                if (!tmpId.isNullOrBlank()) {
+                    SharedPreferencesRepository.set(ID, tmpId.toString())
+                }
+
                 _MyProfile.value = response.body()!!
                 Result.success(response.body()!!)
             } else {
@@ -163,6 +183,8 @@ object UserRepository {
             val response = RetrofitInstance.userApi.getUserById(id)
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
+                val userInterests: List<UserInterestDto> =
+                    body.interests.orEmpty().filterNotNull().filter{ it.interest != null }
 
                 // Save user in DB
                 try {
@@ -170,6 +192,15 @@ object UserRepository {
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving to database: $e")
+                    )
+                }
+
+                // Save interests in DB
+                try {
+                    InterestRepository.resolveIncomingUserInterests(userInterests, body._id!!)
+                } catch (e: Exception) {
+                    return@withContext Result.failure<UserProfileResponse>(
+                        Exception("Error saving interests to database: $e")
                     )
                 }
 
@@ -251,21 +282,7 @@ object UserRepository {
     }
 
 
-    // Fetch public interests catalog; returns map name->id for quick lookup
-    suspend fun fetchInterestsMap(): Result<Map<String, String>> = withContext(Dispatchers.IO) {
-        return@withContext try {
-            val resp = com.example.projektiop.data.api.RetrofitInstance.publicInterestApi.getPublicInterests()
-            if (resp.isSuccessful && resp.body() != null) {
-                val list = resp.body()!!
-                Result.success(list.associate { it.name to it._id })
-            } else {
-                val err = try { resp.errorBody()?.string() } catch (_: Exception) { null }
-                Result.failure(Exception("Nie udało się pobrać listy zainteresowań${if (!err.isNullOrBlank()) ": ${err.take(200)}" else ""}"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+
 
     // Sync interests: desiredNames is set of interest names selected in UI.
     // We diff against server's current interests and call add/remove endpoints.
@@ -282,7 +299,7 @@ object UserRepository {
             val toRemove = currentInterests.filter { it.interest.name in toRemoveNames }
 
             // 3) Map names -> ids via public catalog
-            val nameToId = fetchInterestsMap().getOrElse { return@withContext Result.failure(it) }
+            val nameToId = InterestRepository.fetchInterestsMap().getOrElse { return@withContext Result.failure(it) }
 
             // 4) Execute adds
             for (name in toAdd) {
@@ -354,7 +371,7 @@ object UserRepository {
             } catch (_: Exception) { null }
 
             // 3) Map names -> ids
-            val nameToId = fetchInterestsMap().getOrElse { return@withContext Result.failure(it) }
+            val nameToId = InterestRepository.fetchInterestsMap().getOrElse { return@withContext Result.failure(it) }
 
             // 4) Adds (pass description if provided)
             for (name in toAdd) {

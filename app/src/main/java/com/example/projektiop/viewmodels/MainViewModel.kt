@@ -3,7 +3,9 @@ package com.example.projektiop.viewmodels
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UserProfileResponse
+import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +23,7 @@ class MainViewModel() : ViewModel() {
     private val userId: String = SharedPreferencesRepository.get(ID, "brak")
 
     val myProfile: StateFlow<UserProfileResponse?> = UserRepository.MyProfile
+    val myInterests: StateFlow<List<UserInterestDto>?> = InterestRepository.MyUserInterests
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 

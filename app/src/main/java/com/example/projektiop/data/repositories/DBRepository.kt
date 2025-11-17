@@ -127,7 +127,7 @@ object DBRepository {
     // ----------------------
 
     fun getLocalUserInterestsByUserId(userId: String): List<UserInterest> {
-        return realm.query<UserInterest>(UserInterest::class, "userId == $0").find()
+        return realm.query<UserInterest>(UserInterest::class, "userId == $0", userId).find()
     }
 
     fun addLocalUserInterest(userInterest: UserInterest) {
@@ -159,6 +159,12 @@ object DBRepository {
         realm.writeBlocking {
             copyToRealm(interest, updatePolicy = UpdatePolicy.ALL) // will overwrite existing entry with same id
         }
+    }
+
+    fun getLocalInterestById(id: String): Interest? {
+
+        return realm.query<Interest>(Interest::class, "id == $0", id).first().find()
+
     }
 
     fun deleteLocalInterest(interest: Interest) {
