@@ -11,9 +11,12 @@ import io.realm.kotlin.ext.realmListOf
 
 
 fun UserProfileResponse.toRealm(): User {
-    val id = this._id ?: throw IllegalArgumentException("Missing user id")
-    val username = this.username ?: throw IllegalArgumentException("Missing username")
-    val email = this.email ?: throw IllegalArgumentException("Missing email")
+    require(!this._id.isNullOrBlank()) { "Missing user id" }
+    val id = this._id
+    require(!this.username.isNullOrBlank()) { "Missing username" }
+    val username = this.username
+    require(!this.email.isNullOrBlank()) { "Missing email" }
+    val email = this.email
 
     val profile = UserProfile().apply {
         displayName = this@toRealm.profile?.displayName.orEmpty()

@@ -8,9 +8,13 @@ import com.google.gson.JsonElement
 import io.realm.kotlin.ext.realmListOf
 
 fun MessageDto.toRealm(): Message {
-    val id = this._id ?: throw IllegalArgumentException("Missing message id")
-    val chatId = extractIdFromElement(this.chatId).takeIf { it.isNotBlank() } ?: throw IllegalArgumentException("Missing chat id")
-    val senderId = this.senderId?._id ?: throw IllegalArgumentException("Missing sender id")
+    require(!this._id.isNullOrBlank()) { "Missing message id" }
+    val id = this._id
+    val extractedChatId = extractIdFromElement(this.chatId)
+    require(!extractedChatId.isNullOrBlank()) { "Missing chat id" }
+    val chatId = extractedChatId
+    require(!(this.senderId?._id).isNullOrBlank()) { "Missing sender id" }
+    val senderId = this.senderId?._id!!
 
     val readByList = realmListOf<String>().apply {
         addAll(this@toRealm.readBy?.mapNotNull { it._id } ?: emptyList())

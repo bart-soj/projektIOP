@@ -17,9 +17,11 @@ private const val ID: String = "_id"
 
 // FriendshipDto (API) → Friendship (Realm)
 fun FriendshipDto.toRealm(): Friendship {
-    val id = this.friendshipId ?: this._id ?: return throw IllegalArgumentException("Missing friendship id")
+    require(!this.friendshipId.isNullOrBlank() || !this._id.isNullOrBlank()) { "Missing friendship id" }
+    val id = this.friendshipId ?: this._id!!
     val user1 = SharedPreferencesRepository.get(ID, "")
-    val user2 = this.user?._id ?: return throw IllegalArgumentException("Missing user2 id")
+    require(!this.user?._id.isNullOrBlank()) { "Missing user2 id" }
+    val user2 = this.user._id
     val requestedBy = this.requestedByUsername ?: user1
 
     val status = this.status

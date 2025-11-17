@@ -4,8 +4,12 @@ import com.example.projektiop.data.api.PublicInterestCategoryDto
 import com.example.projektiop.data.db.objects.InterestCategory
 
 fun PublicInterestCategoryDto.toRealm(): InterestCategory {
-    val id = this._id ?: throw IllegalArgumentException("Missing interest id")
-    val name = this.name ?: throw IllegalArgumentException("Missing interest name")
+    require(!this._id.isNullOrBlank()) { "Missing interest id" }
+    val id = this._id
+    require(!this.name.isNullOrBlank()) { "Missing interest name" }
+    val name = this.name
+
+
 
     return InterestCategory.create(
         id = id,
