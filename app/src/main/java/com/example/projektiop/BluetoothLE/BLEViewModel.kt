@@ -4,10 +4,11 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.HelloBeaconApp
+import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UserProfileResponse
+import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
-import com.example.projektiop.screens.cosineSimilarity
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,23 +40,24 @@ class BLEViewModel(application: Application) : AndroidViewModel(application) {
     // Publiczne StateFlow do obserwowania w UI
     val isScanning: StateFlow<Boolean> = bleManager.isScanning
     val isAdvertising: StateFlow<Boolean> = bleManager.isAdvertising
-    val foundDeviceStatus: StateFlow<String> = bleManager.foundDeviceStatus
+    // val foundDeviceStatus: StateFlow<String> = bleManager.foundDeviceStatus
     val foundDeviceIds: StateFlow<List<String>> = bleManager.foundDeviceIds
     val myProfile: StateFlow<UserProfileResponse?> = UserRepository.MyProfile
+    val myInterests: StateFlow<List<UserInterestDto>?> = InterestRepository.MyUserInterests
 
     private val _userProfiles = MutableStateFlow<List<UserProfileResponse>>(emptyList())
     val userProfiles: StateFlow<List<UserProfileResponse>> = combine(
         _userProfiles.asStateFlow(),
-        myProfile
+        myInterests
     ) {
-        val myInterests = myProfile.value?.interests?.map{ userInterest ->
+        val myInterestsNames = myInterests.value?.map{ userInterest ->
             userInterest.interest.name
         }
         _userProfiles.value.sortedByDescending { profile ->
             val profileInterests = profile.interests?.map { userInterest ->
                 userInterest.interest.name
             }
-            cosineSimilarity(profileInterests?.toSet() ?: emptySet(), myInterests?.toSet() ?: emptySet()) // sorts by this
+            cosineSimilarity(profileInterests?.toSet() ?: emptySet(), myInterestsNames?.toSet() ?: emptySet()) // sorts by this
         } // returns this
 
     }.stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = emptyList<UserProfileResponse>())
