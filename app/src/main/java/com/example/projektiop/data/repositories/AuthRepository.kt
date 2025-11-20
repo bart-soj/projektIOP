@@ -1,11 +1,14 @@
 package com.example.projektiop.data.repositories
 
 import android.content.Context
+import coil.network.HttpException
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.data.api.RegisterRequest
 import com.example.projektiop.data.api.LoginRequest
+import com.example.projektiop.data.api.AuthFailedDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.logging.HttpLoggingInterceptor
 
 
 object AuthRepository {
@@ -31,10 +34,10 @@ object AuthRepository {
             try {
                 val response = RetrofitInstance.authApi.login(LoginRequest(email, password))
                 if (response.isSuccessful) {
-                    saveEmail(email)
+                    saveInfo(email, response.body()?._id)
                     Result.success(response.body()?.token)
                 } else {
-                    Result.failure(Exception(response.body()?.message ?: "Login failed"))
+                    Result.failure(Exception(""))
                 }
             } catch (e: Exception) {
                 Result.failure(e)
@@ -48,9 +51,13 @@ object AuthRepository {
             try {
                 val response = RetrofitInstance.authApi.register(RegisterRequest(username, email, password))
                 if (response.isSuccessful) {
+                    saveInfo(email, response.body()?._id)
                     Result.success(response.body()?.token)
                 } else {
-                    Result.failure(Exception(response.body()?.message ?: "Registration failed"))
+                    val converter = RetrofitInstance.errorConverter<AuthFailedDto>(AuthFailedDto::class.java)
+                    val errorDto = converter.convert(response.errorBody()!!)
+                    val errorMessage = errorDto?.message
+                    Result.failure(Exception(errorMessage))
                 }
             } catch (e: Exception) {
                 Result.failure(e)
@@ -73,9 +80,12 @@ object AuthRepository {
     }
 
 
-    fun saveEmail(newEmail: String?) {
+    fun saveInfo(newEmail: String?, newId: String?) {
         if (!newEmail.isNullOrBlank()) {
             SharedPreferencesRepository.set(EMAIL, newEmail)
+        }
+        if (!newId.isNullOrBlank()) {
+            SharedPreferencesRepository.set("_id", newId)
         }
     }
 

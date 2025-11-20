@@ -1,14 +1,11 @@
 package com.example.projektiop.data.repositories
 
-import android.util.Log
-import com.example.projektiop.data.api.PublicInterestApi
+import com.example.projektiop.data.api.InterestDto
 import com.example.projektiop.data.api.PublicInterestCategoryDto
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.data.api.UserInterestDto
-import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.db.objects.Interest
 import com.example.projektiop.data.db.objects.InterestCategory
-import com.example.projektiop.data.db.objects.UserInterest
 import com.example.projektiop.data.mapping.toDto
 import com.example.projektiop.data.mapping.toRealm
 import kotlinx.coroutines.Dispatchers
@@ -18,9 +15,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 object InterestRepository {
-
-    private val _MyUserInterests = MutableStateFlow<List<UserInterestDto>?>(null)
-    val MyUserInterests: StateFlow<List<UserInterestDto>?> = _MyUserInterests.asStateFlow()
 
     suspend fun getPublicInterestCategories(): Result<List<PublicInterestCategoryDto>> = withContext(
         Dispatchers.IO) {
@@ -58,9 +52,46 @@ object InterestRepository {
         }
     }
 
+    suspend fun getPublicInterests(): Result<List<InterestDto>> = withContext(
+        Dispatchers.IO) {
+        try {
+            val response = RetrofitInstance.publicInterestApi.getPublicInterests()
+            if (response.isSuccessful && response.body().orEmpty() != emptyList<InterestDto>()){
+                val body = response.body()!!
+
+                for (interest in body) {
+                    try {
+                        val realmInterest = interest.toRealm()
+                        DBRepository.addLocalInterest(realmInterest)
+                    } catch (e: Exception) {
+                        return@withContext Result.failure(Exception("Error saving user to database: $e"))
+                    }
+                }
+
+                return@withContext Result.success(body)
+
+            } else {
+                val local = DBRepository.getLocalInterests()
+                if (local.orEmpty() != emptyList<Interest>()){
+                    return@withContext Result.success(local!!.map{it.toDto()})
+                } else {
+                    return@withContext Result.failure(Exception("API failed and no local data"))
+                }
+            }
+        } catch (e: Exception) {
+            val local = DBRepository.getLocalInterests()
+            if (local.orEmpty() != emptyList<Interest>()){
+                return@withContext Result.success(local!!.map{it.toDto()})
+            } else {
+                return@withContext Result.failure(Exception("API error and no local data"))
+            }
+        }
+    }
+
+
     // Fetch public interests catalog; returns map name->id for quick lookup
-    suspend fun fetchInterestsMap(): Result<Map<String, String>> = withContext(Dispatchers.IO) {
-        val resp = getPublicInterestCategories().fold(
+    suspend fun fetchPublicInterestsMap(): Result<Map<String, String>> = withContext(Dispatchers.IO) {
+        val resp = getPublicInterests().fold(
             onSuccess = { list ->
                 Result.success(list.associate { it.name to it._id })
             },
@@ -71,8 +102,7 @@ object InterestRepository {
         return@withContext resp
     }
 
-    suspend fun resolveIncomingUserInterests(userInterests: List<UserInterestDto>, userId: String) {
-        // Log.d("INT", "resolving interests started!")
+    suspend fun resolveIncomingUserInterests(userInterests: List<UserInterestDto>, userId: String, flowToUpdate: MutableStateFlow<List<UserInterestDto>?>) {
         var localInterestCategories: List<String> = DBRepository.getLocalInterestCategories()
             .map{ it.id }
 
@@ -92,13 +122,11 @@ object InterestRepository {
                 }
                 DBRepository.addLocalInterestPair(interestRealm, userInterestRealm)
             }.onFailure { e ->
-                // Log.d("INT", "this one failed", e)
+                // Log.d("INT", "UserInterest resolution failed", e)
             }
         }
 
-        _MyUserInterests.value = DBRepository.getLocalUserInterestsByUserId(userId).map{it.toDto()}
-
-        // Log.d("INT", "resolving interests ended!")
+        flowToUpdate.value = DBRepository.getLocalUserInterestsByUserId(userId).map{it.toDto()}
     }
 }
 

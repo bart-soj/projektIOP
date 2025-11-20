@@ -10,18 +10,17 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.api.UpdateProfileRequest
-import com.example.projektiop.data.api.Profile
+import com.example.projektiop.data.api.ProfileDto
 import com.example.projektiop.data.api.AddUserInterestRequest
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UpdateUserInterestRequest
+import com.example.projektiop.data.api.UserSearchDto
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.mapping.toUserProfileResponse
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
@@ -37,13 +36,15 @@ object UserRepository {
     private var prefs: SharedPreferences? = null
     private val _MyProfile = MutableStateFlow<UserProfileResponse?>(null)
     val MyProfile: StateFlow<UserProfileResponse?> = _MyProfile.asStateFlow()
+    private val _MyUserInterests = MutableStateFlow<List<UserInterestDto>?>(null)
+    val MyUserInterests: StateFlow<List<UserInterestDto>?> = _MyUserInterests.asStateFlow()
 
-    fun init(context: Context) {
+    suspend fun init(context: Context) {
         if (prefs == null) {
             prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             // email = prefs?.getString(EMAIL, null) ?: ""
         }
-        GlobalScope.launch { _MyProfile.value = fetchMyProfile().getOrNull() }
+        _MyProfile.value = fetchMyProfile().getOrNull()
     }
 
     suspend fun fetchMyProfile(): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
@@ -68,7 +69,7 @@ object UserRepository {
 
                 // Save interests in DB
                 try {
-                    InterestRepository.resolveIncomingUserInterests(userInterests, tmpId!!)
+                    InterestRepository.resolveIncomingUserInterests(userInterests, tmpId!!, _MyUserInterests)
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving interests to database: $e")
@@ -123,7 +124,7 @@ object UserRepository {
     ): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
         try {
             val body = UpdateProfileRequest(
-                profile = Profile(
+                profile = ProfileDto(
                     displayName = displayName?.takeIf { it.isNotBlank() },
                     gender = gender?.takeIf { it.isNotBlank() },
                     location = location?.takeIf { it.isNotBlank() },
@@ -150,7 +151,7 @@ object UserRepository {
 
                 // Save interests in DB
                 try {
-                    InterestRepository.resolveIncomingUserInterests(userInterests, tmpId!!)
+                    InterestRepository.resolveIncomingUserInterests(userInterests, tmpId!!, _MyUserInterests)
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving interests to database: $e")
@@ -197,7 +198,7 @@ object UserRepository {
 
                 // Save interests in DB
                 try {
-                    InterestRepository.resolveIncomingUserInterests(userInterests, body._id!!)
+                    InterestRepository.resolveIncomingUserInterests(userInterests, body._id!!, MutableStateFlow(null)) // TODO() placeholder mutable stateflow for now
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving interests to database: $e")
@@ -231,6 +232,18 @@ object UserRepository {
             }
             return@withContext Result.failure(Exception("API error and no local data available: $e"))
         }
+    }
+
+
+    suspend fun searchUsers(query: String): Result<List<UserSearchDto>> = withContext(Dispatchers.IO) {
+        try {
+            val response = RetrofitInstance.userApi.searchUsers(query)
+            if (response.isSuccessful) {
+                Result.success(response.body().orEmpty())
+            } else {
+                Result.failure(Exception("Błąd wyszukiwania (${response.code()})"))
+            }
+        } catch (e: Exception) { Result.failure(e) }
     }
 
 
@@ -299,7 +312,7 @@ object UserRepository {
             val toRemove = currentInterests.filter { it.interest.name in toRemoveNames }
 
             // 3) Map names -> ids via public catalog
-            val nameToId = InterestRepository.fetchInterestsMap().getOrElse { return@withContext Result.failure(it) }
+            val nameToId = InterestRepository.fetchPublicInterestsMap().getOrElse { return@withContext Result.failure(it) }
 
             // 4) Execute adds
             for (name in toAdd) {
@@ -371,7 +384,7 @@ object UserRepository {
             } catch (_: Exception) { null }
 
             // 3) Map names -> ids
-            val nameToId = InterestRepository.fetchInterestsMap().getOrElse { return@withContext Result.failure(it) }
+            val nameToId = InterestRepository.fetchPublicInterestsMap().getOrElse { return@withContext Result.failure(it) }
 
             // 4) Adds (pass description if provided)
             for (name in toAdd) {

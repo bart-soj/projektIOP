@@ -1,5 +1,8 @@
 package com.example.projektiop.data.api
 
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
+import retrofit2.HttpException
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -18,8 +21,18 @@ data class LoginRequest(
 )
 
 data class AuthResponse(
-    val token: String?,
-    val message: String?
+    val _id: String?,
+    val username: String?,
+    val email: String?,
+    val profile: ProfileDto?,
+    val role: String?,
+    val isTestAccount: String?,
+    val token: String?
+)
+
+data class AuthFailedDto(
+    @SerializedName("message")
+    val message: String?,
 )
 
 interface AuthApi {

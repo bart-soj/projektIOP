@@ -5,9 +5,15 @@ import com.example.projektiop.BluetoothLE.BluetoothRepository
 import com.example.projektiop.data.db.RealmProvider
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.DBRepository
+import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.util.NotificationHelper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlin.coroutines.coroutineContext
 
 /**
  * Application class for the HelloBeacon Application
@@ -19,11 +25,12 @@ class HelloBeaconApp : Application() {
     val bluetoothRepository by lazy { BluetoothRepository(this) }
     override fun onCreate() {
         super.onCreate()
+        val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         RealmProvider.init(this)
         DBRepository.init(RealmProvider.getRealm())
         SharedPreferencesRepository.init(this)
         AuthRepository.init(this)
-        UserRepository.init(this)
+        applicationScope.launch{ UserRepository.init(this@HelloBeaconApp) }
         NotificationHelper.initChannels(this)
         com.example.projektiop.data.repositories.ChatRepository.init(this)
         com.example.projektiop.data.repositories.ChatUpdateManager.start(this)

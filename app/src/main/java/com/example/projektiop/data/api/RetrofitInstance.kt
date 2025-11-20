@@ -6,6 +6,8 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import com.example.projektiop.data.repositories.AuthRepository
+import okhttp3.ResponseBody
+import retrofit2.Converter
 
 object RetrofitInstance {
      private const val BASE_URL = "https://hellobeacon.onrender.com/api/" // Ujednolicona baza – auth i user pod jednym URL
@@ -35,6 +37,10 @@ object RetrofitInstance {
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
+    }
+
+    fun <T> errorConverter(type: Class<T>): Converter<ResponseBody, T> {
+        return retrofit.responseBodyConverter(type, emptyArray())
     }
 
     val authApi: AuthApi by lazy { retrofit.create(AuthApi::class.java) }
