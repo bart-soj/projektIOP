@@ -152,7 +152,7 @@ fun RegisterScreen(navController: NavController) {
                             coroutineScope.launch {
                                 val result = AuthRepository.register(username, email, password)
                                 result.onSuccess {
-                                    navController.navigate("scanner")
+                                    navController.navigate("main")
                                 }.onFailure {
                                     registrationError = it.message
                                 }
