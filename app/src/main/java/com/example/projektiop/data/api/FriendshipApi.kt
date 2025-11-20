@@ -39,7 +39,6 @@ interface FriendshipApi {
 }
 
 data class FriendRequest(
-    @SerializedName("friendId") val friendId: String? = null,
     @SerializedName("recipientId") val recipientId: String? = null
 )
 
@@ -57,19 +56,12 @@ data class FriendshipDto(
     val blockedBy: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
-    // Legacy / fallback
-    val _id: String? = null,
-    val userId: UserRef? = null,
-    val friendId: UserRef? = null
-)
+) {
+    val _id = friendshipId // quickfix as it was used this way in many places
+}
 
 data class UserRef(
     val _id: String? = null,
     val username: String? = null,
-    val profile: ProfileRef? = null
-)
-
-data class ProfileRef(
-    val displayName: String? = null,
-    val avatarUrl: String? = null
+    val profile: ProfileDto? = null
 )

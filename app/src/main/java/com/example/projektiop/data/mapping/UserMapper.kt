@@ -1,7 +1,6 @@
 package com.example.projektiop.data.mapping
 
-import androidx.compose.ui.semantics.Role
-import com.example.projektiop.data.api.Profile
+import com.example.projektiop.data.api.ProfileDto
 import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.db.objects.Gender
 import com.example.projektiop.data.db.objects.User
@@ -64,7 +63,7 @@ fun UserProfileResponse.toRealm(): User {
 
 fun User.toUserProfileResponse(): UserProfileResponse {
     return UserProfileResponse(
-        profile = Profile(
+        profile = ProfileDto(
             displayName = this.profile?.displayName,
             bio = this.profile?.bio,
             gender = this.profile?.gender?.name,

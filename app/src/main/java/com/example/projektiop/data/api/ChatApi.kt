@@ -36,7 +36,7 @@ data class ChatDto(
 data class ChatUserDto(
     val _id: String? = null,
     val username: String? = null,
-    val profile: ProfileRef? = null
+    val profile: ProfileDto? = null
 )
 
 data class MessageDto(

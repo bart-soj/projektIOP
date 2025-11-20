@@ -20,7 +20,7 @@ enum class FriendshipType {
     VERIFIED
 }
 
-class Friendship()  : RealmObject {
+class Friendship() : RealmObject {
     @PrimaryKey
     var id: String = UUID.randomUUID().toString()
 

@@ -49,7 +49,7 @@ class User : RealmObject {
     @Index
     var email: String = ""
 
-    var profile: UserProfile? = null
+    var profile: UserProfile? = UserProfile()
 
     @Ignore
     var role: UserRole?
@@ -80,7 +80,7 @@ class User : RealmObject {
             id: String,
             username: String,
             email: String,
-            profile: UserProfile? = null,
+            profile: UserProfile = UserProfile(),
             role: UserRole = UserRole.USER,
             interests: RealmList<String> = realmListOf(),
             isBanned: Boolean = false,

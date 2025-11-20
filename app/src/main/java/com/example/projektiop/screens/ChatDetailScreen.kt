@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.example.projektiop.data.api.MessageDto
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
+import com.example.projektiop.data.repositories.BlockInfo
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
 import java.time.Duration
@@ -68,7 +69,7 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var input by remember { mutableStateOf("") }
-    var blockInfo by remember { mutableStateOf<FriendshipRepository.BlockInfo?>(null) }
+    var blockInfo by remember { mutableStateOf<BlockInfo?>(null) }
 
     LaunchedEffect(friendId, chatId) {
         if (resolvedChatId.isNullOrBlank() && !friendId.isNullOrBlank()) {

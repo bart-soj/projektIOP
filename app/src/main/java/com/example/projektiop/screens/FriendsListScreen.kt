@@ -1,7 +1,6 @@
 package com.example.projektiop.screens
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.*
@@ -25,13 +24,13 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
 import com.example.projektiop.data.repositories.FriendItem
-import com.example.projektiop.data.repositories.PendingRequestItem
 import com.example.projektiop.data.repositories.FriendshipRepository
 import kotlinx.coroutines.launch
 import com.example.projektiop.data.api.UserSearchDto
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.data.repositories.UserRepository
 
 private const val BASE_URL_KEY: String = "BASE_URL"
 
@@ -44,7 +43,7 @@ fun FriendsListScreen(navController: NavController) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     var friends by remember { mutableStateOf<List<FriendItem>>(emptyList()) }
-    var incoming by remember { mutableStateOf<List<PendingRequestItem>>(emptyList()) }
+    var incoming by remember { mutableStateOf<List<FriendItem>>(emptyList()) }
     var lastIncomingIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -278,7 +277,7 @@ private fun FriendCard(
 }
 
 @Composable
-private fun PendingRequestCard(item: PendingRequestItem, onAccept: () -> Unit, onReject: () -> Unit) {
+private fun PendingRequestCard(item: FriendItem, onAccept: () -> Unit, onReject: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -368,7 +367,7 @@ private fun UserSearchDialog(onClose: () -> Unit) {
                                 loading = true
                                 error = null
                                 results = emptyList()
-                                FriendshipRepository.searchUsers(query)
+                                UserRepository.searchUsers(query)
                                     .onSuccess { results = it }
                                     .onFailure { error = it.message }
                                 loading = false

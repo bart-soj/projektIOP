@@ -1,11 +1,13 @@
 package com.example.projektiop.BluetoothLE
 
+import android.R
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.HelloBeaconApp
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UserProfileResponse
+import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
@@ -43,7 +45,7 @@ class BLEViewModel(application: Application) : AndroidViewModel(application) {
     // val foundDeviceStatus: StateFlow<String> = bleManager.foundDeviceStatus
     val foundDeviceIds: StateFlow<List<String>> = bleManager.foundDeviceIds
     val myProfile: StateFlow<UserProfileResponse?> = UserRepository.MyProfile
-    val myInterests: StateFlow<List<UserInterestDto>?> = InterestRepository.MyUserInterests
+    val myInterests: StateFlow<List<UserInterestDto>?> = UserRepository.MyUserInterests
 
     private val _userProfiles = MutableStateFlow<List<UserProfileResponse>>(emptyList())
     val userProfiles: StateFlow<List<UserProfileResponse>> = combine(
@@ -82,6 +84,10 @@ class BLEViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
+    }
+
+    fun addFriend(userId: String): Unit {
+        viewModelScope.launch{ FriendshipRepository.sendFriendRequest(userId) }
     }
 
     // Akcje BLE

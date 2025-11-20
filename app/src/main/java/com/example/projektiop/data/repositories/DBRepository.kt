@@ -1,6 +1,7 @@
 package com.example.projektiop.data.repositories
 
 import com.example.projektiop.data.db.objects.Friendship
+import com.example.projektiop.data.db.objects.FriendshipStatus
 import com.example.projektiop.data.db.objects.Interest
 import com.example.projektiop.data.db.objects.InterestCategory
 import com.example.projektiop.data.db.objects.Message
@@ -8,6 +9,7 @@ import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.db.objects.UserInterest
 import io.realm.kotlin.Realm
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.query.RealmResults
 
 
 object DBRepository {
@@ -98,9 +100,26 @@ object DBRepository {
         return realm.query<Friendship>(Friendship::class).find()
     }
 
+    fun getLocalFriendshipsById(friendshipId: String): Friendship? {
+        return realm.query<Friendship>(Friendship::class, "id == $0", friendshipId).first().find()
+    }
+
+    fun getLocalFriendshipsByStatus(status: FriendshipStatus): List<Friendship> {
+        return realm.query<Friendship>(Friendship::class, "_status == $0", status.name).find()
+    }
+
     fun addLocalFriendship(friendship: Friendship) {
         realm.writeBlocking {
-            copyToRealm(friendship) // will throw an exception if pk already exists
+            copyToRealm(friendship, updatePolicy = UpdatePolicy.ALL) // will update if exists
+        }
+    }
+
+    fun changeLocalStatus(friendshipId: String, status: FriendshipStatus) {
+        realm.writeBlocking {
+            val toUpdate = getLocalFriendshipsById(friendshipId)
+            if (toUpdate == null) return@writeBlocking
+            toUpdate.status = status
+            updateLocalFriendship(toUpdate)
         }
     }
 
@@ -113,6 +132,14 @@ object DBRepository {
                 it.isBlocked = friendship.isBlocked
                 it.updatedAt = friendship.updatedAt
             }
+        }
+    }
+
+    fun deleteLocalFriendshipById(friendshipId: String) {
+        val friendship = getLocalFriendshipsById(friendshipId) ?:
+            throw Exception("can't delete, no such friendship")
+        realm.writeBlocking {
+            findLatest(friendship)?.let { delete(it) }
         }
     }
 
@@ -162,8 +189,11 @@ object DBRepository {
     }
 
     fun getLocalInterestById(id: String): Interest? {
-
         return realm.query<Interest>(Interest::class, "id == $0", id).first().find()
+    }
+
+    fun getLocalInterests(): List<Interest>? {
+        return realm.query<Interest>(Interest::class).find()
 
     }
 

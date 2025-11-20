@@ -52,7 +52,7 @@ interface UserApi {
 
 // Dane profilu – wszystkie pola opcjonalne, żeby uniknąć crashy przy różnym JSON.
 data class UserProfileResponse(
-    val profile: Profile? = Profile(),
+    val profile: ProfileDto? = ProfileDto(),
     val _id: String? = null,
     val username: String? = null,
     val email: String? = null,
@@ -94,7 +94,7 @@ data class InterestDto(
     val updatedAt: String? = null
 )
 
-data class Profile(
+data class ProfileDto(
     val displayName: String? = null,
     val bio: String? = null,
     val gender: String? = null,
@@ -107,7 +107,7 @@ data class Profile(
 data class UserSearchDto(
     val _id: String? = null,
     val username: String? = null,
-    val profile: Profile? = null
+    val profile: ProfileDto? = null
 )
 
 data class UserStats(
@@ -118,7 +118,7 @@ data class UserStats(
 
 // Request do aktualizacji profilu – dopasowany do validatorów w userRoutes.js (profile.*)
 data class UpdateProfileRequest(
-    val profile: Profile
+    val profile: ProfileDto
 )
 
 data class AddUserInterestRequest(
@@ -129,14 +129,3 @@ data class AddUserInterestRequest(
 data class UpdateUserInterestRequest(
     val customDescription: String? = null
 )
-
-/*
-data class ProfilePatch(
-    val displayName: String? = null,
-    val gender: String? = null,
-    val birthDate: String? = null, // ISO8601 jeśli użyte
-    val location: String? = null,
-    val bio: String? = null,
-    val broadcastMessage: String? = null
-)
-*/

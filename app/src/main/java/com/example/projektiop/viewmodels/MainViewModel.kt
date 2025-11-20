@@ -23,7 +23,7 @@ class MainViewModel() : ViewModel() {
     private val userId: String = SharedPreferencesRepository.get(ID, "brak")
 
     val myProfile: StateFlow<UserProfileResponse?> = UserRepository.MyProfile
-    val myInterests: StateFlow<List<UserInterestDto>?> = InterestRepository.MyUserInterests
+    val myInterests: StateFlow<List<UserInterestDto>?> = UserRepository.MyUserInterests
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 

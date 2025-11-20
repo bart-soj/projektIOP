@@ -37,7 +37,6 @@ import com.example.projektiop.data.api.CertificateRequest
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.util.CertificateUtils
 import com.example.projektiop.data.api.UserProfileResponse
-import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.launch
@@ -136,11 +135,18 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
 
             Spacer(modifier = Modifier.height(8.dp))
             Column {
-                ScannedUsersList(users = users) { user ->
-                    navController.navigate(
-                        "friend_profile/${user._id}?username=${user.username}&displayName=${user.profile?.displayName}&avatarUrl=${user.profile?.avatarUrl}"
-                    )
-                }
+                ScannedUsersList(
+                    users = users,
+                    onUserClick = { user ->
+                        navController.navigate(
+                            "friend_profile/${user._id}?username=${user.username}&displayName=${user.profile?.displayName}&avatarUrl=${user.profile?.avatarUrl}"
+                        )
+                    },
+                    onAddClick = { userId ->
+                        viewModel.addFriend(userId)
+                    }
+                )
+
                 ActiveHandshakeButton { }
                 //CertificateRequester(AuthRepository.getToken().toString())
             }
@@ -260,7 +266,8 @@ fun CertificateRequester(
 @Composable
 fun ScannedUserRow(
     user: UserProfileResponse,
-    onClick: (UserProfileResponse) -> Unit
+    onClick: (UserProfileResponse) -> Unit,
+    onAddClick: (String) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -322,10 +329,7 @@ fun ScannedUserRow(
                 */
             }
 
-            Button(onClick = {
-                coroutineScope.launch{ FriendshipRepository.sendFriendRequest(user._id.toString()) }
-            }
-            ) {
+            Button(onClick = { onAddClick(user._id.toString()) }) {
                 Text("Dodaj") // TODO() better repository add function that takes already existing friend into account
             }
 
@@ -337,7 +341,8 @@ fun ScannedUserRow(
 @Composable
 fun ScannedUsersList(
     users: List<UserProfileResponse>?,
-    onUserClick: (UserProfileResponse) -> Unit
+    onUserClick: (UserProfileResponse) -> Unit,
+    onAddClick: (String) -> Unit
 ) {
 
     if (users == null) {
@@ -349,27 +354,21 @@ fun ScannedUsersList(
             contentPadding = PaddingValues(16.dp)
         ) {
             items(users) { user ->
-                ScannedUserRow(user, onClick = { onUserClick(user) })
+                ScannedUserRow(
+                    user,
+                    onClick = { onUserClick(user) },
+                    onAddClick = { onAddClick(user._id.toString()) }
+                )
             }
         }
     }
 }
 
 
-fun cosineSimilarity(a: Set<String>, b: Set<String>): Double {
-    if (a.isEmpty() || b.isEmpty()) return 0.0
-
-    val intersectionSize = a.intersect(b).size
-    return intersectionSize / kotlin.math.sqrt(a.size.toDouble() * b.size.toDouble())
-}
-
-
-// --- Podgląd dla ScannerScreen (opcjonalnie) ---
 @Preview(showBackground = true)
 @Composable
 fun ScannerScreenPreview() {
-    MaterialTheme { // Użyj swojego motywu
-        // Przekaż przykładowe dane i pusty NavController dla podglądu
+    MaterialTheme {
         ScannerScreen(navController = rememberNavController(), viewModel = BLEViewModel(
             application = TODO()
         ))

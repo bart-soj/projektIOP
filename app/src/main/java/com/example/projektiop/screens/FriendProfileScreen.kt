@@ -27,7 +27,7 @@ import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.ui.res.stringResource
-import com.example.projektiop.data.api.Profile
+import com.example.projektiop.data.api.ProfileDto
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 
@@ -59,7 +59,7 @@ fun FriendProfileScreen(
                             profile = UserProfileResponse(
                                 _id = userId,
                                 username = usernamePrefill,
-                                profile = Profile(displayName = displayNamePrefill),
+                                profile = ProfileDto(displayName = displayNamePrefill),
                                 interests = emptyList(),
                                 email = null
                             )

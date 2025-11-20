@@ -18,7 +18,6 @@ class InterestSortingUnitTest {
         return intersectionSize / sqrt(a.size.toDouble() * b.size.toDouble())
     }
 
-
     @Test
     fun `identical set similarity should equal 1`(): Unit {
         assertEquals(1, cosineSimilarity<String>(

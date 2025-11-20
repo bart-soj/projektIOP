@@ -94,7 +94,7 @@ fun EditProfileScreen(
                 selectedDescriptions = descMap
             }
             .onFailure { error = it.message }
-        InterestRepository.fetchInterestsMap()
+        InterestRepository.fetchPublicInterestsMap()
             .onSuccess { map ->
                 allInterests = map.keys.sorted()
             }

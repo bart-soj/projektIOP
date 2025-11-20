@@ -2,23 +2,25 @@ package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.FriendshipDto
 import com.example.projektiop.data.api.UserRef
-import com.example.projektiop.data.api.ProfileRef
 import com.example.projektiop.data.db.objects.Friendship
 import com.example.projektiop.data.db.objects.FriendshipStatus
 import com.example.projektiop.data.db.objects.FriendshipType
 import com.example.projektiop.data.repositories.DBRepository
+import com.example.projektiop.data.repositories.FriendItem
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.data.repositories.UserRepository
 import io.realm.kotlin.types.RealmInstant
+import kotlinx.serialization.internal.throwMissingFieldException
 import java.util.UUID
 
 
 private const val ID: String = "_id"
 
 
-// FriendshipDto (API) → Friendship (Realm)
+// FriendshipDto (API) -> Friendship (Realm)
 fun FriendshipDto.toRealm(): Friendship {
-    require(!this.friendshipId.isNullOrBlank() || !this._id.isNullOrBlank()) { "Missing friendship id" }
-    val id = this.friendshipId ?: this._id!!
+    require(!this.friendshipId.isNullOrBlank()) { "Missing friendship id" }
+    val id = this.friendshipId
     val user1 = SharedPreferencesRepository.get(ID, "")
     require(!this.user?._id.isNullOrBlank()) { "Missing user2 id" }
     val user2 = this.user._id
@@ -44,5 +46,50 @@ fun FriendshipDto.toRealm(): Friendship {
         createdAt = mongoTimestampToRealmInstant(this.createdAt),
         updatedAt = mongoTimestampToRealmInstant(this.updatedAt)
     )
+}
 
+fun Friendship.toDto(): FriendshipDto {
+    return FriendshipDto(
+        friendshipId = this.id,
+        user = UserRef(this.user2),
+        status = this.status.name,
+        friendshipType = this.friendshipType.name,
+        requestedByUsername = this.requestedBy,
+        isBlocked = this.isBlocked,
+        blockedBy = this.blockedBy,
+        createdAt = realmInstantToMongoTimestamp(this.createdAt),
+        updatedAt = realmInstantToMongoTimestamp(this.updatedAt)
+    )
+}
+
+fun FriendshipDto.toFriendItem(): FriendItem? {
+    val userRef = this.user ?: return null
+    val id = userRef._id ?: return null
+    val displayName = userRef.profile?.displayName ?: userRef.username ?: "(bez nazwy)"
+    val username = userRef.username ?: ""
+    val avatarUrl = userRef.profile?.avatarUrl
+    val friendshipId = this.friendshipId ?: return null
+    val blockedBy = this.blockedBy
+
+    return FriendItem(
+        id = id,
+        displayName = displayName,
+        username = username,
+        avatarUrl = avatarUrl,
+        friendshipId = friendshipId,
+        blockedBy = blockedBy
+    )
+}
+
+fun Friendship.toFriendItem(): FriendItem {
+    val user = DBRepository.getLocalUserById(this.user2)
+    val profile  = user?.profile
+    return FriendItem(
+        id = this.user2,
+        displayName = user?.profile?.displayName.toString(),
+        username = user?.username ?: "",
+        avatarUrl = user?.profile?.avatarUrl,
+        friendshipId = this.id,
+        blockedBy = this.blockedBy
+    )
 }
