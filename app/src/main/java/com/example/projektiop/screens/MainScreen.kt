@@ -1,6 +1,5 @@
 package com.example.projektiop.screens
 
-import android.app.Application
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,7 +24,6 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
-import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import coil.compose.AsyncImage
@@ -36,7 +34,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.viewmodels.MainViewModel
@@ -56,20 +53,12 @@ fun MainScreen(navController: NavController, viewModel: MainViewModel) {
             BottomNavigationBar(navController = navController, currentRoute = currentRoute)
         }
     ) { paddingValues ->
-        var isRefreshing by remember { mutableStateOf(false) }
+        val isLoading by viewModel.loading.collectAsState()
         val scope = rememberCoroutineScope()
 
         com.example.projektiop.util.PullToRefresh(
-            refreshing = isRefreshing,
-            onRefresh = {
-                if (!isRefreshing) {
-                    isRefreshing = true
-                    scope.launch {
-                        viewModel.refreshProfile()
-                        isRefreshing = false
-                    }
-                }
-            }
+            refreshing = isLoading,
+            onRefresh = { viewModel.refreshProfile() }
         ) {
             Column(
                 modifier = Modifier
@@ -105,8 +94,8 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
     LaunchedEffect(navBackStackEntry?.destination?.route) {
         if (navBackStackEntry?.destination?.route == "main") {
             error = null
-            viewModel.refreshProfile()
         }
+        viewModel.refreshProfile()
     }
 
     Card(
