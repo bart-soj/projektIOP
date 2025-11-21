@@ -24,10 +24,10 @@ class Friendship : RealmObject {
     var id: String = UUID.randomUUID().toString()
 
     @Index
-    var user1: String = "" // Reference to User
+    var user1: String = ""
 
     @Index
-    var user2: String = "" // Reference to User
+    var user2: String = ""
 
     @Ignore
     var status: FriendshipStatus
@@ -40,7 +40,7 @@ class Friendship : RealmObject {
 
     private var _status: String = FriendshipStatus.PENDING.name
 
-    var requestedBy: String = "" // Reference to User
+    var requestedBy: String = ""
 
     @Ignore
     var friendshipType: FriendshipType
@@ -53,7 +53,7 @@ class Friendship : RealmObject {
 
     private var _friendshipType: String = FriendshipType.UNVERIFIED.name
 
-    var blockedBy: String? = null // Reference to User
+    var blockedBy: String? = null
 
     var isBlocked: Boolean = false
 

@@ -11,10 +11,10 @@ class UserInterest : RealmObject {
     var id: String = UUID.randomUUID().toString()
 
     @Index
-    var userId: String = "" // Reference to User
+    var userId: String = ""
 
     @Index
-    var interestId: String = "" // Reference to Interest
+    var interestId: String = ""
 
     var customDescription: String = ""
 

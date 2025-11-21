@@ -13,14 +13,13 @@ class Message : RealmObject {
     var id: String = UUID.randomUUID().toString()
 
     @Index
-    var chatId: String = "" // Reference to Chat
+    var chatId: String = ""
 
     @Index
-    var senderId: String = "" // Reference to User
+    var senderId: String = ""
 
     var content: String = ""
 
-    // Equivalent to: readBy: [UserId]
     var readBy: RealmList<String> = realmListOf()
 
     var createdAt: RealmInstant? = null
