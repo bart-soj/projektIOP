@@ -8,10 +8,6 @@ import com.example.projektiop.data.db.objects.FriendshipType
 import com.example.projektiop.data.repositories.DBRepository
 import com.example.projektiop.data.repositories.FriendItem
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
-import com.example.projektiop.data.repositories.UserRepository
-import io.realm.kotlin.types.RealmInstant
-import kotlinx.serialization.internal.throwMissingFieldException
-import java.util.UUID
 
 
 private const val ID: String = "_id"
@@ -50,8 +46,8 @@ fun FriendshipDto.toRealm(): Friendship {
 
 fun Friendship.toDto(): FriendshipDto {
     return FriendshipDto(
-        friendshipId = this.id,
-        user = UserRef(this.user2),
+        friendshipId = this._id.toString(),
+        user = UserRef(this.user2Id),
         status = this.status.name,
         friendshipType = this.friendshipType.name,
         requestedByUsername = this.requestedBy,
@@ -82,14 +78,14 @@ fun FriendshipDto.toFriendItem(): FriendItem? {
 }
 
 fun Friendship.toFriendItem(): FriendItem {
-    val user = DBRepository.getLocalUserById(this.user2)
+    val user = DBRepository.getUserById(this.user2Id)
     val profile  = user?.profile
     return FriendItem(
-        id = this.user2,
+        id = this.user2Id,
         displayName = user?.profile?.displayName.toString(),
         username = user?.username ?: "",
         avatarUrl = user?.profile?.avatarUrl,
-        friendshipId = this.id,
+        friendshipId = this._id.toString(),
         blockedBy = this.blockedBy
     )
 }

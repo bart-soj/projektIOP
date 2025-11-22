@@ -89,7 +89,7 @@ data class InterestDto(
     val name: String,
     val category: String? = null,
     val description: String? = null,
-    val isArchived: Boolean = false,
+    val isArchived: Boolean? = false,
     val createdAt: String? = null,
     val updatedAt: String? = null
 )

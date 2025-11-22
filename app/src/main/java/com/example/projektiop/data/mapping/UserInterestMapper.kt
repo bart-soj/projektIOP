@@ -13,11 +13,14 @@ fun UserInterestDto.toRealm(userId: String): UserInterest {
 
     require(!this.interest._id.isNullOrBlank()) { "Missing interest id" }
     val interestId = this.interest._id
+    val interest = DBRepository.getInterestById(interestId)
+    require(interest != null) { "No such Interest" }
 
     return UserInterest.create(
         id = id,
         userId = userId,
         interestId = interestId,
+        interest = interest,
         customDescription = this.customDescription ?: "",
         // createdAt = TODO(),
         // updatedAt = TODO()
@@ -26,9 +29,9 @@ fun UserInterestDto.toRealm(userId: String): UserInterest {
 
 fun UserInterest.toDto(): UserInterestDto {
     return UserInterestDto(
-        userInterestId = this.id,
+        userInterestId = this._id.toString(),
         // userId = TODO() serverside
-        interest = DBRepository.getLocalInterestById(this.interestId)!!.toDto(),
+        interest = this.interest!!.toDto(),
         customDescription = this.customDescription
     )
 }

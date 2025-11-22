@@ -6,11 +6,11 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.annotations.PrimaryKey
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.RealmInstant
-import java.util.UUID
+import org.mongodb.kbson.ObjectId
 
 class Message : RealmObject {
     @PrimaryKey
-    var id: String = UUID.randomUUID().toString()
+    var _id: ObjectId = ObjectId()
 
     @Index
     var chatId: String = "" // Reference to Chat
@@ -37,7 +37,7 @@ class Message : RealmObject {
             updatedAt: RealmInstant? = null
         ): Message {
             return Message().apply {
-                this.id = id
+                this._id = ObjectId(id)
                 this.chatId = chatId
                 this.senderId = senderId
                 this.content = content

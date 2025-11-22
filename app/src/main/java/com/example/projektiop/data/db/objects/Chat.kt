@@ -5,11 +5,11 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
-import java.util.UUID
+import org.mongodb.kbson.ObjectId
 
 class Chat : RealmObject {
     @PrimaryKey
-    var id: String = UUID.randomUUID().toString()
+    var _id: ObjectId = ObjectId()
 
     var participants: RealmList<String> = realmListOf() // References to User IDs
 
@@ -27,14 +27,14 @@ class Chat : RealmObject {
             lastMessageId: String,
             lastMessageTimestamp: RealmInstant? = RealmInstant.now(),
             createdAt: RealmInstant? = RealmInstant.now(),
-            updatedAt: RealmInstant? = null
+            updatedAt: RealmInstant? = RealmInstant.now()
         ): Chat {
             require(participants.isNotEmpty()) {
                 "Chat must have at least one participant"
             }
 
             return Chat().apply {
-                this.id = id
+                this._id = ObjectId(id)
                 this.participants = participants
                 this.lastMessageId = lastMessageId
                 this.lastMessageTimestamp = lastMessageTimestamp

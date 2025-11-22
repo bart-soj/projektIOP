@@ -1,18 +1,18 @@
 package com.example.projektiop.data.db.objects
 
-import io.realm.kotlin.Realm
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.RealmInstant
-import java.util.UUID
+import org.mongodb.kbson.ObjectId
 
 enum class FriendshipStatus {
     PENDING,
     ACCEPTED,
     REJECTED,
-    BLOCKED
+    BLOCKED,
+    NOT_FRIENDS
 }
 
 enum class FriendshipType {
@@ -22,13 +22,13 @@ enum class FriendshipType {
 
 class Friendship() : RealmObject {
     @PrimaryKey
-    var id: String = UUID.randomUUID().toString()
+    var _id: ObjectId = ObjectId()
 
     @Index
-    var user1: String = "" // Reference to User
+    var user1Id: String = "" // Reference to User
 
     @Index
-    var user2: String = "" // Reference to User
+    var user2Id: String = "" // Reference to User
 
     @Ignore
     var status: FriendshipStatus
@@ -38,7 +38,7 @@ class Friendship() : RealmObject {
         set(value) {
             _status = value.name
         }
-    private var _status: String = FriendshipStatus.PENDING.name
+    private var _status: String = FriendshipStatus.NOT_FRIENDS.name
 
     var requestedBy: String = "" // Reference to User
 
@@ -73,9 +73,9 @@ class Friendship() : RealmObject {
             updatedAt: RealmInstant? = null
         ) : Friendship {
             return Friendship().apply {
-                this.id = id
-                this.user1 = user1
-                this.user2 = user2
+                this._id = ObjectId(id)
+                this.user1Id = user1
+                this.user2Id = user2
                 this.requestedBy = requestedBy
                 this.status = status
                 this.friendshipType = friendshipType

@@ -1,20 +1,24 @@
 package com.example.projektiop.data.db.objects
 
+import io.realm.kotlin.ext.backlinks
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.RealmInstant
-import java.util.UUID
+import org.mongodb.kbson.ObjectId
 
 class UserInterest : RealmObject {
     @PrimaryKey
-    var id: String = UUID.randomUUID().toString()
+    var _id: ObjectId = ObjectId()
 
     @Index
-    var userId: String = "" // Reference to User
+    var userId: ObjectId? = null // Reference to User
+    val user: RealmResults<User> by backlinks(User::interests)
 
     @Index
-    var interestId: String = "" // Reference to Interest
+    var interestId: ObjectId? = null// Reference to Interest
+    var interest: Interest? = null
 
     var customDescription: String = ""
 
@@ -27,14 +31,16 @@ class UserInterest : RealmObject {
             id: String,
             userId: String,
             interestId: String,
+            interest: Interest,
             customDescription: String = "",
             createdAt: RealmInstant? = RealmInstant.now(),
             updatedAt: RealmInstant? = null
         ): UserInterest {
             return UserInterest().apply {
-                this.id = id
-                this.userId = userId
-                this.interestId = interestId
+                this._id = ObjectId(id)
+                this.userId = ObjectId(userId)
+                this.interestId = ObjectId(interestId)
+                this.interest = interest
                 this.customDescription = customDescription
                 this.createdAt = createdAt
                 this.updatedAt = updatedAt

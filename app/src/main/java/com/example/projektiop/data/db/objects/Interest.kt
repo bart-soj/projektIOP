@@ -4,17 +4,18 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
-import java.util.UUID
+import org.mongodb.kbson.ObjectId
 
 class Interest : RealmObject {
     @PrimaryKey
-    var id: String = UUID.randomUUID().toString()
+    var _id: ObjectId = ObjectId()
 
     @Index
     var name: String = ""
 
     @Index
-    var categoryId: String? = null // Reference to InterestCategory
+    var categoryId: ObjectId? = null // Reference to InterestCategory
+    var category: InterestCategory? = null
 
     var description: String = ""
     var isArchived: Boolean = false
@@ -27,18 +28,20 @@ class Interest : RealmObject {
         fun create(
             id: String,
             name: String,
-            categoryId: String? = null,
+            interestCategory: InterestCategory,
+            categoryId: String,
             description: String = "",
-            isArchived: Boolean = false,
+            isArchived: Boolean? = false,
             createdAt: RealmInstant? = RealmInstant.now(),
             updatedAt: RealmInstant? = null
         ): Interest {
             return Interest().apply {
-                this.id = id
+                this._id = ObjectId(id)
                 this.name = name
-                this.categoryId = categoryId
+                this.category = interestCategory
+                this.categoryId = ObjectId(categoryId)
                 this.description = description
-                this.isArchived = isArchived
+                this.isArchived = isArchived == true
                 this.createdAt = createdAt
                 this.updatedAt = updatedAt
             }

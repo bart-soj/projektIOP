@@ -11,6 +11,8 @@ import com.example.projektiop.data.db.objects.UserInterest
 import com.example.projektiop.data.db.objects.Message
 import com.example.projektiop.data.db.objects.UserProfile
 
+// TODO() use RealmSetTypes in RealmObject definition to represent relationships
+
 object RealmProvider {
     private lateinit var realmInstance: Realm
 

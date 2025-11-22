@@ -36,7 +36,7 @@ fun UserProfileResponse.toRealm(): User {
         ?.let { runCatching { UserRole.valueOf(it) }.getOrDefault(UserRole.USER) }
         ?: UserRole.USER
 
-    val interests = realmListOf<String>().apply {
+    val interestIds = realmListOf<String>().apply {
         addAll(this@toRealm.interests?.mapNotNull { it.userInterestId } ?: emptyList())
     }
 
@@ -46,7 +46,7 @@ fun UserProfileResponse.toRealm(): User {
         email = email,
         profile = profile,
         role = roleEnum,
-        interests = interests,
+        interestIds = interestIds,
         isBanned = this.isBanned ?: false,
         banReason = this.banReason,
         bannedAt = mongoTimestampToRealmInstant(this.bannedAt),
@@ -72,7 +72,7 @@ fun User.toUserProfileResponse(): UserProfileResponse {
             broadcastMessage = this.profile?.broadcastMessage,
             avatarUrl = this.profile?.avatarUrl
         ),
-        _id = this.id,
+        _id = this._id.toString(),
         username = this.username,
         email = this.email,
         role = this.role?.name,

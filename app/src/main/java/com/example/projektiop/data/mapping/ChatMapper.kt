@@ -20,7 +20,7 @@ fun ChatDto.toRealm(): Chat {
         participants = participants,
         lastMessageId = lastMessageId,
         lastMessageTimestamp = lastMessageTimestamp,
-        createdAt = TODO(), // not present in dto
-        updatedAt = TODO() // not present in dto
+        // createdAt = TODO() not present in dto
+        // updatedAt = TODO() not present in dto
     )
 }

@@ -8,7 +8,7 @@ import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.annotations.Ignore
-import java.util.UUID
+import org.mongodb.kbson.ObjectId
 
 enum class UserRole {
     USER,
@@ -41,7 +41,7 @@ class UserProfile : EmbeddedRealmObject {
 
 class User : RealmObject {
     @PrimaryKey
-    var id: String = UUID.randomUUID().toString()
+    var _id: ObjectId = ObjectId()
 
     @Index
     var username: String = ""
@@ -58,7 +58,8 @@ class User : RealmObject {
 
     private var _role: String = UserRole.USER.name
 
-    var interests: RealmList<String> = realmListOf() // list of ids of user interests
+    var interestIds: RealmList<ObjectId> = realmListOf() // list of ids of user interests
+    var interests: RealmList<UserInterest> = realmListOf()
 
     var isBanned: Boolean = false
     var banReason: String? = null
@@ -82,7 +83,8 @@ class User : RealmObject {
             email: String,
             profile: UserProfile = UserProfile(),
             role: UserRole = UserRole.USER,
-            interests: RealmList<String> = realmListOf(),
+            interests: RealmList<UserInterest> = realmListOf(),
+            interestIds: List<String> = emptyList(),
             isBanned: Boolean = false,
             banReason: String? = null,
             bannedAt: RealmInstant? = null,
@@ -94,11 +96,12 @@ class User : RealmObject {
             updatedAt: RealmInstant? = null
         ): User {
             return User().apply {
-                this.id = id
+                this._id = ObjectId(id)
                 this.username = username
                 this.email = email
                 this.profile = profile
                 this.role = role
+                this.interestIds = realmListOf(*interestIds.map{ ObjectId(it) }.toTypedArray())
                 this.interests = interests
                 this.isBanned = isBanned
                 this.banReason = banReason

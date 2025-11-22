@@ -4,10 +4,11 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.mongodb.kbson.ObjectId
 
 class InterestCategory : RealmObject {
     @PrimaryKey
-    var id: String = ""
+    var _id: ObjectId = ObjectId()
 
     @Index
     var name: String = ""
@@ -27,7 +28,7 @@ class InterestCategory : RealmObject {
             updatedAt: RealmInstant? = null
         ): InterestCategory {
             return InterestCategory().apply {
-                this.id = id
+                this._id = ObjectId(id)
                 this.name = name
                 // this.description = description
                 this.createdAt = createdAt
