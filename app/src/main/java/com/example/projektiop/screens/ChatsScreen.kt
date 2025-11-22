@@ -271,28 +271,3 @@ fun ChatsScreenPreview() {
         ChatsScreen(navController = rememberNavController())
     }
 }
-
-// --- Dodaj te zasoby string do pliku strings.xml ---
-/*
-<resources>
-    ... inne stringi ...
-    <string name="search_label">Szukaj...</string>
-    <string name="search_icon_desc">Ikona wyszukiwania</string>
-    <string name="profile_picture_desc">Zdjęcie profilowe %1$s</string> // %1$s zostanie zastąpione nazwą znajomego
-    // Dodaj stringi dla dolnego paska nawigacji jeśli jeszcze ich nie masz
-    <string name="bottom_nav_home">Główna</string>
-    <string name="bottom_nav_profile">Profil</string>
-    <string name="bottom_nav_chats">Czaty</string>
-    <string name="bottom_nav_broadcast">Rozgłaszanie</string>
-    <string name="bottom_nav_settings">Ustawienia</string>
-    // Dodaj stringi używane w MainScreen (jeśli ich nie ma)
-    <string name="filter_settings_label">Ustawienia filtrów</string>
-    <string name="profile_name_placeholder">Jan Kowalski</string>
-    <string name="profile_description_placeholder">Opis profilu użytkownika, może być dłuższy.</string>
-    <string name="profile_interests_label">Zainteresowania:</string>
-    <string name="profile_interest_1">Programowanie</string>
-    <string name="profile_interest_2">Gry</string>
-    <string name="profile_interest_3">Muzyka</string>
-    <string name="broadcasting_label">Rozgłaszanie lokalizacji</string>
-</resources>
-*/

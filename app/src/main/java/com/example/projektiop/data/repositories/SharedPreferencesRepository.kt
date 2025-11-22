@@ -2,6 +2,7 @@ package com.example.projektiop.data.repositories
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 
 object SharedPreferencesRepository {
     private lateinit var appContext: Context
@@ -51,7 +52,7 @@ object SharedPreferencesRepository {
     }
 
     fun remove(key: String, context: Context = this.getAppContext()) {
-        getPreferences(context).edit().remove(key).apply()
+        getPreferences(context).edit() { remove(key) }
     }
 }
 

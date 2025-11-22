@@ -87,6 +87,7 @@ object AuthRepository {
         if (!newId.isNullOrBlank()) {
             SharedPreferencesRepository.set("_id", newId)
         }
+        UserRepository.updateMyId()
     }
 
 

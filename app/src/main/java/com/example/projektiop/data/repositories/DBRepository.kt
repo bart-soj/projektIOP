@@ -9,8 +9,10 @@ import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.db.objects.UserInterest
 import io.realm.kotlin.Realm
 import io.realm.kotlin.UpdatePolicy
-import io.realm.kotlin.query.RealmResults
-
+import io.realm.kotlin.notifications.SingleQueryChange
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import org.mongodb.kbson.ObjectId
 
 object DBRepository {
     private lateinit var realm: Realm
@@ -22,21 +24,22 @@ object DBRepository {
     // ----------------------
     // Message operations
     // ----------------------
-    fun getLocalMessages(): List<Message> {
+    fun getMessages(): List<Message> {
         return realm.query<Message>(Message::class).find()
     }
 
-    fun getLocalMessagesByChat(chatId: String): List<Message> {
-        return realm.query<Message>(Message::class, "chatId == $0", chatId).find()
+    fun getMessagesByChat(chatId: String): List<Message> {
+        val objectId = ObjectId(chatId)
+        return realm.query<Message>(Message::class, "chatId == $0", objectId).find()
     }
 
-    fun addLocalMessage(message: Message) {
+    fun addMessage(message: Message) {
         realm.writeBlocking {
             copyToRealm(message)
         }
     }
 
-    fun updateLocalMessage(message: Message) {
+    fun updateMessage(message: Message) {
         realm.writeBlocking {
             findLatest(message)?.let {
                 it.content = message.content
@@ -46,7 +49,7 @@ object DBRepository {
         }
     }
 
-    fun deleteLocalMessage(message: Message) {
+    fun deleteMessage(message: Message) {
         realm.writeBlocking {
             findLatest(message)?.let { delete(it) }
         }
@@ -55,26 +58,26 @@ object DBRepository {
     // ----------------------
     // User operations
     // ----------------------
-    fun getLocalUsers(): List<User> {
+    fun getUsers(): List<User> {
         return realm.query<User>(User::class).find()
     }
 
-    fun getLocalUserById(userId: String): User? {
-        return realm.query<User>(User::class, "id == $0", userId).first().find()
+    fun getUserById(userId: String): User? {
+        val objectId = ObjectId(userId)
+        return realm.query<User>(User::class, "_id == $0", objectId).first().find()
     }
 
-    fun getLocalUserByEmail(email: String): User? {
+    fun getUserByEmail(email: String): User? {
         return realm.query<User>(User::class, "email == $0", email).first().find()
     }
 
-    fun addLocalUser(user: User) {
+    fun addUser(user: User) {
         realm.writeBlocking {
-            // UpdatePolicy.ALL means the object will be updated if already exists
             copyToRealm(user, updatePolicy = UpdatePolicy.ALL)
         }
     }
 
-    fun updateLocalUser(user: User) {
+    fun updateUser(user: User) {
         realm.writeBlocking {
             findLatest(user)?.let {
                 it.username = user.username
@@ -87,43 +90,53 @@ object DBRepository {
         }
     }
 
-    fun deleteLocalUser(user: User) {
+    fun deleteUser(user: User) {
         realm.writeBlocking {
             findLatest(user)?.let { delete(it) }
         }
     }
 
+    fun getUserFlowById(_id: String): Flow<User?> {
+        return realm.query<User>(User::class, "_id == $0", ObjectId(_id))
+            .first()
+            .asFlow()
+            .map { change: SingleQueryChange<User> ->
+                change.obj
+            }
+    }
+
     // ----------------------
     // Friendship operations
     // ----------------------
-    fun getLocalFriendships(): List<Friendship> {
+    fun getFriendships(): List<Friendship> {
         return realm.query<Friendship>(Friendship::class).find()
     }
 
-    fun getLocalFriendshipsById(friendshipId: String): Friendship? {
-        return realm.query<Friendship>(Friendship::class, "id == $0", friendshipId).first().find()
+    fun getFriendshipsById(friendshipId: String): Friendship? {
+        val objectId = ObjectId(friendshipId)
+        return realm.query<Friendship>(Friendship::class, "_id == $0", objectId).first().find()
     }
 
-    fun getLocalFriendshipsByStatus(status: FriendshipStatus): List<Friendship> {
+    fun getFriendshipsByStatus(status: FriendshipStatus): List<Friendship> {
         return realm.query<Friendship>(Friendship::class, "_status == $0", status.name).find()
     }
 
-    fun addLocalFriendship(friendship: Friendship) {
+    fun addFriendship(friendship: Friendship) {
         realm.writeBlocking {
-            copyToRealm(friendship, updatePolicy = UpdatePolicy.ALL) // will update if exists
+            copyToRealm(friendship, updatePolicy = UpdatePolicy.ALL)
         }
     }
 
-    fun changeLocalStatus(friendshipId: String, status: FriendshipStatus) {
+    fun changeFriendshipStatus(friendshipId: String, status: FriendshipStatus) {
         realm.writeBlocking {
-            val toUpdate = getLocalFriendshipsById(friendshipId)
+            val toUpdate = getFriendshipsById(friendshipId)
             if (toUpdate == null) return@writeBlocking
             toUpdate.status = status
-            updateLocalFriendship(toUpdate)
+            updateFriendship(toUpdate)
         }
     }
 
-    fun updateLocalFriendship(friendship: Friendship) {
+    fun updateFriendship(friendship: Friendship) {
         realm.writeBlocking {
             findLatest(friendship)?.let {
                 it.status = friendship.status
@@ -135,15 +148,17 @@ object DBRepository {
         }
     }
 
-    fun deleteLocalFriendshipById(friendshipId: String) {
-        val friendship = getLocalFriendshipsById(friendshipId) ?:
-            throw Exception("can't delete, no such friendship")
+    fun deleteFriendshipById(friendshipId: String) {
+        val objectId = ObjectId(friendshipId)
+        val friendship = realm.query<Friendship>(Friendship::class, "_id == $0", objectId)
+            .first().find() ?: throw Exception("can't delete, no such friendship")
+
         realm.writeBlocking {
             findLatest(friendship)?.let { delete(it) }
         }
     }
 
-    fun deleteLocalFriendship(friendship: Friendship) {
+    fun deleteFriendship(friendship: Friendship) {
         realm.writeBlocking {
             findLatest(friendship)?.let { delete(it) }
         }
@@ -152,18 +167,29 @@ object DBRepository {
     // ----------------------
     // UserInterest operations
     // ----------------------
-
-    fun getLocalUserInterestsByUserId(userId: String): List<UserInterest> {
-        return realm.query<UserInterest>(UserInterest::class, "userId == $0", userId).find()
+    fun getUserInterestsByUserId(userId: String): List<UserInterest> {
+        val objectId = ObjectId(userId)
+        return realm.query<UserInterest>(UserInterest::class, "userId == $0", objectId).find()
     }
 
-    fun addLocalUserInterest(userInterest: UserInterest) {
+    fun addUserInterest(userInterest: UserInterest) {
         realm.writeBlocking {
-            copyToRealm(userInterest, updatePolicy = UpdatePolicy.ALL) // will overwrite existing entry with same id
+            val user = query<User>(User::class, "_id == $0", userInterest.userId).first().find()
+            val interest = query<Interest>(Interest::class, "_id == $0", userInterest.interestId).first().find()
+
+            if (user != null && interest != null) {
+                copyToRealm(userInterest.apply {
+                    this.interest = interest
+                }, updatePolicy = UpdatePolicy.ALL)
+
+                user.interests.add(userInterest)
+            } else {
+                throw Exception("No such user or interest")
+            }
         }
     }
 
-    fun updateLocalUserInterest(userInterest: UserInterest) {
+    fun updateUserInterest(userInterest: UserInterest) {
         realm.writeBlocking {
             findLatest(userInterest)?.let {
                 it.customDescription = userInterest.customDescription
@@ -172,7 +198,7 @@ object DBRepository {
         }
     }
 
-    fun deleteLocalUserInterest(userInterest: UserInterest) {
+    fun deleteUserInterest(userInterest: UserInterest) {
         realm.writeBlocking {
             findLatest(userInterest)?.let { delete(it) }
         }
@@ -181,55 +207,85 @@ object DBRepository {
     // ----------------------
     // Interest operations
     // ----------------------
-
-    fun addLocalInterest(interest: Interest) {
+    fun addInterest(interest: Interest) {
         realm.writeBlocking {
-            copyToRealm(interest, updatePolicy = UpdatePolicy.ALL) // will overwrite existing entry with same id
+            val category = query<InterestCategory>(InterestCategory::class, "_id == $0", interest.categoryId).first().find()
+            if (category != null) {
+                interest.apply {
+                    this.category = category
+                }
+                copyToRealm(interest, updatePolicy = UpdatePolicy.ALL)
+            } else {
+                throw Exception("No such category")
+            }
         }
     }
 
-    fun getLocalInterestById(id: String): Interest? {
-        return realm.query<Interest>(Interest::class, "id == $0", id).first().find()
+    fun getInterestById(id: String): Interest? {
+        val objectId = ObjectId(id)
+        return realm.query<Interest>(Interest::class, "_id == $0", objectId).first().find()
     }
 
-    fun getLocalInterests(): List<Interest>? {
+    fun getInterests(): List<Interest>? {
         return realm.query<Interest>(Interest::class).find()
-
     }
 
-    fun deleteLocalInterest(interest: Interest) {
+    fun deleteInterest(interest: Interest) {
         realm.writeBlocking {
             findLatest(interest)?.let { delete(it) }
         }
     }
 
-    fun addLocalInterestPair(interest: Interest, userInterest: UserInterest) {
-        realm.writeBlocking {
-            copyToRealm(interest, updatePolicy = UpdatePolicy.ALL) // will overwrite existing entry with same id
-            copyToRealm(userInterest, updatePolicy = UpdatePolicy.ALL) // will overwrite existing entry with same id
+    fun addInterestPair(interest: Interest, userInterest: UserInterest) {
+        realm.writeBlocking{
+            // add interest
+            val category = query<InterestCategory>(InterestCategory::class, "_id == $0", interest.categoryId).first().find()
+            if (category != null) {
+                interest.apply {
+                    this.category = category
+                }
+                copyToRealm(interest, updatePolicy = UpdatePolicy.ALL)
+            } else {
+                throw Exception("No such category")
+            }
+
+            // add user interest
+            val user = query<User>(User::class, "_id == $0", userInterest.userId).first().find()
+            val interest = query<Interest>(Interest::class, "_id == $0", userInterest.interestId).first().find()
+
+            if (user != null && interest != null) {
+                copyToRealm(userInterest.apply {
+                    this.interest = interest
+                }, updatePolicy = UpdatePolicy.ALL)
+
+                user.interests.add(userInterest)
+            } else {
+                throw Exception("No such user or interest")
+            }
+
         }
     }
-
-
 
     // ----------------------
     // InterestCategory operations
     // ----------------------
-
-    fun addLocalInterestCategory(interestCategory: InterestCategory) {
+    fun addInterestCategory(interestCategory: InterestCategory) {
         realm.writeBlocking {
-            copyToRealm(interestCategory, updatePolicy = UpdatePolicy.ALL) // will overwrite existing entry with same id
+            copyToRealm(interestCategory, updatePolicy = UpdatePolicy.ALL)
         }
     }
 
-    fun getLocalInterestCategories(): List<InterestCategory> {
+    fun getInterestCategories(): List<InterestCategory> {
         return realm.query<InterestCategory>(InterestCategory::class).find()
     }
 
-    fun deleteLocalInterestCategory(interestCategory: InterestCategory) {
+    fun getInterestCategoryById(_id: String): InterestCategory? {
+        return realm.query<InterestCategory>(InterestCategory::class, "_id == $0", ObjectId(_id)).first().find()
+    }
+
+    fun deleteInterestCategory(interestCategory: InterestCategory) {
         realm.writeBlocking {
             findLatest(interestCategory)?.let { delete(it) }
         }
     }
-
 }

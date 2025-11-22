@@ -24,7 +24,6 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -34,6 +33,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import com.example.projektiop.data.db.objects.Gender
+import com.example.projektiop.data.mapping.realmInstantToMongoTimestamp
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.viewmodels.MainViewModel
@@ -85,7 +86,7 @@ fun MainScreen(navController: NavController, viewModel: MainViewModel) {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifier, viewModel: MainViewModel) {
-    val profile by viewModel.myProfile.collectAsState()
+    val user by viewModel.user.collectAsState()
     val interests by viewModel.myInterests.collectAsState()
     val loading by viewModel.loading.collectAsState()
     var error by remember { mutableStateOf<String?>(null) }
@@ -112,9 +113,9 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val ctx = LocalContext.current
-                val rawUrl = profile?.profile?.avatarUrl?.takeIf { it.isNotBlank() }
+                val rawUrl = user?.profile?.avatarUrl?.takeIf { it.isNotBlank() }
                 val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it" }
-                val versionTag = profile?.updatedAt?.takeIf { !it.isNullOrBlank() }?.hashCode()?.toString()
+                val versionTag = user?.updatedAt?.takeIf { !realmInstantToMongoTimestamp(it).isNullOrBlank() }?.hashCode()?.toString()
                 val displayUrl = fullUrl?.let { url ->
                     versionTag?.let { v -> if (url.contains('?')) "$url&v=$v" else "$url?v=$v" } ?: url
                 }
@@ -153,7 +154,7 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                     text = when {
                         loading -> stringResource(R.string.profile_loading)
                         error != null -> stringResource(R.string.profile_error)
-                        !profile?.effectiveDisplayName.isNullOrBlank() -> profile?.effectiveDisplayName ?: ""
+                        user?.profile?.displayName?.isNotEmpty() == true -> user!!.profile!!.displayName
                         else -> stringResource(R.string.profile_name_placeholder)
                     },
                     style = MaterialTheme.typography.titleLarge,
@@ -164,17 +165,17 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 }
             }
             // --- Pasek z płcią, miastem i wiekiem ---
-            val genderRaw = profile?.profile?.gender
+            val genderRaw = user?.profile?.gender
             val genderLabel = when (genderRaw) {
-                "male" -> stringResource(R.string.gender_male)
-                "female" -> stringResource(R.string.gender_female)
-                "other" -> stringResource(R.string.gender_other)
-                "prefer_not_to_say" -> stringResource(R.string.gender_prefer_not_to_say)
+                Gender.MALE -> stringResource(R.string.gender_male)
+                Gender.FEMALE -> stringResource(R.string.gender_female)
+                Gender.OTHER -> stringResource(R.string.gender_other)
+                Gender.PREFER_NOT_TO_SAY -> stringResource(R.string.gender_prefer_not_to_say)
                 else -> null
             }
-            val locationVal = profile?.profile?.location?.takeIf { it.isNotBlank() }
-            val ageVal = profile?.profile?.birthDate?.let { bd ->
-                val datePart = bd.take(10)
+            val locationVal = user?.profile?.location?.takeIf { it.isNotBlank() }
+            val ageVal = user?.profile?.birthDate?.let { bd ->
+                val datePart = realmInstantToMongoTimestamp(bd)?.take(10)
                 try {
                     val ld = LocalDate.parse(datePart, DateTimeFormatter.ISO_DATE)
                     val now = LocalDate.now()
@@ -210,7 +211,7 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 text = when {
                     loading -> stringResource(R.string.profile_loading_description)
                     error != null -> error ?: stringResource(R.string.profile_error_description)
-                    !profile?.effectiveDescription.isNullOrBlank() -> profile?.effectiveDescription ?: ""
+                    user?.profile?.bio?.isNotEmpty() == true -> user!!.profile!!.bio
                     else -> stringResource(R.string.profile_description_placeholder)
                 },
                 style = MaterialTheme.typography.bodyMedium

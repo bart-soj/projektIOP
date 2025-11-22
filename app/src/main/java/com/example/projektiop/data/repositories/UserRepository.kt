@@ -15,9 +15,11 @@ import com.example.projektiop.data.api.AddUserInterestRequest
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UpdateUserInterestRequest
 import com.example.projektiop.data.api.UserSearchDto
+import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.mapping.toUserProfileResponse
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,20 +33,28 @@ private const val ID = "_id"
 
 
 object UserRepository {
-    private var id: String? = null
+    private lateinit var id: String
     // private var email: String? = null
     private var prefs: SharedPreferences? = null
-    private val _MyProfile = MutableStateFlow<UserProfileResponse?>(null)
-    val MyProfile: StateFlow<UserProfileResponse?> = _MyProfile.asStateFlow()
     private val _MyUserInterests = MutableStateFlow<List<UserInterestDto>?>(null)
     val MyUserInterests: StateFlow<List<UserInterestDto>?> = _MyUserInterests.asStateFlow()
 
     suspend fun init(context: Context) {
         if (prefs == null) {
             prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            // email = prefs?.getString(EMAIL, null) ?: ""
+            updateMyId()
         }
-        _MyProfile.value = fetchMyProfile().getOrNull()
+    }
+
+    fun updateMyId() {
+        val tmpId = SharedPreferencesRepository.get(ID, "")
+        if (tmpId.isNotBlank()) {
+            id = tmpId
+        }
+    }
+
+    fun getMyUserFlow(): Flow<User?> {
+        return DBRepository.getUserFlowById(id)
     }
 
     suspend fun fetchMyProfile(): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
@@ -60,7 +70,7 @@ object UserRepository {
 
                 // Save user in DB, mapper ensures mandatory fields present
                 try {
-                    DBRepository.addLocalUser(body.toRealm())
+                    DBRepository.addUser(body.toRealm())
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving user to database: $e")
@@ -81,7 +91,6 @@ object UserRepository {
                     SharedPreferencesRepository.set(ID, tmpId.toString())
                 }
 
-                _MyProfile.value = body
                 return@withContext Result.success(body)
             } else {
                 val tmpId: String = SharedPreferencesRepository.get(ID, "")
@@ -89,10 +98,9 @@ object UserRepository {
                 if (tmpId.isBlank()) {
                     return@withContext Result.failure(Exception("API failed and no user ID found in preferences"))
                 }
-                val localUser = DBRepository.getLocalUserById(tmpId)
+                val localUser = DBRepository.getUserById(tmpId)
                 if (localUser != null) {
                     val userProfile = localUser.toUserProfileResponse()
-                    _MyProfile.value = userProfile
                     return@withContext Result.success(userProfile)
                 }
                 return@withContext Result.failure(Exception("API failed and no local data available"))
@@ -103,10 +111,9 @@ object UserRepository {
             if (tmpId.isBlank()) {
                 return@withContext Result.failure(Exception("API error and no user ID found in preferences: $e"))
             }
-            val localUser = DBRepository.getLocalUserById(tmpId)
+            val localUser = DBRepository.getUserById(tmpId)
             if (localUser != null) {
                 val userProfile = localUser.toUserProfileResponse()
-                _MyProfile.value = userProfile
                 return@withContext Result.success(userProfile)
             }
             return@withContext Result.failure(Exception("API error and no local data available: $e"))
@@ -142,7 +149,7 @@ object UserRepository {
 
                 // Save user in DB
                 try {
-                    DBRepository.addLocalUser(body.toRealm())
+                    DBRepository.addUser(body.toRealm())
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving to database: $e")
@@ -163,7 +170,6 @@ object UserRepository {
                     SharedPreferencesRepository.set(ID, tmpId.toString())
                 }
 
-                _MyProfile.value = response.body()!!
                 Result.success(response.body()!!)
             } else {
                 val errBody = try { response.errorBody()?.string() } catch (_: Exception) { null }
@@ -189,7 +195,7 @@ object UserRepository {
 
                 // Save user in DB
                 try {
-                    DBRepository.addLocalUser(body.toRealm())
+                    DBRepository.addUser(body.toRealm())
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving to database: $e")
@@ -208,10 +214,9 @@ object UserRepository {
                 Result.success(response.body()!!)
             } else {
                 // API failed → fallback to DB
-                val localUser = DBRepository.getLocalUserById(id)
+                val localUser = DBRepository.getUserById(id)
                 if (localUser != null) {
                     val userProfile = localUser.toUserProfileResponse()
-                    _MyProfile.value = userProfile
                     return@withContext Result.success(userProfile)
                 }
 
@@ -224,10 +229,9 @@ object UserRepository {
             }
         } catch (e: Exception) {
             // API failed → fallback to DB
-            val localUser = DBRepository.getLocalUserById(id)
+            val localUser = DBRepository.getUserById(id)
             if (localUser != null) {
                 val userProfile = localUser.toUserProfileResponse()
-                _MyProfile.value = userProfile
                 return@withContext Result.success(userProfile)
             }
             return@withContext Result.failure(Exception("API error and no local data available: $e"))
@@ -271,7 +275,7 @@ object UserRepository {
                 }
                 // Try to persist locally, but don't fail the whole operation if local save has issues
                 try {
-                    DBRepository.addLocalUser(body.toRealm())
+                    DBRepository.addUser(body.toRealm())
                 } catch (e: Exception) {
                     Log.w("UserRepository", "uploadAvatar: failed to persist locally, will continue. ${e.message}")
                 }
@@ -349,7 +353,7 @@ object UserRepository {
             val refreshed = RetrofitInstance.userApi.getMyProfile()
             if (refreshed.isSuccessful && refreshed.body() != null) {
                 val body = refreshed.body()!!
-                try { DBRepository.addLocalUser(body.toRealm()) } catch (_: Exception) {}
+                try { DBRepository.addUser(body.toRealm()) } catch (_: Exception) {}
                 Result.success(body)
             } else {
                 val err = try { refreshed.errorBody()?.string() } catch (_: Exception) { null }
@@ -433,7 +437,7 @@ object UserRepository {
             val refreshed = RetrofitInstance.userApi.getMyProfile()
             if (refreshed.isSuccessful && refreshed.body() != null) {
                 val body = refreshed.body()!!
-                try { DBRepository.addLocalUser(body.toRealm()) } catch (_: Exception) {}
+                try { DBRepository.addUser(body.toRealm()) } catch (_: Exception) {}
                 Result.success(body)
             } else {
                 val err = try { refreshed.errorBody()?.string() } catch (_: Exception) { null }

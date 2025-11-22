@@ -130,6 +130,9 @@
     <string name="ble_status_scanning">Scanning active</string>
     <string name="ble_status_advertising">Advertising active</string>
     <string name="ble_status_inactive">Inactive</string>
+    <string name="enable_bluetooth">Enable Bluetooth!</string>
+    <string name="enable_location">Enable Location!</string>
+    <string name="rejected">Rejected</string>
 
     <!-- Settings Screen -->
     <string name="dark_mode_label">Dark mode</string>
@@ -173,7 +176,6 @@
     <string name="chat">Chat</string>
     <string name="no_chats">No chats</string>
 
-    <string name="enable_bluetooth">Enable Bluetooth!</string>
-    <string name="enable_location">Enable Location!</string>
+
 
 </resources>

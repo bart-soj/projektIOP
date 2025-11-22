@@ -1,5 +1,6 @@
 package com.example.projektiop.data.repositories
 
+import android.util.Log
 import com.example.projektiop.data.api.InterestDto
 import com.example.projektiop.data.api.PublicInterestCategoryDto
 import com.example.projektiop.data.api.RetrofitInstance
@@ -10,8 +11,6 @@ import com.example.projektiop.data.mapping.toDto
 import com.example.projektiop.data.mapping.toRealm
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 object InterestRepository {
@@ -26,7 +25,7 @@ object InterestRepository {
                 for (category in body) {
                     try {
                         val realmCategory = category.toRealm()
-                        DBRepository.addLocalInterestCategory(realmCategory)
+                        DBRepository.addInterestCategory(realmCategory)
                     } catch (e: Exception) {
                         return@withContext Result.failure(Exception("Error saving user to database: $e"))
                     }
@@ -35,7 +34,7 @@ object InterestRepository {
                 return@withContext Result.success(body)
 
             } else {
-                val local = DBRepository.getLocalInterestCategories()
+                val local = DBRepository.getInterestCategories()
                 if (local.orEmpty() != emptyList<InterestCategory>()){
                     return@withContext Result.success(local.map{it.toDto()})
                 } else {
@@ -43,11 +42,11 @@ object InterestRepository {
                 }
             }
         } catch (e: Exception) {
-            val local = DBRepository.getLocalInterestCategories()
-            if (local.orEmpty() != emptyList<InterestCategory>()){
+            val local = DBRepository.getInterestCategories()
+            if (local != emptyList<InterestCategory>()){
                 return@withContext Result.success(local.map{it.toDto()})
             } else {
-                return@withContext Result.failure(Exception("API error and no local data"))
+                return@withContext Result.failure(Exception("API error and no local data $e"))
             }
         }
     }
@@ -58,20 +57,31 @@ object InterestRepository {
             val response = RetrofitInstance.publicInterestApi.getPublicInterests()
             if (response.isSuccessful && response.body().orEmpty() != emptyList<InterestDto>()){
                 val body = response.body()!!
+                var returnList = emptyList<InterestDto>()
 
-                for (interest in body) {
+                for (publicInterestDto in body) {
+                    val interestDto = InterestDto(
+                        _id = publicInterestDto._id,
+                        name = publicInterestDto.name,
+                        category = publicInterestDto.category?._id,
+                        description = publicInterestDto.description,
+                        isArchived = publicInterestDto.isArchived,
+                        createdAt = publicInterestDto.createdAt,
+                        updatedAt = publicInterestDto.updatedAt
+                    )
                     try {
-                        val realmInterest = interest.toRealm()
-                        DBRepository.addLocalInterest(realmInterest)
+                        val realmInterest = interestDto.toRealm()
+                        DBRepository.addInterest(realmInterest)
+                        returnList += interestDto
                     } catch (e: Exception) {
-                        return@withContext Result.failure(Exception("Error saving user to database: $e"))
+                        return@withContext Result.failure(Exception("Error saving public interest to database: $e"))
                     }
                 }
 
-                return@withContext Result.success(body)
+                return@withContext Result.success(returnList)
 
             } else {
-                val local = DBRepository.getLocalInterests()
+                val local = DBRepository.getInterests()
                 if (local.orEmpty() != emptyList<Interest>()){
                     return@withContext Result.success(local!!.map{it.toDto()})
                 } else {
@@ -79,11 +89,11 @@ object InterestRepository {
                 }
             }
         } catch (e: Exception) {
-            val local = DBRepository.getLocalInterests()
+            val local = DBRepository.getInterests()
             if (local.orEmpty() != emptyList<Interest>()){
                 return@withContext Result.success(local!!.map{it.toDto()})
             } else {
-                return@withContext Result.failure(Exception("API error and no local data"))
+                return@withContext Result.failure(Exception("API error and no local data $e"))
             }
         }
     }
@@ -103,8 +113,14 @@ object InterestRepository {
     }
 
     suspend fun resolveIncomingUserInterests(userInterests: List<UserInterestDto>, userId: String, flowToUpdate: MutableStateFlow<List<UserInterestDto>?>) {
-        var localInterestCategories: List<String> = DBRepository.getLocalInterestCategories()
-            .map{ it.id }
+        var localInterestCategories: List<String> = DBRepository.getInterestCategories()
+            .map{ it._id.toString() }
+
+        if (localInterestCategories == emptyList<String>()) {
+            getPublicInterestCategories().onSuccess {
+                localInterestCategories = it.map{ it._id } // just need a list of ids
+            }.onFailure { e -> throw e }
+        }
 
 
         for (userInterestDto in userInterests) {
@@ -112,7 +128,7 @@ object InterestRepository {
                 val interestRealm = userInterestDto.interest.toRealm()
                 val userInterestRealm = userInterestDto.toRealm(userId)
                 val interestCategory = userInterestDto.interest.category
-                if (interestCategory !in localInterestCategories) {
+                if (interestCategory !in localInterestCategories ) {
                     getPublicInterestCategories().onSuccess {
                         localInterestCategories = it.map{ it._id } // just need a list of ids
                     }
@@ -120,13 +136,13 @@ object InterestRepository {
                         throw Exception("invalid interest category id")
                     }
                 }
-                DBRepository.addLocalInterestPair(interestRealm, userInterestRealm)
+                DBRepository.addInterestPair(interestRealm, userInterestRealm)
             }.onFailure { e ->
                 // Log.d("INT", "UserInterest resolution failed", e)
             }
         }
 
-        flowToUpdate.value = DBRepository.getLocalUserInterestsByUserId(userId).map{it.toDto()}
+        flowToUpdate.value = DBRepository.getUserInterestsByUserId(userId).map{it.toDto()}
     }
 }
 

@@ -132,6 +132,9 @@
     <string name="ble_status_scanning">Skanowanie aktywne</string>
     <string name="ble_status_advertising">Rozgłaszanie aktywne</string>
     <string name="ble_status_inactive">Nieaktywne</string>
+    <string name="enable_bluetooth">Włącz Bluetooth!</string>
+    <string name="enable_location">Włącz Lokalizację!</string>
+    <string name="rejected">Odrzucono</string>
 
     <!-- Settings Screen -->
     <string name="dark_mode_label">Tryb ciemny</string>
@@ -176,7 +179,7 @@
     <string name="chat">Czat</string>
     <string name="no_chats">Brak czatów</string>
 
-    <string name="enable_bluetooth">Włącz Bluetooth!</string>
-    <string name="enable_location">Włącz Lokalizację!</string>
+
+
 
 </resources>

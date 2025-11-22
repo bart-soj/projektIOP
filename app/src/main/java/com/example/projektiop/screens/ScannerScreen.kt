@@ -30,13 +30,16 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.projektiop.BluetoothLE.BLEViewModel
+import com.example.projektiop.viewmodels.BLEViewModel
+import com.example.projektiop.viewmodels.UserWithStatus
 import com.example.projektiop.R
 import com.example.projektiop.activeHandshake.NFC.ActiveHandshakeButton
 import com.example.projektiop.data.api.CertificateRequest
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.util.CertificateUtils
 import com.example.projektiop.data.api.UserProfileResponse
+import com.example.projektiop.data.db.objects.FriendshipStatus
+import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.launch
@@ -142,9 +145,14 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
                             "friend_profile/${user._id}?username=${user.username}&displayName=${user.profile?.displayName}&avatarUrl=${user.profile?.avatarUrl}"
                         )
                     },
-                    onAddClick = { userId ->
-                        viewModel.addFriend(userId)
-                    }
+                    onAddClick = { id: String ->
+                        viewModel.addFriend(id)
+                    },
+                    onChatClick = { id: String ->
+                        navController.navigate(
+                            "chats" //TODO() navigate to the actual chat, no chatId here yet
+                        )
+                    },
                 )
 
                 ActiveHandshakeButton { }
@@ -173,6 +181,124 @@ fun ScanStatus(viewModel: BLEViewModel, modifier: Modifier = Modifier) {
         style = MaterialTheme.typography.bodyMedium,
         modifier = modifier.padding(vertical = 8.dp)
     )
+}
+
+
+@Composable
+fun ScannedUserRow(
+    userWithStatus: UserWithStatus,
+    onClick: (UserProfileResponse) -> Unit,
+    onAddClick: (String) -> Unit,
+    onChatClick: (String) -> Unit
+) {
+    val coroutineScope = rememberCoroutineScope()
+    val user = userWithStatus.user
+    val status = userWithStatus.status
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable { onClick(user) },
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AvatarImage(user.profile?.avatarUrl)
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(user.profile?.displayName ?: user.username.toString(), style = MaterialTheme.typography.titleMedium)
+                Text(user.username.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                Text(user.email.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                /*
+                if (!user.interests.isNullOrEmpty()) {
+                    Text(
+                        text = "Zainteresowania: ${user.interests.joinToString { it.interest.name }}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+                */
+            }
+            when (status) {
+                FriendshipStatus.ACCEPTED -> Button(onClick = { onAddClick(user._id.toString()) }) { Text(stringResource(R.string.add)) }
+                FriendshipStatus.PENDING -> Button(onClick = {}, enabled = false) { Text(stringResource(R.string.sent)) }
+                FriendshipStatus.BLOCKED -> Button(onClick = { onChatClick(user._id.toString()) }) {Text(stringResource(R.string.chat))}
+                FriendshipStatus.NOT_FRIENDS -> Button(onClick = {}, enabled = false) { stringResource(R.string.blocked) }
+                FriendshipStatus.REJECTED -> Button(onClick = {}, enabled = false) { Text(stringResource(R.string.rejected)) }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun ScannedUsersList(
+    users: List<UserWithStatus>?,
+    onUserClick: (UserProfileResponse) -> Unit,
+    onAddClick: (String) -> Unit,
+    onChatClick: (String) -> Unit
+) {
+
+    if (users == null) {
+        CircularProgressIndicator()
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(16.dp)
+        ) {
+            items(users) { user ->
+                ScannedUserRow(
+                    user,
+                    onClick = { onUserClick(user.user) },
+                    onAddClick = onAddClick,
+                    onChatClick = onChatClick
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+fun AvatarImage(rawUrl: String?) {
+    if (rawUrl != null) {
+        val fullUrl = rawUrl.let { if (it.startsWith("http") ) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it" }
+        val req = ImageRequest.Builder(LocalContext.current)
+            .data(fullUrl)
+            .crossfade(true)
+            .apply {
+                val token = AuthRepository.getToken()
+                if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
+            }
+            .build()
+        AsyncImage(
+            model = req,
+            contentDescription = null,
+            placeholder = painterResource(R.drawable.avatar_placeholder),
+            error = painterResource(R.drawable.avatar_placeholder),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+        )
+    } else {
+        Image(
+            painter = painterResource(id = R.drawable.avatar_placeholder),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+        )
+    }
 }
 
 
@@ -210,7 +336,7 @@ fun CertificateRequester(
                             Result.failure(e)
                         }
 
-                       profileResult.fold(
+                        profileResult.fold(
                             onSuccess = { profileData ->
                                 val userEmail: String = profileData.email.toString()
                                 println("User email: $userEmail")
@@ -261,109 +387,6 @@ fun CertificateRequester(
         }
     }
 }
-
-
-@Composable
-fun ScannedUserRow(
-    user: UserProfileResponse,
-    onClick: (UserProfileResponse) -> Unit,
-    onAddClick: (String) -> Unit
-) {
-    val coroutineScope = rememberCoroutineScope()
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clickable { onClick(user) },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val rawUrl = user.profile?.avatarUrl
-            val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it" }
-            if (fullUrl != null) {
-                val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
-                    .data(fullUrl)
-                    .crossfade(true)
-                    .apply {
-                        val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
-                        if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
-                    }
-                    .build()
-                AsyncImage(
-                    model = req,
-                    contentDescription = null,
-                    placeholder = painterResource(R.drawable.avatar_placeholder),
-                    error = painterResource(R.drawable.avatar_placeholder),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(80.dp).clip(CircleShape)
-                )
-            } else {
-                Image(
-                    painter = painterResource(id = R.drawable.avatar_placeholder),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(80.dp).clip(CircleShape)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(user.profile?.displayName ?: user.username.toString(), style = MaterialTheme.typography.titleMedium)
-                Text(user.username.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                Text(user.email.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                /*
-                if (!user.interests.isNullOrEmpty()) {
-                    Text(
-                        text = "Zainteresowania: ${user.interests.joinToString { it.interest.name }}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
-                }
-                */
-            }
-
-            Button(onClick = { onAddClick(user._id.toString()) }) {
-                Text("Dodaj") // TODO() better repository add function that takes already existing friend into account
-            }
-
-        }
-    }
-}
-
-
-@Composable
-fun ScannedUsersList(
-    users: List<UserProfileResponse>?,
-    onUserClick: (UserProfileResponse) -> Unit,
-    onAddClick: (String) -> Unit
-) {
-
-    if (users == null) {
-        CircularProgressIndicator()
-    } else {
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(16.dp)
-        ) {
-            items(users) { user ->
-                ScannedUserRow(
-                    user,
-                    onClick = { onUserClick(user) },
-                    onAddClick = { onAddClick(user._id.toString()) }
-                )
-            }
-        }
-    }
-}
-
 
 @Preview(showBackground = true)
 @Composable

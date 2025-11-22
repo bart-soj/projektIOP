@@ -44,7 +44,7 @@ import com.example.projektiop.screens.EditProfileScreen
 import com.example.projektiop.screens.FriendsListScreen
 import com.example.projektiop.screens.FriendProfileScreen
 
-import com.example.projektiop.BluetoothLE.BLEViewModel
+import com.example.projektiop.viewmodels.BLEViewModel
 import com.example.projektiop.BluetoothLE.BTPermissionsManager
 
 class MainActivity : ComponentActivity() {

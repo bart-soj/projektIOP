@@ -1,14 +1,15 @@
-package com.example.projektiop.BluetoothLE
+package com.example.projektiop.viewmodels
 
-import android.R
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projektiop.BluetoothLE.BluetoothRepository
 import com.example.projektiop.HelloBeaconApp
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UserProfileResponse
+import com.example.projektiop.data.db.objects.FriendshipStatus
+import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.repositories.FriendshipRepository
-import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -23,9 +24,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.collections.mapNotNull
 import kotlin.collections.plus
+import kotlin.math.sqrt
 
 
 private const val ID: String = "_id"
+
+
+data class UserWithStatus(val user: UserProfileResponse, val status: FriendshipStatus)
 
 
 class BLEViewModel(application: Application) : AndroidViewModel(application) {
@@ -44,27 +49,54 @@ class BLEViewModel(application: Application) : AndroidViewModel(application) {
     val isAdvertising: StateFlow<Boolean> = bleManager.isAdvertising
     // val foundDeviceStatus: StateFlow<String> = bleManager.foundDeviceStatus
     val foundDeviceIds: StateFlow<List<String>> = bleManager.foundDeviceIds
-    val myProfile: StateFlow<UserProfileResponse?> = UserRepository.MyProfile
+    //private val _user = MutableStateFlow<User?>(null)
+    //val user: StateFlow<User?> = _user.asStateFlow()
     val myInterests: StateFlow<List<UserInterestDto>?> = UserRepository.MyUserInterests
+    val friendsIds: StateFlow<List<String>> = FriendshipRepository.friendsIds
+    val pendingIds: StateFlow<List<String>> = FriendshipRepository.pendingIds
+    val blockedIds: StateFlow<List<String>> = FriendshipRepository.blockedIds
 
     private val _userProfiles = MutableStateFlow<List<UserProfileResponse>>(emptyList())
-    val userProfiles: StateFlow<List<UserProfileResponse>> = combine(
+    val userProfiles: StateFlow<List<UserWithStatus>> = combine(
         _userProfiles.asStateFlow(),
-        myInterests
+        myInterests,
+        friendsIds,
+        pendingIds,
+        blockedIds
     ) {
+        val friendsSet = friendsIds.value.toSet()
+        val pendingSet = pendingIds.value.toSet()
+        val blockedSet = blockedIds.value.toSet()
+
         val myInterestsNames = myInterests.value?.map{ userInterest ->
             userInterest.interest.name
         }
-        _userProfiles.value.sortedByDescending { profile ->
+        val sortedProfiles = _userProfiles.value.sortedByDescending { profile ->
             val profileInterests = profile.interests?.map { userInterest ->
                 userInterest.interest.name
             }
             cosineSimilarity(profileInterests?.toSet() ?: emptySet(), myInterestsNames?.toSet() ?: emptySet()) // sorts by this
-        } // returns this
+        }
+        sortedProfiles.map { profile ->
+            val status: FriendshipStatus = when (profile._id) {
+                in friendsSet -> FriendshipStatus.ACCEPTED
+                in pendingSet -> FriendshipStatus.PENDING
+                in blockedSet -> FriendshipStatus.BLOCKED
+                else -> { FriendshipStatus.NOT_FRIENDS }
+            }
+            UserWithStatus(profile, status)
+        }// returns this
 
-    }.stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = emptyList<UserProfileResponse>())
+    }.stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = emptyList<UserWithStatus>())
 
     init {
+        /*
+        viewModelScope.launch {
+            UserRepository.getMyUserFlow().collect { updatedUser ->
+                _user.value = updatedUser
+            }
+        }
+        */
         viewModelScope.launch {
             foundDeviceIds.collect { currentIds ->
                 val existingProfileIds = _userProfiles.value.map { it._id }.toSet()
@@ -124,5 +156,5 @@ fun cosineSimilarity(a: Set<String>, b: Set<String>): Double {
     if (a.isEmpty() || b.isEmpty()) return 0.0
 
     val intersectionSize = a.intersect(b).size
-    return intersectionSize / kotlin.math.sqrt(a.size.toDouble() * b.size.toDouble())
+    return intersectionSize / sqrt(a.size.toDouble() * b.size.toDouble())
 }

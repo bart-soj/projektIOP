@@ -122,7 +122,7 @@ object ChatRepository {
             if (existing.isSuccessful) {
                 existing.body().orEmpty().firstOrNull { chat ->
                     chat.participants?.any { it._id == friendId } == true
-                }?.let { return@withContext Result.success(it._id ?: "") }
+                }?.let { return@withContext Result.success(it._id!!) }
             }
             val created = RetrofitInstance.chatApi.accessChat(mapOf("userId" to friendId))
             if (created.isSuccessful) {
