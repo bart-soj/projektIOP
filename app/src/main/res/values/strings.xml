@@ -178,5 +178,6 @@
 
     <string name="enable_bluetooth">Włącz Bluetooth!</string>
     <string name="enable_location">Włącz Lokalizację!</string>
+    <string name="clear">Wyczyść</string>
 
 </resources>

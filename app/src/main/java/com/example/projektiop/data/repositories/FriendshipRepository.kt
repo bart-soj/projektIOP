@@ -9,12 +9,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 data class FriendItem(
-    val id: String,               // user id of the friend
+    val id: String,
     val displayName: String,
     val username: String,
     val avatarUrl: String?,
-    val friendshipId: String,     // underlying friendship relation id
-    val blockedBy: String? = null // userId who initiated block (for conditional unblock UI)
+    val friendshipId: String,
+    val blockedBy: String? = null
 )
 
 data class PendingRequestItem(
@@ -32,8 +32,6 @@ object FriendshipRepository {
         val friendshipId: String?
     )
     suspend fun fetchAccepted(): Result<List<FriendItem>> = withContext(Dispatchers.IO) {
-        // Nie używamy status=accepted, bo backend wtedy automatycznie filtruje tylko 'verified'.
-        // Pobieramy bez status i filtrujemy lokalnie, aby pokazać też 'unverified'.
         try {
             val response = RetrofitInstance.friendshipApi.getFriendships()
             if (response.isSuccessful) {
@@ -115,20 +113,10 @@ object FriendshipRepository {
 
     suspend fun sendFriendRequest(recipientId: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // Najpierw spróbuj friendId (częsty wariant w backendach), potem recipientId.
             val primary = RetrofitInstance.friendshipApi.sendRequest(FriendRequest(friendId = recipientId))
             if (primary.isSuccessful) return@withContext Result.success(Unit)
 
-            // Jeśli 400/404 spróbuj alternatywne pole.
-            val secondary = RetrofitInstance.friendshipApi.sendRequest(FriendRequest(recipientId = recipientId))
-            if (secondary.isSuccessful) return@withContext Result.success(Unit)
-
-            // Spróbuj wydobyć komunikat błędu.
-            val raw = secondary.errorBody()?.string() ?: primary.errorBody()?.string()
-            val msg = try {
-                if (raw.isNullOrBlank()) null else JSONObject(raw).optString("message").takeIf { it.isNotBlank() }
-            } catch (e: Exception) { null }
-            Result.failure(Exception(msg ?: "Nie udało się wysłać zaproszenia (${secondary.code()})"))
+            Result.failure(Exception("Nie udało się wysłać zaproszenia"))
         } catch (e: Exception) { Result.failure(e) }
     }
 
@@ -155,7 +143,7 @@ object FriendshipRepository {
 
     suspend fun getBlockInfo(friendId: String): Result<BlockInfo?> = withContext(Dispatchers.IO) {
         try {
-            val profileResp = com.example.projektiop.data.repositories.UserRepository.fetchMyProfile()
+            val profileResp = UserRepository.fetchMyProfile()
             val myId = profileResp.getOrNull()?._id
             if (myId.isNullOrBlank()) return@withContext Result.success(null)
             val blocked = fetchBlocked().getOrNull().orEmpty()

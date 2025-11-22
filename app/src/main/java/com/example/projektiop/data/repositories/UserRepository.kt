@@ -370,13 +370,15 @@ object UserRepository {
             val kept = currentInterests.filter { it.interest.name in toKeepNames }
             for (ui in kept) {
                 val name = ui.interest.name
-                val desiredDesc = desired[name]?.orEmpty()?.trim() ?: ""
+                val desiredRaw = desired[name]
+                val desiredDesc = desiredRaw?.trim() ?: ""
                 val currentDesc = ui.customDescription?.trim().orEmpty()
                 if (desiredDesc != currentDesc) {
                     val id = jsonIdToString(ui.userInterestId) ?: continue
+                    val toSend = if (desiredDesc.isBlank() && currentDesc.isNotBlank()) "" else desiredDesc.ifBlank { null }
                     val resp = RetrofitInstance.userApi.updateUserInterest(
                         userInterestId = id,
-                        body = UpdateUserInterestRequest(customDescription = desiredDesc.ifBlank { null })
+                        body = UpdateUserInterestRequest(customDescription = toSend)
                     )
                     if (!resp.isSuccessful) {
                         val err = try { resp.errorBody()?.string() } catch (_: Exception) { null }
