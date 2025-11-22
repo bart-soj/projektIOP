@@ -70,7 +70,7 @@ fun MainScreen(navController: NavController, viewModel: MainViewModel) {
             ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 1. Dynamiczna karta profilu
+            // Karta profilu
             ProfileCardDynamic(
                 navController,
                 viewModel = viewModel
@@ -293,10 +293,10 @@ fun InterestTag(
     }
 }
 
-// --- Dolny Pasek Nawigacji (element 9) ---
+// --- Dolny Pasek Nawigacji  ---
 
 data class BottomNavItem(
-    val labelResId: Int, // ID zasobu string
+    val labelResId: Int,
     val icon: ImageVector,
     val route: String
 )

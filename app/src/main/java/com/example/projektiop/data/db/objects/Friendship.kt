@@ -25,10 +25,10 @@ class Friendship() : RealmObject {
     var _id: ObjectId = ObjectId()
 
     @Index
-    var user1Id: String = "" // Reference to User
+    var user1Id: String = ""
 
     @Index
-    var user2Id: String = "" // Reference to User
+    var user2Id: String = ""
 
     @Ignore
     var status: FriendshipStatus
@@ -40,7 +40,7 @@ class Friendship() : RealmObject {
         }
     private var _status: String = FriendshipStatus.NOT_FRIENDS.name
 
-    var requestedBy: String = "" // Reference to User
+    var requestedBy: String = ""
 
     @Ignore
     var friendshipType: FriendshipType
@@ -52,7 +52,7 @@ class Friendship() : RealmObject {
         }
     private var _friendshipType: String = FriendshipType.UNVERIFIED.name
 
-    var blockedBy: String? = null // Reference to User
+    var blockedBy: String? = null
     var isBlocked: Boolean = false
 
     var createdAt: RealmInstant? = null
