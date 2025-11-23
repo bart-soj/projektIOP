@@ -34,6 +34,7 @@ fun FriendCard(
     onChatClick: (() -> Unit)? = null,
     onRemoveClick: (() -> Unit)? = null,
     onBlockClick: (() -> Unit)? = null,
+    onUnblockClick: (() -> Unit)? = null,
 
     onInviteClick: (() -> Unit)? = null,
     isInviteSent: Boolean = false,
@@ -82,6 +83,12 @@ fun FriendCard(
             if (onChatClick != null) {
                 TextButton(onClick = onChatClick) {
                     Text(stringResource(R.string.chat))
+                }
+            }
+
+            if (onUnblockClick != null) {
+                TextButton(onClick = onUnblockClick) {
+                    Text(stringResource(R.string.unlock))
                 }
             }
 

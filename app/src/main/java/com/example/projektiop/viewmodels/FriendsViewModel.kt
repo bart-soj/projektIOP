@@ -23,7 +23,8 @@ data class FriendsUiState(
     val searchResults: List<UserSearchDto> = emptyList(),
     val isSearchLoading: Boolean = false,
     val searchError: String? = null,
-    val sentRequests: Set<String> = emptySet()
+    val sentRequests: Set<String> = emptySet(),
+    val blockedUsers: List<FriendItem> = emptyList()
 )
 
 sealed interface FriendsUiEffect {
@@ -136,6 +137,28 @@ class FriendsViewModel : ViewModel() {
     fun onBlockFriend(friendshipId: String) {
         viewModelScope.launch {
             FriendshipRepository.blockFriendship(friendshipId).onSuccess { refreshAll() }
+        }
+    }
+
+    fun loadBlocked() {
+        viewModelScope.launch {
+            FriendshipRepository.fetchBlocked()
+                .onSuccess { list ->
+                    _uiState.update { it.copy(blockedUsers = list) }
+                }
+        }
+    }
+
+    fun onUnblockFriend (friendshipId: String) {
+        viewModelScope.launch {
+            FriendshipRepository.unblockFriendship(friendshipId)
+                .onSuccess {
+                    _uiState.update { state ->
+                        state.copy(
+                            blockedUsers = state.blockedUsers.filterNot { it.friendshipId == friendshipId }
+                        )
+                    }
+                }
         }
     }
 
