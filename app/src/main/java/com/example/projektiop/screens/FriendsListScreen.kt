@@ -1,91 +1,76 @@
 package com.example.projektiop.screens
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
-import com.example.projektiop.data.repositories.FriendItem
-import com.example.projektiop.data.repositories.FriendshipRepository
-import kotlinx.coroutines.launch
 import com.example.projektiop.data.api.UserSearchDto
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import com.example.projektiop.data.repositories.SharedPreferencesRepository
-import com.example.projektiop.data.repositories.UserRepository
+import com.example.projektiop.data.repositories.FriendshipRepository
+import com.example.projektiop.screens.components.FriendCard
+import com.example.projektiop.screens.components.PendingRequestCard
+import com.example.projektiop.screens.friends.FriendsUiEffect
+import com.example.projektiop.screens.friends.FriendsViewModel
+import com.example.projektiop.util.NotificationHelper
+import kotlinx.coroutines.launch
 
-private const val BASE_URL_KEY: String = "BASE_URL"
-
-// Ekran dynamiczny listy znajomych z API
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FriendsListScreen(navController: NavController) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+fun FriendsListScreen(
+    navController: NavController,
+    viewModel: FriendsViewModel = viewModel()
+) {
+    val context = LocalContext.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    var friends by remember { mutableStateOf<List<FriendItem>>(emptyList()) }
-    var incoming by remember { mutableStateOf<List<FriendItem>>(emptyList()) }
+    val uiState by viewModel.uiState.collectAsState()
+    var showSearch by remember { mutableStateOf(false) }
     var lastIncomingIds by remember { mutableStateOf<Set<String>>(emptySet()) }
-    var loading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    val scope = rememberCoroutineScope()
 
-    fun refreshAll() {
-        scope.launch {
-            loading = true
-            error = null
-            val fr = FriendshipRepository.fetchAccepted()
-            val pend = FriendshipRepository.fetchIncomingPending()
-            fr.onSuccess { friends = it }.onFailure { error = it.message }
-            pend.onSuccess { list ->
-                val newOnes = list.filter { it.friendshipId !in lastIncomingIds }
-                if (newOnes.isNotEmpty()) {
-                    newOnes.take(3).forEach { req ->
-                        com.example.projektiop.util.NotificationHelper.notifyFriendRequest(context, req.displayName)
-                    }
-                }
-                incoming = list
-                lastIncomingIds = list.map { it.friendshipId }.toSet()
-            }.onFailure { error = it.message }
-            loading = false
+    LaunchedEffect(viewModel) {
+        viewModel.uiEffect.collect { effect ->
+            when (effect) {
+                is FriendsUiEffect.NavigateToProfile -> navController.navigate(effect.route)
+                is FriendsUiEffect.NavigateToChat -> navController.navigate("chat_detail?chatId=null&friendId=${effect.friendId}")
+                is FriendsUiEffect.ShowToast -> Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
-    LaunchedEffect(Unit) { refreshAll() }
+    LaunchedEffect(uiState.incomingRequests) {
+        val newIds = uiState.incomingRequests.map { it.friendshipId }.toSet()
+        val newOnes = uiState.incomingRequests.filter { it.friendshipId !in lastIncomingIds }
+        if (newOnes.isNotEmpty()) {
+            newOnes.take(3).forEach { req ->
+                NotificationHelper.notifyFriendRequest(context, req.displayName)
+            }
+        }
+        lastIncomingIds = newIds
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.friends_list_title)) },
                 actions = {
-                    var showSearch by remember { mutableStateOf(false) }
                     IconButton(onClick = { showSearch = true }) {
                         Icon(
                             Icons.Default.Search,
                             contentDescription = stringResource(R.string.search_users)
                         )
-                    }
-                    if (showSearch) {
-                        UserSearchDialog(onClose = { showSearch = false })
                     }
                 }
             )
@@ -100,22 +85,22 @@ fun FriendsListScreen(navController: NavController) {
                 .padding(paddingValues)
         ) {
             when {
-                loading -> {
+                uiState.isLoading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
-                error != null -> {
+                uiState.error != null -> {
                     Column(
                         modifier = Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(error ?: "Błąd", color = MaterialTheme.colorScheme.error)
+                        Text(uiState.error ?: "Błąd", color = MaterialTheme.colorScheme.error)
                         Spacer(Modifier.height(8.dp))
-                        Button(onClick = { refreshAll() }) {
+                        Button(onClick = { viewModel.refreshAll() }) {
                             Text(stringResource(R.string.retry))
                         }
                     }
                 }
-                friends.isEmpty() && incoming.isEmpty() ->
+                uiState.friends.isEmpty() && uiState.incomingRequests.isEmpty() ->
                     Text(
                         stringResource(R.string.no_friends),
                         modifier = Modifier.align(Alignment.Center)
@@ -128,7 +113,7 @@ fun FriendsListScreen(navController: NavController) {
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
-                        if (incoming.isNotEmpty()) {
+                        if (uiState.incomingRequests.isNotEmpty()) {
                             item("pending_header") {
                                 Text(
                                     stringResource(R.string.pending_requests),
@@ -136,24 +121,16 @@ fun FriendsListScreen(navController: NavController) {
                                     modifier = Modifier.padding(vertical = 4.dp)
                                 )
                             }
-                            items(incoming, key = { it.friendshipId }) { req ->
+                            items(uiState.incomingRequests, key = { it.friendshipId }) { req ->
                                 PendingRequestCard(
                                     item = req,
-                                    onAccept = {
-                                        scope.launch {
-                                            FriendshipRepository.acceptFriendship(req.friendshipId).onSuccess { refreshAll() }
-                                        }
-                                    },
-                                    onReject = {
-                                        scope.launch {
-                                            FriendshipRepository.rejectFriendship(req.friendshipId).onSuccess { refreshAll() }
-                                        }
-                                    }
+                                    onAccept = { viewModel.onAcceptRequest(req.friendshipId) },
+                                    onReject = { viewModel.onRejectRequest(req.friendshipId) }
                                 )
                             }
                             item("divider_after_pending") { Divider(Modifier.padding(vertical = 4.dp)) }
                         }
-                        if (friends.isNotEmpty()) {
+                        if (uiState.friends.isNotEmpty()) {
                             item("friends_header") {
                                 Text(
                                     stringResource(R.string.friends_header),
@@ -161,13 +138,13 @@ fun FriendsListScreen(navController: NavController) {
                                     modifier = Modifier.padding(vertical = 4.dp)
                                 )
                             }
-                            items(friends, key = { it.id }) { friend ->
+                            items(uiState.friends, key = { it.id }) { friend ->
                                 FriendCard(
                                     friend = friend,
-                                    onClick = { navController.navigate("friend_profile/${friend.id}?username=${friend.username}&displayName=${friend.displayName}") },
-                                    onChat = { navController.navigate("chat_detail?chatId=null&friendId=${friend.id}") },
-                                    onRemoved = { refreshAll() },
-                                    onBlocked = { refreshAll() }
+                                    onCardClick = { viewModel.onFriendClicked(friend) },
+                                    onChatClick = { viewModel.onChatClicked(friend.id) },
+                                    onRemoveClick = { viewModel.onRemoveFriend(friend.friendshipId) },
+                                    onBlockClick = { viewModel.onBlockFriend(friend.friendshipId) }
                                 )
                             }
                         }
@@ -176,162 +153,9 @@ fun FriendsListScreen(navController: NavController) {
             }
         }
     }
-}
 
-@Composable
-private fun FriendCard(
-    friend: FriendItem,
-    onClick: () -> Unit,
-    onChat: () -> Unit,
-    onRemoved: () -> Unit,
-    onBlocked: () -> Unit
-) {
-    var menuExpanded by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onLongPress = { menuExpanded = true },
-                    onTap = { onClick() }
-                )
-            },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val rawUrl = friend.avatarUrl?.takeIf { it.isNotBlank() }
-            val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it" }
-            if (fullUrl != null) {
-                val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
-                    .data(fullUrl)
-                    .crossfade(true)
-                    .apply {
-                        val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
-                        if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
-                    }
-                    .build()
-                AsyncImage(
-                    model = req,
-                    contentDescription = "Avatar",
-                    placeholder = painterResource(R.drawable.avatar_placeholder),
-                    error = painterResource(R.drawable.avatar_placeholder),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                )
-            } else {
-                Image(
-                    painter = painterResource(id = R.drawable.avatar_placeholder),
-                    contentDescription = "Avatar",
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(friend.displayName, style = MaterialTheme.typography.titleMedium)
-            }
-
-            TextButton(onClick = onChat) { Text(stringResource(R.string.chat)) }
-
-            Box {
-                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    DropdownMenuItem(
-                        text = { Text("Usuń znajomego") },
-                        onClick = {
-                            menuExpanded = false
-                            scope.launch {
-                                FriendshipRepository.removeFriend(friend.friendshipId)
-                                    .onSuccess { onRemoved() }
-                            }
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Zablokuj") },
-                        onClick = {
-                            menuExpanded = false
-                            scope.launch {
-                                FriendshipRepository.blockFriendship(friend.friendshipId)
-                                    .onSuccess { onBlocked() }
-                            }
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PendingRequestCard(item: FriendItem, onAccept: () -> Unit, onReject: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val rawUrl = item.avatarUrl?.takeIf { it.isNotBlank() }
-            val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
-            if (fullUrl != null) {
-                val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
-                    .data(fullUrl)
-                    .crossfade(true)
-                    .apply {
-                        val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
-                        if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
-                    }
-                    .build()
-                AsyncImage(
-                    model = req,
-                    contentDescription = "Avatar",
-                    placeholder = painterResource(R.drawable.avatar_placeholder),
-                    error = painterResource(R.drawable.avatar_placeholder),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                )
-            } else {
-                Image(
-                    painter = painterResource(id = R.drawable.avatar_placeholder),
-                    contentDescription = "Avatar",
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                )
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(item.displayName, style = MaterialTheme.typography.titleMedium)
-                Text(item.username, style = MaterialTheme.typography.bodySmall)
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                TextButton(onClick = onReject) { Text("Odrzuć") }
-                Button(onClick = onAccept) { Text("Akceptuj") }
-            }
-        }
+    if (showSearch) {
+        UserSearchDialog(onClose = { showSearch = false })
     }
 }
 
@@ -367,7 +191,7 @@ private fun UserSearchDialog(onClose: () -> Unit) {
                                 loading = true
                                 error = null
                                 results = emptyList()
-                                UserRepository.searchUsers(query)
+                                FriendshipRepository.searchUsers(query)
                                     .onSuccess { results = it }
                                     .onFailure { error = it.message }
                                 loading = false
@@ -415,8 +239,3 @@ private fun UserSearchDialog(onClose: () -> Unit) {
     )
 }
 
-@Preview(showBackground = true)
-@Composable
-fun FriendsListPreview() {
-    FriendsListScreen(navController = rememberNavController())
-}

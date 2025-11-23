@@ -23,12 +23,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.UUID
 
 
 private const val PREFS_NAME = "auth_prefs"
-// private const val EMAIL = "my_email"
+private const val EMAIL = "my_email"
 private const val ID = "_id"
 
 
@@ -418,13 +420,15 @@ object UserRepository {
             val kept = currentInterests.filter { it.interest.name in toKeepNames }
             for (ui in kept) {
                 val name = ui.interest.name
-                val desiredDesc = desired[name]?.orEmpty()?.trim() ?: ""
+                val desiredRaw = desired[name]
+                val desiredDesc = desiredRaw?.trim() ?: ""
                 val currentDesc = ui.customDescription?.trim().orEmpty()
                 if (desiredDesc != currentDesc) {
                     val id = ui.userInterestId ?: continue
+                    val toSend = if (desiredDesc.isBlank() && currentDesc.isNotBlank()) "" else desiredDesc.ifBlank { null }
                     val resp = RetrofitInstance.userApi.updateUserInterest(
                         userInterestId = id,
-                        body = UpdateUserInterestRequest(customDescription = desiredDesc.ifBlank { null })
+                        body = UpdateUserInterestRequest(customDescription = toSend)
                     )
                     if (!resp.isSuccessful) {
                         val err = try { resp.errorBody()?.string() } catch (_: Exception) { null }

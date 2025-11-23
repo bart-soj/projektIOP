@@ -11,14 +11,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import kotlin.Result
 
 data class FriendItem(
-    val id: String,               // user id of the friend
+    val id: String,
     val displayName: String,
     val username: String,
     val avatarUrl: String?,
-    val friendshipId: String,     // underlying friendship relation id
-    val blockedBy: String? = null // userId who initiated block (for conditional unblock UI)
+    val friendshipId: String,
+    val blockedBy: String? = null
 )
 
 data class BlockInfo(
@@ -45,8 +46,6 @@ object FriendshipRepository {
     val repositoryCache: StateFlow<Map<String, OtherUserRepository>> = _repositoryCache.asStateFlow()
 
     suspend fun fetchAccepted(): Result<List<FriendItem>> = withContext(Dispatchers.IO) {
-        // Nie używamy status=accepted, bo backend wtedy automatycznie filtruje tylko 'verified'.
-        // Pobieramy bez status i filtrujemy lokalnie, aby pokazać też 'unverified'.
         try {
             val response = RetrofitInstance.friendshipApi.getFriendships()
             if (response.isSuccessful) {
@@ -168,9 +167,8 @@ object FriendshipRepository {
             val response = RetrofitInstance.friendshipApi.sendRequest(FriendRequest(recipientId = recipientId))
             if (response.isSuccessful) {
                 return@withContext Result.success(Unit)
-            } else {
-                return@withContext Result.failure(Exception("API failed"))
             }
+            Result.failure(Exception("Nie udało się wysłać zaproszenia"))
         } catch (e: Exception) {
             return@withContext Result.failure(Exception("API error",e))
         }

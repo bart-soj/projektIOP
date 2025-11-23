@@ -178,4 +178,11 @@
 
 
 
+    <string name="clear">Clear</string>
+    <string name="options">Options</string>
+    <string name="remove">Remove friend</string>
+    <string name="block">Block</string>
+    <string name="reject">Reject</string>
+    <string name="accept">Accept</string>
+
 </resources>

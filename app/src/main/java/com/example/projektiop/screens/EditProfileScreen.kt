@@ -26,6 +26,8 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import coil.request.ImageRequest
 import com.example.projektiop.data.repositories.InterestRepository
 
@@ -240,6 +242,15 @@ fun EditProfileScreen(
                             },
                             label = { Text(stringResource(id = R.string.interest_description_label, nameKey)) },
                             supportingText = { Text("${value.length}/200") },
+                            trailingIcon = {
+                                if (value.isNotBlank()) {
+                                    IconButton(onClick = {
+                                        selectedDescriptions = selectedDescriptions.toMutableMap().apply { put(nameKey, "") }
+                                    }) {
+                                        Icon(Icons.Default.Clear, contentDescription = stringResource(id = R.string.clear))
+                                    }
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
