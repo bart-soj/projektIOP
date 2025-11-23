@@ -103,14 +103,17 @@ fun EditProfileScreen(
         loadingInitial = false
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+    ){
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(16.dp, top = 48.dp, bottom = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             Text(text = stringResource(id = R.string.edit_profile), style = MaterialTheme.typography.headlineMedium)
             if (loadingInitial) {

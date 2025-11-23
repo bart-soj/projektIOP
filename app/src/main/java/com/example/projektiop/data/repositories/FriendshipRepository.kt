@@ -4,7 +4,6 @@ import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.data.api.UserSearchDto
 import com.example.projektiop.data.api.FriendRequest
 import com.example.projektiop.data.api.FriendshipDto
-import org.json.JSONObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -116,7 +115,12 @@ object FriendshipRepository {
             val primary = RetrofitInstance.friendshipApi.sendRequest(FriendRequest(friendId = recipientId))
             if (primary.isSuccessful) return@withContext Result.success(Unit)
 
-            Result.failure(Exception("Nie udało się wysłać zaproszenia"))
+            val code = primary.code()
+            val body = primary.errorBody()?.string()?.take(200)
+
+            Result.failure(
+                Exception("Nie udało się wysłać zaproszenia ($code): $body")
+            )
         } catch (e: Exception) { Result.failure(e) }
     }
 

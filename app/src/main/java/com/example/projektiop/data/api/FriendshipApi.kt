@@ -39,8 +39,7 @@ interface FriendshipApi {
 }
 
 data class FriendRequest(
-    @SerializedName("friendId") val friendId: String? = null,
-    @SerializedName("recipientId") val recipientId: String? = null
+    @SerializedName("recipientId") val friendId: String? = null
 )
 
 // Backend (kontroler getFriendships) zwraca już PRZETWORZONE obiekty:

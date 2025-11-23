@@ -182,5 +182,6 @@
     <string name="block">Block</string>
     <string name="reject">Reject</string>
     <string name="accept">Accept</string>
-
+    <string name="already_friends">Already\nfriends</string>
+    <string name="invite_sent">Invite\nsent</string>
 </resources>

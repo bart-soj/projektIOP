@@ -186,5 +186,7 @@
     <string name="block">Zablokuj</string>
     <string name="reject">Odrzuć</string>
     <string name="accept">Akceptuj</string>
+    <string name="already_friends">Już\nznajomi</string>
+    <string name="invite_sent">Wysłano\nzaproszenie</string>
 
 </resources>

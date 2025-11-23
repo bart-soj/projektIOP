@@ -33,7 +33,11 @@ fun FriendCard(
 
     onChatClick: (() -> Unit)? = null,
     onRemoveClick: (() -> Unit)? = null,
-    onBlockClick: (() -> Unit)? = null
+    onBlockClick: (() -> Unit)? = null,
+
+    onInviteClick: (() -> Unit)? = null,
+    isInviteSent: Boolean = false,
+    isAlreadyFriend: Boolean = false
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -59,6 +63,20 @@ fun FriendCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(friend.displayName, style = MaterialTheme.typography.titleMedium)
                 Text(friend.username, style = MaterialTheme.typography.bodySmall)
+            }
+
+            if (onInviteClick != null) {
+                TextButton(
+                    onClick = onInviteClick,
+                    enabled = !isInviteSent && !isAlreadyFriend
+                ) {
+                    val label = stringResource(
+                        if (isAlreadyFriend) R.string.already_friends
+                        else if (isInviteSent) R.string.invite_sent
+                        else R.string.add
+                    )
+                    Text(label)
+                }
             }
 
             if (onChatClick != null) {
