@@ -17,7 +17,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.R
-import com.example.projektiop.data.api.UserSearchDto
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.screens.components.FriendCard
 import com.example.projektiop.screens.components.PendingRequestCard
@@ -155,27 +154,24 @@ fun FriendsListScreen(
     }
 
     if (showSearch) {
-        UserSearchDialog(onClose = { showSearch = false })
+        UserSearchDialog(onClose = {
+            showSearch = false
+            viewModel.clearSearchState()
+        }, viewModel = viewModel)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun UserSearchDialog(onClose: () -> Unit) {
+private fun UserSearchDialog(onClose: () -> Unit, viewModel: FriendsViewModel) {
     var query by remember { mutableStateOf("") }
-    var results by remember { mutableStateOf<List<UserSearchDto>>(emptyList()) }
-    var loading by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var sentFor by remember { mutableStateOf<Set<String>>(emptySet()) }
-    val scope = rememberCoroutineScope()
+    val uiState by viewModel.uiState.collectAsState()
 
     AlertDialog(
         onDismissRequest = onClose,
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onClose) {
-                Text(stringResource(R.string.close))
-            }
+            TextButton(onClick = onClose) { Text(stringResource(R.string.close)) }
         },
         title = { Text(stringResource(R.string.search_users)) },
         text = {
@@ -187,50 +183,48 @@ private fun UserSearchDialog(onClose: () -> Unit) {
                     singleLine = true,
                     trailingIcon = {
                         IconButton(enabled = query.isNotBlank(), onClick = {
-                            scope.launch {
-                                loading = true
-                                error = null
-                                results = emptyList()
-                                FriendshipRepository.searchUsers(query)
-                                    .onSuccess { results = it }
-                                    .onFailure { error = it.message }
-                                loading = false
-                            }
+                            viewModel.onSearchQueryChanged(query)
                         }) { Icon(Icons.Default.Search, contentDescription = null) }
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(12.dp))
-                if (loading) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                } else if (error != null) {
-                    Text(error!!, color = MaterialTheme.colorScheme.error)
-                } else if (results.isEmpty()) {
-                    Text(stringResource(R.string.no_results), style = MaterialTheme.typography.bodySmall)
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .heightIn(max = 300.dp)
-                    ) {
-                        items(results, key = { it._id ?: it.username ?: it.hashCode().toString() }) { user ->
-                            val userId = user._id ?: return@items
-                            val alreadySent = userId in sentFor
-                            ListItem(
-                                headlineContent = { Text(user.profile?.displayName ?: user.username ?: stringResource(R.string.no_name)) },
-                                supportingContent = { Text(user.username ?: "") },
-                                trailingContent = {
-                                    TextButton(enabled = !alreadySent, onClick = {
-                                        scope.launch {
-                                            FriendshipRepository.sendFriendRequest(userId)
-                                                .onSuccess { sentFor = sentFor + userId }
-                                                .onFailure { error = it.message }
-                                        }
-                                    }) {
-                                        Text(if (alreadySent) stringResource(R.string.sent) else stringResource(R.string.add))
-                                    }
-                                }
-                            )
-                            Divider()
+                when {
+                    uiState.isSearchLoading -> {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+                    uiState.searchError != null -> {
+                        Text(uiState.searchError ?: "Błąd", color = MaterialTheme.colorScheme.error)
+                    }
+                    uiState.searchResults.isEmpty() -> {
+                        Text(stringResource(R.string.no_results), style = MaterialTheme.typography.bodySmall)
+                    }
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier.heightIn(max = 300.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(uiState.searchResults, key = { it._id ?: it.username ?: it.hashCode().toString() }) { user ->
+                                val userId = user._id ?: return@items
+
+                                val isAlreadyFriend = uiState.friends.any { it.id == userId }
+                                val inviteSent = userId in uiState.sentRequests
+
+                                val friendItem = com.example.projektiop.data.repositories.FriendItem(
+                                    id = userId,
+                                    displayName = user.profile?.displayName ?: user.username ?: stringResource(R.string.no_name),
+                                    username = user.username ?: "",
+                                    avatarUrl = user.profile?.avatarUrl,
+                                    friendshipId = userId
+                                )
+                                FriendCard(
+                                    friend = friendItem,
+                                    onCardClick = { viewModel.onFriendClicked(friendItem) },
+                                    onInviteClick = { viewModel.onInviteUser(userId) },
+                                    isInviteSent = inviteSent,
+                                    isAlreadyFriend = isAlreadyFriend
+                                )
+                            }
                         }
                     }
                 }

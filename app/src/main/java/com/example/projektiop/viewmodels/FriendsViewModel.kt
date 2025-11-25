@@ -2,6 +2,7 @@ package com.example.projektiop.screens.friends
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projektiop.data.api.UserSearchDto
 import com.example.projektiop.data.repositories.FriendItem
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.PendingRequestItem
@@ -17,7 +18,13 @@ data class FriendsUiState(
     val isLoading: Boolean = false,
     val friends: List<FriendItem> = emptyList(),
     val incomingRequests: List<PendingRequestItem> = emptyList(),
-    val error: String? = null
+    val error: String? = null,
+
+    val searchResults: List<UserSearchDto> = emptyList(),
+    val isSearchLoading: Boolean = false,
+    val searchError: String? = null,
+    val sentRequests: Set<String> = emptySet(),
+    val blockedUsers: List<FriendItem> = emptyList()
 )
 
 sealed interface FriendsUiEffect {
@@ -44,7 +51,6 @@ class FriendsViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            // Odwołujemy się bezpośrednio do Twoich obiektów Repositories
             val friendsResult = FriendshipRepository.fetchAccepted()
             val pendingResult = FriendshipRepository.fetchIncomingPending()
 
@@ -62,10 +68,53 @@ class FriendsViewModel : ViewModel() {
         }
     }
 
+    // --- Wyszukiwanie ---
+
+    fun onSearchQueryChanged(query: String) {
+        if (query.isBlank()) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSearchLoading = true, searchError = null, searchResults = emptyList()) }
+
+            FriendshipRepository.searchUsers(query)
+                .onSuccess { results ->
+                    _uiState.update { it.copy(searchResults = results) }
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(searchError = e.message) }
+                }
+
+            _uiState.update { it.copy(isSearchLoading = false) }
+        }
+    }
+
+    fun onInviteUser(userId: String) {
+        viewModelScope.launch {
+            FriendshipRepository.sendFriendRequest(userId)
+                .onSuccess {
+                    _uiState.update { state ->
+                        state.copy(sentRequests = state.sentRequests + userId)
+                    }
+                }
+                .onFailure { e ->
+                    _uiEffect.send(FriendsUiEffect.ShowToast(e.message ?: "Błąd wysyłania"))
+                }
+        }
+    }
+
+    fun clearSearchState() {
+        _uiState.update {
+            it.copy(
+                searchResults = emptyList(),
+                searchError = null,
+                isSearchLoading = false
+            )
+        }
+    }
+
     // --- Akcje z UI ---
 
     fun onFriendClicked(friend: FriendItem) {
-        // Logika budowania URL przeniesiona tutaj
         val encodedName = encode(friend.displayName)
         val encodedAvatar = encode(friend.avatarUrl)
 
@@ -88,6 +137,28 @@ class FriendsViewModel : ViewModel() {
     fun onBlockFriend(friendshipId: String) {
         viewModelScope.launch {
             FriendshipRepository.blockFriendship(friendshipId).onSuccess { refreshAll() }
+        }
+    }
+
+    fun loadBlocked() {
+        viewModelScope.launch {
+            FriendshipRepository.fetchBlocked()
+                .onSuccess { list ->
+                    _uiState.update { it.copy(blockedUsers = list) }
+                }
+        }
+    }
+
+    fun onUnblockFriend (friendshipId: String) {
+        viewModelScope.launch {
+            FriendshipRepository.unblockFriendship(friendshipId)
+                .onSuccess {
+                    _uiState.update { state ->
+                        state.copy(
+                            blockedUsers = state.blockedUsers.filterNot { it.friendshipId == friendshipId }
+                        )
+                    }
+                }
         }
     }
 

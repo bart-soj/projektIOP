@@ -4,13 +4,9 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.ShieldMoon
-import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.*
-import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,16 +15,23 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.projektiop.screens.friends.FriendsViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.R
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.FriendItem
+import com.example.projektiop.screens.components.FriendCard
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark: () -> Unit) {
+fun SettingsScreen(
+    navController: NavController,
+    darkMode: Boolean,
+    onToggleDark: () -> Unit
+) {
 
     var animationPlayed by remember { mutableStateOf(false) }
     val alphaAnimation = animateFloatAsState(
@@ -152,7 +155,10 @@ fun SettingsScreen(navController: NavController, darkMode: Boolean, onToggleDark
 }
 
 @Composable
-private fun BlockedUsersDialog(onClose: () -> Unit) {
+private fun BlockedUsersDialog(
+    onClose: () -> Unit,
+    // todo: użyć w blockedusersdialog viewModel: FriendsViewModel = viewModel()
+) {
     val scope = rememberCoroutineScope()
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -184,35 +190,26 @@ private fun BlockedUsersDialog(onClose: () -> Unit) {
                 else -> {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         items.forEach { u ->
-                            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(Modifier.weight(1f)) {
-                                        Text(u.displayName, style = MaterialTheme.typography.titleMedium)
-                                        Text(u.username, style = MaterialTheme.typography.bodySmall)
+                            val isProcessing = processingId == u.friendshipId
+                            val showUnblock = myUserId != null && myUserId == u.blockedBy
+
+                            if (showUnblock && !isProcessing) {
+                                FriendCard(
+                                    friend = u,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onCardClick = {},
+                                    onUnblockClick = {
+                                        scope.launch {
+                                            processingId = u.friendshipId
+                                            FriendshipRepository.unblockFriendship(u.friendshipId)
+                                                .onSuccess {
+                                                    items = items.filterNot { it.friendshipId == u.friendshipId }
+                                                    FriendshipRepository.fetchBlocked().onSuccess { items = it }
+                                                }
+                                            processingId = null
+                                        }
                                     }
-                                    val isProcessing = processingId == u.friendshipId
-                                    val showUnblock = myUserId != null && myUserId == u.blockedBy
-                                    if (showUnblock) {
-                                        TextButton(enabled = !isProcessing, onClick = {
-                                            scope.launch {
-                                                processingId = u.friendshipId
-                                                FriendshipRepository.unblockFriendship(u.friendshipId)
-                                                    .onSuccess {
-                                                        FriendshipRepository.fetchBlocked().onSuccess { items = it }
-                                                    }
-                                                processingId = null
-                                            }
-                                        }) { Text(if (isProcessing) stringResource(id = R.string.three_dots) else stringResource(id = R.string.unlock)) }
-                                    } else {
-                                        Text(text = stringResource(id = R.string.blocked), style = MaterialTheme.typography.bodySmall)
-                                    }
-                                }
+                                )
                             }
                         }
                     }

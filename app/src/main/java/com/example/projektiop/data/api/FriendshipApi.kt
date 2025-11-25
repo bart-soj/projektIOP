@@ -60,8 +60,8 @@ data class FriendshipDto(
     val _id = friendshipId // quickfix as it was used this way in many places
 }
 
-data class UserRef(
+data class UserRef( // TODO() serverside send full user
     val _id: String? = null,
     val username: String? = null,
-    val profile: ProfileDto? = null
+    val profile: ProfileDto? = null //TODO() serverside, send full profile
 )
