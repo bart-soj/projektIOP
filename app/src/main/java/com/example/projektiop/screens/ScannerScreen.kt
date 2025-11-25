@@ -37,11 +37,10 @@ import com.example.projektiop.activeHandshake.NFC.ActiveHandshakeButton
 import com.example.projektiop.data.api.CertificateRequest
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.util.CertificateUtils
-import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.db.objects.FriendshipStatus
-import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.repositories.UserRepository
+import com.example.projektiop.screens.components.AvatarImage
 import kotlinx.coroutines.launch
 
 
@@ -149,9 +148,8 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
                         viewModel.addFriend(id)
                     },
                     onChatClick = { id: String ->
-                        navController.navigate(
-                            "chats" //TODO() navigate to the actual chat, no chatId here yet
-                        )
+                        //navController.navigate("chat_detail?chatId=null&friendId=${}")
+                        navController.navigate("chats")
                     },
                 )
 
@@ -187,7 +185,7 @@ fun ScanStatus(viewModel: BLEViewModel, modifier: Modifier = Modifier) {
 @Composable
 fun ScannedUserRow(
     userWithStatus: UserWithStatus,
-    onClick: (UserProfileResponse) -> Unit,
+    onClick: (User) -> Unit,
     onAddClick: (String) -> Unit,
     onChatClick: (String) -> Unit
 ) {
@@ -241,7 +239,7 @@ fun ScannedUserRow(
 @Composable
 fun ScannedUsersList(
     users: List<UserWithStatus>?,
-    onUserClick: (UserProfileResponse) -> Unit,
+    onUserClick: (User) -> Unit,
     onAddClick: (String) -> Unit,
     onChatClick: (String) -> Unit
 ) {
@@ -267,39 +265,7 @@ fun ScannedUsersList(
 }
 
 
-@Composable
-fun AvatarImage(rawUrl: String?) {
-    if (rawUrl != null) {
-        val fullUrl = rawUrl.let { if (it.startsWith("http") ) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it" }
-        val req = ImageRequest.Builder(LocalContext.current)
-            .data(fullUrl)
-            .crossfade(true)
-            .apply {
-                val token = AuthRepository.getToken()
-                if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
-            }
-            .build()
-        AsyncImage(
-            model = req,
-            contentDescription = null,
-            placeholder = painterResource(R.drawable.avatar_placeholder),
-            error = painterResource(R.drawable.avatar_placeholder),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-        )
-    } else {
-        Image(
-            painter = painterResource(id = R.drawable.avatar_placeholder),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-        )
-    }
-}
+
 
 
 @Composable

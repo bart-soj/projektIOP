@@ -17,13 +17,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.R
-import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.screens.components.FriendCard
 import com.example.projektiop.screens.components.PendingRequestCard
 import com.example.projektiop.screens.friends.FriendsUiEffect
 import com.example.projektiop.screens.friends.FriendsViewModel
 import com.example.projektiop.util.NotificationHelper
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,10 +45,11 @@ fun FriendsListScreen(
                 is FriendsUiEffect.ShowToast -> Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
             }
         }
+        viewModel.refreshAll()
     }
 
     LaunchedEffect(uiState.incomingRequests) {
-        val newIds = uiState.incomingRequests.map { it.friendshipId }.toSet()
+        val newIds = uiState.incomingRequests.map{ it.friendshipId }.toSet()
         val newOnes = uiState.incomingRequests.filter { it.friendshipId !in lastIncomingIds }
         if (newOnes.isNotEmpty()) {
             newOnes.take(3).forEach { req ->

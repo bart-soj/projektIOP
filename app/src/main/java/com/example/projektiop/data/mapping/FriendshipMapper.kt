@@ -1,7 +1,7 @@
 package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.FriendshipDto
-import com.example.projektiop.data.api.UserRef
+import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.db.objects.Friendship
 import com.example.projektiop.data.db.objects.FriendshipStatus
 import com.example.projektiop.data.db.objects.FriendshipType
@@ -17,13 +17,14 @@ private const val ID: String = "_id"
 fun FriendshipDto.toRealm(): Friendship {
     require(!this.friendshipId.isNullOrBlank()) { "Missing friendship id" }
     val id = this.friendshipId
-    val user1 = SharedPreferencesRepository.get(ID, "")
+    val user1Id = SharedPreferencesRepository.get(ID, "")
+    require(user1Id.isNotEmpty()) { "Missing user1 id" }
     require(!this.user?._id.isNullOrBlank()) { "Missing user2 id" }
-    val user2 = this.user._id
-    val requestedBy = this.requestedByUsername ?: user1
+    val user2Id = this.user._id
+    val requestedBy = this.requestedBy ?: user1Id
 
     val status = this.status
-        ?.let { runCatching { FriendshipStatus.valueOf(it) }.getOrDefault(FriendshipStatus.PENDING) }
+        ?.let { runCatching { FriendshipStatus.valueOf(it.uppercase()) }.getOrDefault(FriendshipStatus.NOT_FRIENDS) }
         ?: FriendshipStatus.PENDING
 
     val friendshipType = this.friendshipType
@@ -32,8 +33,8 @@ fun FriendshipDto.toRealm(): Friendship {
 
     return Friendship.create(
         id = id,
-        user1 = user1,
-        user2 = user2,
+        user1Id = user1Id,
+        user2Id = user2Id,
         requestedBy = requestedBy,
         status = status,
         friendshipType = friendshipType,
@@ -47,10 +48,10 @@ fun FriendshipDto.toRealm(): Friendship {
 fun Friendship.toDto(): FriendshipDto {
     return FriendshipDto(
         friendshipId = this._id.toString(),
-        user = UserRef(this.user2Id),
+        user = UserProfileResponse(_id = this.user2Id),
         status = this.status.name,
         friendshipType = this.friendshipType.name,
-        requestedByUsername = this.requestedBy,
+        requestedBy = this.requestedBy,
         isBlocked = this.isBlocked,
         blockedBy = this.blockedBy,
         createdAt = realmInstantToMongoTimestamp(this.createdAt),

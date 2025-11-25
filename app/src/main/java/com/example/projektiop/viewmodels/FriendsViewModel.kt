@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.api.UserSearchDto
 import com.example.projektiop.data.repositories.FriendItem
 import com.example.projektiop.data.repositories.FriendshipRepository
-import com.example.projektiop.data.repositories.PendingRequestItem
+import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets
 data class FriendsUiState(
     val isLoading: Boolean = false,
     val friends: List<FriendItem> = emptyList(),
-    val incomingRequests: List<PendingRequestItem> = emptyList(),
+    val incomingRequests: List<FriendItem> = emptyList(),
     val error: String? = null,
 
     val searchResults: List<UserSearchDto> = emptyList(),
@@ -76,7 +76,7 @@ class FriendsViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isSearchLoading = true, searchError = null, searchResults = emptyList()) }
 
-            FriendshipRepository.searchUsers(query)
+            UserRepository.searchUsers(query)
                 .onSuccess { results ->
                     _uiState.update { it.copy(searchResults = results) }
                 }

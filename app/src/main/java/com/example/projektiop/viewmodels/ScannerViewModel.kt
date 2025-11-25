@@ -9,6 +9,7 @@ import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.db.objects.FriendshipStatus
 import com.example.projektiop.data.db.objects.User
+import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
@@ -30,7 +31,7 @@ import kotlin.math.sqrt
 private const val ID: String = "_id"
 
 
-data class UserWithStatus(val user: UserProfileResponse, val status: FriendshipStatus)
+data class UserWithStatus(val user: User, val status: FriendshipStatus)
 
 
 class BLEViewModel(application: Application) : AndroidViewModel(application) {
@@ -84,7 +85,7 @@ class BLEViewModel(application: Application) : AndroidViewModel(application) {
                 in blockedSet -> FriendshipStatus.BLOCKED
                 else -> { FriendshipStatus.NOT_FRIENDS }
             }
-            UserWithStatus(profile, status)
+            UserWithStatus(profile.toRealm(), status)
         }// returns this
 
     }.stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = emptyList<UserWithStatus>())

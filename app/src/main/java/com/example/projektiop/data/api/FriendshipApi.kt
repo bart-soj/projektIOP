@@ -42,16 +42,13 @@ data class FriendRequest(
     @SerializedName("recipientId") val recipientId: String? = null
 )
 
-// Backend (kontroler getFriendships) zwraca już PRZETWORZONE obiekty:
-// { friendshipId, user: { _id, username, profile { displayName, avatarUrl } }, status, friendshipType, isPendingRecipient, ... }
-// Dodajemy też pola userId/friendId dla kompatybilności jeśli kiedyś backend zwróci surowe dane.
 data class FriendshipDto(
     val friendshipId: String? = null,
-    val user: UserRef? = null,
+    val user: UserProfileResponse? = null,
     val status: String? = null,
     val friendshipType: String? = null,
     val isPendingRecipient: Boolean? = null,
-    val requestedByUsername: String? = null,
+    val requestedBy: String? = null,   // _id of the requesting user
     val isBlocked: Boolean? = null,
     val blockedBy: String? = null,
     val createdAt: String? = null,
@@ -59,9 +56,3 @@ data class FriendshipDto(
 ) {
     val _id = friendshipId // quickfix as it was used this way in many places
 }
-
-data class UserRef( // TODO() serverside send full user
-    val _id: String? = null,
-    val username: String? = null,
-    val profile: ProfileDto? = null //TODO() serverside, send full profile
-)

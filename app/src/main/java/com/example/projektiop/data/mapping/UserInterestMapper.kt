@@ -8,8 +8,7 @@ fun UserInterestDto.toRealm(userId: String): UserInterest {
 
     require(!this.userInterestId.isNullOrBlank()) { "Missing user interest id" }
     val id = this.userInterestId
-    // require(!this.userId.isNullOrBlank()) { "Missing user id" } // TODO: add it serverside
-    // val userId = this.userId
+    require(userId.isNotBlank()) { "Missing user id" }
 
     require(!this.interest._id.isNullOrBlank()) { "Missing interest id" }
     val interestId = this.interest._id
@@ -30,7 +29,6 @@ fun UserInterestDto.toRealm(userId: String): UserInterest {
 fun UserInterest.toDto(): UserInterestDto {
     return UserInterestDto(
         userInterestId = this._id.toString(),
-        // userId = TODO() serverside
         interest = this.interest!!.toDto(),
         customDescription = this.customDescription
     )

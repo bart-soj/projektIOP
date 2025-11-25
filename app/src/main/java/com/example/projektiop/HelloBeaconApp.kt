@@ -30,7 +30,10 @@ class HelloBeaconApp : Application() {
         DBRepository.init(RealmProvider.getRealm())
         SharedPreferencesRepository.init(this)
         AuthRepository.init(this)
-        applicationScope.launch{ UserRepository.init(this@HelloBeaconApp) }
+        applicationScope.launch{
+            UserRepository.init(this@HelloBeaconApp)
+            InterestRepository.init()
+        }
         NotificationHelper.initChannels(this)
         com.example.projektiop.data.repositories.ChatRepository.init(this)
         com.example.projektiop.data.repositories.ChatUpdateManager.start(this)

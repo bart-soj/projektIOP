@@ -38,7 +38,8 @@ interface UserApi {
 
     // Interests management
     @POST("users/profile/interests")
-    suspend fun addUserInterest(@Body body: AddUserInterestRequest): Response<UserProfileResponse>
+    suspend fun addUserInterest(@Body body: AddUserInterestRequest): Response<UserInterestDto>
+    // TODO() server in fact returns interestId name category isArchived
 
     @PUT("users/profile/interests/{userInterestId}")
     suspend fun updateUserInterest(
@@ -79,7 +80,6 @@ data class UserProfileResponse(
 
 data class UserInterestDto(
     val userInterestId: String?,
-    // val userId: String?, TODO() add serverside
     val interest: InterestDto,
     val customDescription: String? = null
 )

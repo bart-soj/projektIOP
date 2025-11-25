@@ -15,6 +15,10 @@ import kotlinx.coroutines.withContext
 
 object InterestRepository {
 
+    suspend fun init() {
+        getPublicInterests()
+    }
+
     suspend fun getPublicInterestCategories(): Result<List<PublicInterestCategoryDto>> = withContext(
         Dispatchers.IO) {
         try {
@@ -69,9 +73,12 @@ object InterestRepository {
                         createdAt = publicInterestDto.createdAt,
                         updatedAt = publicInterestDto.updatedAt
                     )
+                    val PublicInterestCategoryDto = publicInterestDto.category
                     try {
                         val realmInterest = interestDto.toRealm()
+                        val realmCategory = PublicInterestCategoryDto?.toRealm()
                         DBRepository.addInterest(realmInterest)
+                        if (realmCategory != null) DBRepository.addInterestCategory(realmCategory)
                         returnList += interestDto
                     } catch (e: Exception) {
                         return@withContext Result.failure(Exception("Error saving public interest to database: $e"))
@@ -138,7 +145,7 @@ object InterestRepository {
                 }
                 DBRepository.addInterestPair(interestRealm, userInterestRealm)
             }.onFailure { e ->
-                // Log.d("INT", "UserInterest resolution failed", e)
+                Log.d("INT", "UserInterest resolution failed", e)
             }
         }
 

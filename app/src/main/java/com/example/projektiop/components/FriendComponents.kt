@@ -1,5 +1,6 @@
 package com.example.projektiop.screens.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -20,7 +21,6 @@ import coil.request.ImageRequest
 import com.example.projektiop.R
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.FriendItem
-import com.example.projektiop.data.repositories.PendingRequestItem
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 
 private const val BASE_URL_KEY = "BASE_URL"
@@ -129,7 +129,7 @@ fun FriendCard(
 
 @Composable
 fun PendingRequestCard(
-    item: PendingRequestItem,
+    item: FriendItem,
     onAccept: () -> Unit,
     onReject: () -> Unit
 ) {
@@ -192,4 +192,40 @@ fun UserAvatar(url: String?, size: androidx.compose.ui.unit.Dp) {
             .size(size)
             .clip(CircleShape)
     )
+}
+
+
+@Composable
+fun AvatarImage(rawUrl: String?) {
+    if (rawUrl != null) {
+        val fullUrl = rawUrl.let { if (it.startsWith("http") ) it else "${SharedPreferencesRepository.get(
+            BASE_URL_KEY, "")}$it" }
+        val req = ImageRequest.Builder(LocalContext.current)
+            .data(fullUrl)
+            .crossfade(true)
+            .apply {
+                val token = AuthRepository.getToken()
+                if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
+            }
+            .build()
+        AsyncImage(
+            model = req,
+            contentDescription = null,
+            placeholder = painterResource(R.drawable.avatar_placeholder),
+            error = painterResource(R.drawable.avatar_placeholder),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+        )
+    } else {
+        Image(
+            painter = painterResource(id = R.drawable.avatar_placeholder),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+        )
+    }
 }

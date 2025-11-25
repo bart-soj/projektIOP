@@ -7,6 +7,7 @@ import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.RealmInstant
 import org.mongodb.kbson.ObjectId
 
+
 enum class FriendshipStatus {
     PENDING,
     ACCEPTED,
@@ -15,10 +16,12 @@ enum class FriendshipStatus {
     NOT_FRIENDS
 }
 
+
 enum class FriendshipType {
     UNVERIFIED,
     VERIFIED
 }
+
 
 class Friendship() : RealmObject {
     @PrimaryKey
@@ -26,9 +29,11 @@ class Friendship() : RealmObject {
 
     @Index
     var user1Id: String = ""
+    // var user1: User? = null
 
     @Index
     var user2Id: String = ""
+    // var user2: User? = null
 
     @Ignore
     var status: FriendshipStatus
@@ -62,8 +67,10 @@ class Friendship() : RealmObject {
     companion object {
         fun create (
             id: String,
-            user1: String,
-            user2: String,
+            user1Id: String,
+            user2Id: String,
+            // user1: User,
+            // user2: User,
             requestedBy: String,
             status: FriendshipStatus = FriendshipStatus.PENDING,
             friendshipType: FriendshipType = FriendshipType.UNVERIFIED,
@@ -74,8 +81,10 @@ class Friendship() : RealmObject {
         ) : Friendship {
             return Friendship().apply {
                 this._id = ObjectId(id)
-                this.user1Id = user1
-                this.user2Id = user2
+                this.user1Id = user1Id
+                this.user2Id = user2Id
+                // this.user1 = user1
+                // this.user2 = user2
                 this.requestedBy = requestedBy
                 this.status = status
                 this.friendshipType = friendshipType

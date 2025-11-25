@@ -54,7 +54,6 @@ object FriendshipRepository {
                     runCatching {
                         DBRepository.addFriendship(dto.toRealm())
                         val tmpId = dto.user?._id.toString()
-                        UserRepository.fetchUserById(tmpId) // TODO() serverside, just send whole user since it's needed
                     }.onFailure { e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 }
                 _friendsIds.value = all.mapNotNull { it._id }
@@ -84,13 +83,12 @@ object FriendshipRepository {
                 runCatching {
                     DBRepository.addFriendship(dto.toRealm())
                     val tmpId = dto.user?._id.toString()
-                    UserRepository.fetchUserById(tmpId) // TODO() serverside, just send whole user since it's needed
                 }.onFailure { e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
             }
             _pendingIds.value = items.mapNotNull { it._id }
             Result.success(items.mapNotNull { it.toFriendItem() })
         } catch (e: Exception) {
-            val local = DBRepository.getFriendshipsByStatus(FriendshipStatus.PENDING)
+            val local = DBRepository.getFriendshipsByStatus(FriendshipStatus.PENDING) // TODO() direction
             if (local.isNotEmpty()) {
                 Result.success(local.map { it.toFriendItem() })
             }
@@ -107,7 +105,6 @@ object FriendshipRepository {
                 runCatching {
                     DBRepository.addFriendship(dto.toRealm())
                     val tmpId = dto.user?._id.toString()
-                    UserRepository.fetchUserById(tmpId) // TODO() serverside, just send whole user since it's needed
                 }.onFailure { e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
             }
             _blockedIds.value = items.mapNotNull { it._id }
