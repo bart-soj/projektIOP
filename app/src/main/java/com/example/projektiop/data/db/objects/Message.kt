@@ -13,14 +13,14 @@ class Message : RealmObject {
     var _id: ObjectId = ObjectId()
 
     @Index
-    var chatId: String = ""
+    var chatId: ObjectId = ObjectId()
 
     @Index
-    var senderId: String = ""
+    var senderId: ObjectId = ObjectId()
 
     var content: String = ""
 
-    var readBy: RealmList<String> = realmListOf()
+    var readBy: RealmList<ObjectId> = realmListOf()
 
     var createdAt: RealmInstant? = null
     var updatedAt: RealmInstant? = null
@@ -31,18 +31,17 @@ class Message : RealmObject {
             chatId: String,
             senderId: String,
             content: String = "",
-            readBy: RealmList<String> = realmListOf(),
+            readBy: List<String> = emptyList(),
             createdAt: RealmInstant? = RealmInstant.now(),
-            updatedAt: RealmInstant? = null
         ): Message {
             return Message().apply {
                 this._id = ObjectId(id)
-                this.chatId = chatId
-                this.senderId = senderId
+                this.chatId = ObjectId(chatId)
+                this.senderId = ObjectId(senderId)
                 this.content = content
-                this.readBy = readBy
+                this.readBy = realmListOf(*readBy.map{ ObjectId(it) }.toTypedArray())
                 this.createdAt = createdAt
-                this.updatedAt = updatedAt
+                this.updatedAt = RealmInstant.now()
             }
         }
     }

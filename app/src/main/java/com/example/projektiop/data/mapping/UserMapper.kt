@@ -7,6 +7,7 @@ import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.db.objects.UserProfile
 import com.example.projektiop.data.db.objects.UserRole
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.RealmInstant
 
 
 fun UserProfileResponse.toRealm(): User {
@@ -55,7 +56,7 @@ fun UserProfileResponse.toRealm(): User {
         isDeleted = this.isDeleted ?: false,
         deletedAt = mongoTimestampToRealmInstant(this.deletedAt),
         createdAt = mongoTimestampToRealmInstant(this.createdAt),
-        updatedAt = mongoTimestampToRealmInstant(this.updatedAt)
+        updatedAt = RealmInstant.now()
     )
 }
 

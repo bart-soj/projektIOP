@@ -3,6 +3,7 @@ package com.example.projektiop.data.mapping
 import com.example.projektiop.data.api.ChatDto
 import com.example.projektiop.data.db.objects.Chat
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.RealmInstant
 
 fun ChatDto.toRealm(): Chat {
     require(!this._id.isNullOrBlank()) { "Missing chat id" }
@@ -21,6 +22,6 @@ fun ChatDto.toRealm(): Chat {
         lastMessageId = lastMessageId,
         lastMessageTimestamp = lastMessageTimestamp,
         // createdAt = TODO() not present in dto
-        // updatedAt = TODO() not present in dto
+        updatedAt = RealmInstant.now()
     )
 }

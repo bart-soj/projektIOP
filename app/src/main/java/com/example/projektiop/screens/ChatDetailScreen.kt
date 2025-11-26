@@ -140,7 +140,7 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                                     key = { _, m ->
                                         m._id ?: m.hashCode().toString()
                                     }) { index, m ->
-                                    val isIncoming = m.senderId?._id == friendId
+                                    val isIncoming = m.senderId == friendId
 
                                     val showTime = index == messages.lastIndex || runCatching {
                                         val diff = Duration.between(
@@ -151,7 +151,7 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                                     }.getOrDefault(false)
 
                                     val prevSame = index > 0 && runCatching {
-                                        val sameSender = messages[index - 1].senderId?._id == m.senderId?._id
+                                        val sameSender = messages[index - 1].senderId == m.senderId
                                         if (!sameSender) false else {
                                             val prevInstant = Instant.parse(messages[index - 1].createdAt)
                                             val currInstant = Instant.parse(m.createdAt)
@@ -167,11 +167,12 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                                         DateSeparator(date = currentDate!!)
                                         Spacer(Modifier.height(6.dp))
                                     }
+                                    val urlShouldBeHere = null // TODO() not working bc of backend update
                                     MessageBubble(
                                         text = m.content ?: "",
                                         incoming = isIncoming,
                                         groupedWithPrev = prevSame,
-                                        avatarUrl = if (isIncoming && !prevSame) m.senderId?.profile?.avatarUrl else null,
+                                        avatarUrl = if (isIncoming && !prevSame) urlShouldBeHere else null,
                                         timestampIso = if (showTime) m.createdAt else null
                                     )
                                 }

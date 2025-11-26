@@ -10,14 +10,13 @@ import io.realm.kotlin.ext.realmListOf
 fun MessageDto.toRealm(): Message {
     require(!this._id.isNullOrBlank()) { "Missing message id" }
     val id = this._id
-    val extractedChatId = extractIdFromElement(this.chatId)
-    require(!extractedChatId.isNullOrBlank()) { "Missing chat id" }
-    val chatId = extractedChatId
-    require(!(this.senderId?._id).isNullOrBlank()) { "Missing sender id" }
-    val senderId = this.senderId?._id!!
+    val chatId = this.chatId
+    require(!chatId.isNullOrBlank()) { "Missing chat id" }
+    require(!(this.senderId).isNullOrBlank()) { "Missing sender id" }
+    val senderId = this.senderId
 
     val readByList = realmListOf<String>().apply {
-        addAll(this@toRealm.readBy?.mapNotNull { it._id } ?: emptyList())
+        addAll(this@toRealm.readBy?.mapNotNull { it } ?: emptyList())
     }
     val createdAt = mongoTimestampToRealmInstant(this.createdAt)
     val updatedAt = mongoTimestampToRealmInstant(this.updatedAt)
@@ -29,19 +28,5 @@ fun MessageDto.toRealm(): Message {
         content = this.content ?: "",
         readBy = readByList,
         createdAt = createdAt,
-        updatedAt = updatedAt
     )
-}
-
-private fun extractIdFromElement(el: JsonElement?): String {
-    if (el == null || el.isJsonNull) return ""
-    return try {
-        when {
-            el.isJsonPrimitive && el.asJsonPrimitive.isString -> el.asString
-            el.isJsonObject && el.asJsonObject.has("_id") -> el.asJsonObject.get("*id").asString
-            else -> el.toString()
-        }
-    } catch (_: Exception) {
-        ""
-    }
 }

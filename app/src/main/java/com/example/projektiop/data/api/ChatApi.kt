@@ -1,6 +1,6 @@
 package com.example.projektiop.data.api
 
-import com.google.gson.JsonElement
+import com.example.projektiop.data.db.objects.User
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -27,26 +27,23 @@ interface ChatApi {
     suspend fun sendMessage(@Body body: Map<String, @JvmSuppressWildcards Any>): Response<MessageDto>
 }
 
+
+
+
 data class ChatDto(
     val _id: String? = null,
-    val participants: List<ChatUserDto>? = null,
-    val lastMessage: MessageDto? = null
-)
-
-data class ChatUserDto(
-    val _id: String? = null,
-    val username: String? = null,
-    val profile: ProfileDto? = null
+    val participants: List<UserProfileResponse>? = null,
+    val lastMessage: MessageDto? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null
 )
 
 data class MessageDto(
     val _id: String? = null,
-    // Server may return chatId either as a string or as an object with _id field.
-    // Use JsonElement to handle both shapes and normalize later in mapping.
-    val chatId: JsonElement? = null,
+    val chatId: String? = null,
     val content: String? = null,
-    val senderId: ChatUserDto? = null,
-    val readBy: List<ChatUserDto>? = null,
+    val senderId: String? = null,
+    val readBy: List<String>? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null
 )
