@@ -34,6 +34,7 @@ import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.BlockInfo
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
+import com.example.projektiop.ui.components.UserAvatar
 import java.time.Duration
 import java.time.Instant
 
@@ -257,42 +258,7 @@ private fun MessageBubble(
     val timeText = remember(timestampIso) { parseTimeShort(timestampIso) }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (incoming) Arrangement.Start else Arrangement.End) {
         if (incoming) {
-            if (avatarUrl != null && avatarUrl.isNotBlank()) {
-                val raw = avatarUrl
-                val fullUrl = if (raw.startsWith("http")) raw else "https://hellobeacon.onrender.com$raw"
-                val req = ImageRequest.Builder(LocalContext.current)
-                    .data(fullUrl)
-                    .crossfade(true)
-                    .apply {
-                        val token = AuthRepository.getToken()
-                        if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
-                    }
-                    .build()
-                AsyncImage(
-                    model = req,
-                    contentDescription = "avatar",
-                    placeholder = painterResource(R.drawable.avatar_placeholder),
-                    error = painterResource(R.drawable.avatar_placeholder),
-                    fallback = painterResource(R.drawable.avatar_placeholder),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .padding(end = 6.dp)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                )
-            } else if (!groupedWithPrev) {
-                Image(
-                    painter = painterResource(id = R.drawable.avatar_placeholder),
-                    contentDescription = "avatar",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .padding(end = 6.dp)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                )
-            } else Spacer(Modifier.width(38.dp))
+            UserAvatar(avatarUrl)
         }
         Column(horizontalAlignment = if (incoming) Alignment.Start else Alignment.End) {
             Surface(

@@ -1,7 +1,5 @@
 package com.example.projektiop.util
 
-import io.realm.kotlin.internal.util.Validation
-
 sealed interface RootError
 
 sealed interface DataError: RootError {

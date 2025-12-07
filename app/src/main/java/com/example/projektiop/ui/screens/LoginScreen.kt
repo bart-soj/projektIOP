@@ -1,6 +1,7 @@
 package com.example.projektiop.ui.screens
 
 import android.content.Context
+import android.util.Log
 import android.util.Patterns
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,33 +25,42 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.projektiop.R
 import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
 import com.example.projektiop.ui.components.SwitchWithText
 import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.data.repositories.ChatUpdateManager
-import kotlinx.coroutines.launch
+import com.example.projektiop.ui.viewmodels.AuthEvent
+import com.example.projektiop.ui.viewmodels.AuthViewModel
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(false) }
-    var emailError by remember { mutableStateOf<String?>(null) }
-    var passwordError by remember { mutableStateOf<String?>(null) }
-    var apiError by remember { mutableStateOf<String?>(null) }
-    var isLoading by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-    val isEmailValid = remember(email) { email.isNotEmpty() && Patterns.EMAIL_ADDRESS.matcher(email).matches() }
-    val isPasswordValid = remember(password) { password.isNotEmpty() }
 
-    fun validateFields(context: Context) {
-        emailError = if (!isEmailValid) context.getString(R.string.invalid_email_format) else null
-        passwordError = if (!isPasswordValid) context.getString(R.string.password_required) else null
+    val rememberMe by viewModel.rememberMe.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val emailErrors by viewModel.emailErrors.collectAsState()
+    val passwordErrors by viewModel.passwordErrors.collectAsState()
+    val isLoading by viewModel.loading.collectAsState()
+    val inputsValid by viewModel.inputsValid.collectAsState()
+
+
+    val authEvents = viewModel.authEvent.collectAsStateWithLifecycle(null)
+
+    LaunchedEffect(authEvents.value) {
+        when (val event = authEvents.value) {
+            is AuthEvent.Success -> navController.navigate("main") {
+                popUpTo("login") { inclusive = true }
+            }
+            is AuthEvent.Error -> {}
+            else -> {}
+        }
     }
 
-    // --- UI ---
+
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -73,14 +83,13 @@ fun LoginScreen(navController: NavController) {
             OutlinedTextFieldWithClearAndError(
                 value = email,
                 onValueChange = {
+                    viewModel.onEmailChange(it)
                     email = it
-                    emailError = null
-                    apiError = null
                 },
                 label = stringResource(R.string.email_label),
-                errorMessage = emailError ?: stringResource(R.string.email_error),
+                errorList = emailErrors,
                 modifier = Modifier.fillMaxWidth(),
-                isError = emailError != null,
+                isError = emailErrors.isNotEmpty(),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -89,14 +98,13 @@ fun LoginScreen(navController: NavController) {
             OutlinedTextFieldWithClearAndError(
                 value = password,
                 onValueChange = {
+                    viewModel.onPasswordChange(it)
                     password = it
-                    passwordError = null
-                    apiError = null
                 },
                 label = stringResource(R.string.password_label),
-                errorMessage = passwordError ?: stringResource(R.string.password_error),
+                errorList = passwordErrors,
                 modifier = Modifier.fillMaxWidth(),
-                isError = passwordError != null,
+                isError = emailErrors.isNotEmpty(),
                 visualTransformation = PasswordVisualTransformation(),
             )
 
@@ -109,15 +117,15 @@ fun LoginScreen(navController: NavController) {
                 SwitchWithText(
                     checked = rememberMe,
                     text = stringResource(R.string.remember_me),
-                    onCheckedChange = { rememberMe = it }
+                    onCheckedChange = { viewModel.rememberMe() }
                 )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            if (apiError != null) {
+            if (errorMessage != null) {
                 Text(
-                    text = apiError ?: "",
+                    text = errorMessage ?: "",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
@@ -149,24 +157,7 @@ fun LoginScreen(navController: NavController) {
                 // Przycisk Zaloguj
                 Button(
                     onClick = {
-                        if (isLoading) return@Button
-                        validateFields(context)
-                        if (isEmailValid && isPasswordValid) {
-                            isLoading = true
-                            apiError = null
-                            scope.launch {
-                                val result = AuthRepository.login(email, password)
-                                result.onSuccess { token ->
-                                    if (!token.isNullOrBlank()) AuthRepository.saveToken(token, remember = rememberMe)
-                                    navController.navigate("main") {
-                                        popUpTo("login") { inclusive = true }
-                                    }
-                                }.onFailure { e ->
-                                    apiError = e.message ?: context.getString(R.string.login_failed)
-                                }
-                                isLoading = false
-                            }
-                        }
+                        viewModel.onLoginClick(email, password)
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -176,7 +167,7 @@ fun LoginScreen(navController: NavController) {
                         contentColor = MaterialTheme.colorScheme.onPrimary,
                         disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                     ),
-                    enabled = isEmailValid && isPasswordValid && !isLoading
+                    enabled = inputsValid && !isLoading
                 ) {
                     Text(if (isLoading) stringResource(R.string.logging_in) else stringResource(R.string.login_button_text))
                 }
@@ -189,5 +180,5 @@ fun LoginScreen(navController: NavController) {
 @Composable
 fun LoginScreenPreview() {
     val navController = NavController(LocalContext.current)
-    LoginScreen(navController)
+    LoginScreen(navController, AuthViewModel(authRepository = AuthRepository))
 }

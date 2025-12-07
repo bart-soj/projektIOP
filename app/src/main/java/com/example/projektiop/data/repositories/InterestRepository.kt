@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
 object InterestRepository {
 
     suspend fun init() {
-        getPublicInterests() // TODO() they dont end up in db
+        getPublicInterests() // TODO() can't see interests post fresh install -> this here failed
     }
 
     suspend fun getPublicInterestCategories(): Result<List<PublicInterestCategoryDto>> = withContext(

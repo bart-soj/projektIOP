@@ -1,10 +1,13 @@
 package com.example.projektiop.ui.components
 
+import androidx.compose.foundation.gestures.forEach
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
@@ -19,6 +22,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.projektiop.R
+import com.example.projektiop.util.ValidationError
+
+
+@Composable
+fun ValidationErrorList(items: List<String>, modifier: Modifier = Modifier) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        items.forEach { item ->
+            Text(
+                text = item,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+        }
+    }
+}
 
 
 @Composable
@@ -27,7 +49,7 @@ fun OutlinedTextFieldWithClearAndError(
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier, // Dobrze jest dać modifier wcześniej
-    errorMessage: String? = null, // Zmień na nullable, aby nie wymagać wiadomości, gdy nie ma błędu
+    errorList: List<String> = emptyList(),// Zmień na nullable, aby nie wymagać wiadomości, gdy nie ma błędu
     isError: Boolean = false, // Zachowaj isError jako główny wskaźnik błędu
     singleLine: Boolean = true,
     visualTransformation: VisualTransformation = VisualTransformation.None // Domyślnie brak transformacji (tekst widoczny)
@@ -59,8 +81,8 @@ fun OutlinedTextFieldWithClearAndError(
         },
         isError = isError,
         supportingText = {
-            if (isError && errorMessage != null) {
-                Text(text = errorMessage)
+            if (isError && errorList.isNotEmpty() ) {
+                ValidationErrorList(errorList)
             }
         },
         visualTransformation = visualTransformation

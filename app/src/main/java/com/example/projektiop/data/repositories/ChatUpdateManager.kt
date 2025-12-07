@@ -1,6 +1,9 @@
 package com.example.projektiop.data.repositories
 
+import android.app.Service
 import android.content.Context
+import android.content.Intent
+import android.os.IBinder
 import android.util.Log
 import androidx.compose.runtime.collectAsState
 import com.example.projektiop.HelloBeaconApp
@@ -14,9 +17,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-object ChatUpdateManager { // TODO() start it at appropriate place, bugged now
+object ChatUpdateManager { // TODO() start it at appropriate place, bugged now, make into a service
     private const val POLL_INTERVAL_MS = 15000L
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val _chatsFlow = MutableStateFlow<List<ChatListItem>>(emptyList())
     val chatsFlow: StateFlow<List<ChatListItem>> = _chatsFlow
     val myUserFlow = UserRepository.myUserFlow
@@ -72,4 +75,10 @@ object ChatUpdateManager { // TODO() start it at appropriate place, bugged now
             }
         }
     }
+}
+
+
+class ChatUpdateService: Service() {
+    override fun onBind(intent: Intent?): IBinder? = null
+    // TODO() implement, make ChatsViewModel/mainActivity bind to it
 }

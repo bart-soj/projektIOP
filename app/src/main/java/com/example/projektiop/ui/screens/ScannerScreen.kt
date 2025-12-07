@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.projektiop.ui.viewmodels.BLEViewModel
+import com.example.projektiop.ui.viewmodels.ScannerViewModel
 import com.example.projektiop.ui.viewmodels.UserWithStatus
 import com.example.projektiop.R
 import com.example.projektiop.activeHandshake.NFC.ActiveHandshakeButton
@@ -43,7 +43,7 @@ private const val BASE_URL_KEY: String = "BASE_URL"
 
 @OptIn(ExperimentalMaterial3Api::class) // Dla Scaffold
 @Composable
-fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, viewModel: BLEViewModel) {
+fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, viewModel: ScannerViewModel) {
     val context = LocalContext.current
 
     // Pobranie aktualnej ścieżki
@@ -156,7 +156,7 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
 }
 
 @Composable
-fun ScanStatus(viewModel: BLEViewModel, modifier: Modifier = Modifier) {
+fun ScanStatus(viewModel: ScannerViewModel, modifier: Modifier = Modifier) {
     val isScanning = viewModel.isScanning.collectAsState().value
     val isAdvertising = viewModel.isAdvertising.collectAsState().value
 
@@ -342,7 +342,7 @@ fun CertificateRequester(
 @Composable
 fun ScannerScreenPreview() {
     MaterialTheme {
-        ScannerScreen(navController = rememberNavController(), viewModel = BLEViewModel(
+        ScannerScreen(navController = rememberNavController(), viewModel = ScannerViewModel(
             application = TODO()
         ))
     }

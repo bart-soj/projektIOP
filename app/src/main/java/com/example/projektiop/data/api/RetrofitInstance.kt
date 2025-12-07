@@ -16,7 +16,7 @@ object RetrofitInstance {
 
     private val authInterceptor = Interceptor { chain ->
         val original = chain.request()
-        val token = AuthRepository.getToken()
+        val token = SharedPreferencesRepository.get("auth_token", "") // TODO() get it from a better place
         val builder = original.newBuilder()
         if (!token.isNullOrBlank()) {
             builder.addHeader("Authorization", "Bearer $token")

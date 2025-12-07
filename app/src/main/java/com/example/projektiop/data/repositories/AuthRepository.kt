@@ -1,74 +1,91 @@
 package com.example.projektiop.data.repositories
 
 import android.content.Context
+import arrow.core.Either
+import arrow.core.raise.result
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.data.api.RegisterRequest
 import com.example.projektiop.data.api.LoginRequest
 import com.example.projektiop.data.api.AuthFailedDto
+import com.example.projektiop.util.DataError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
-
+import com.example.projektiop.util.Result
+import kotlinx.serialization.SerializationException
+import java.io.IOException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 
 object AuthRepository {
-    private const val KEY_TOKEN = "auth_token"
-    private const val EMAIL = "my_email"
-    private const val KEY_REMEMBER = "remember_me"
+    private val KEY_TOKEN = "auth_token"
+    private val EMAIL = "my_email"
+    private val KEY_REMEMBER = "remember_me"
 
-    private var token: String? = null
-    private var rememberMe: Boolean = false
-
-    fun init(context: Context) {
-        // Load persisted values directly from repository
-        rememberMe = SharedPreferencesRepository.get(KEY_REMEMBER, false)
-
-        if (rememberMe) {
-            token = SharedPreferencesRepository.get(KEY_TOKEN, null)
-        }
-    }
-
-
-    suspend fun login(email: String, password: String): Result<String?> {
+    suspend fun login(email: String, password: String): Result<String?, DataError> {
         return try {
             val response = RetrofitInstance.authApi.login(LoginRequest(email, password))
-            if (response.isSuccessful) {
-                saveInfo(email, response.body()?._id)
-                Result.success(response.body()?.token)
-            } else {
-                Result.failure(HttpException(response))
+            saveInfo(email, response.body()?._id) // TODO() handle saving errors
+            Result.Success(response.body()?.token)
+        } catch (e: HttpException) {
+            when(e.code()) {
+                408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
+                413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
+                429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
+                in 500..599 -> Result.Error(DataError.Network.SERVER_ERROR)
+                else -> Result.Error(DataError.Network.UNKNOWN)
             }
+        } catch (e: SocketTimeoutException) {
+            Result.Error(DataError.Network.REQUEST_TIMEOUT)
+
+        } catch (e: UnknownHostException) {
+            Result.Error(DataError.Network.NO_INTERNET)
+
+        } catch (e: IOException) {
+            Result.Error(DataError.Network.NO_INTERNET)
+
+        } catch (e: SerializationException) {
+            Result.Error(DataError.Network.SERIALIZATION)
 
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Error(DataError.Network.UNKNOWN)
         }
     }
 
 
-    suspend fun register(username: String, email: String, password: String): Result<String?> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = RetrofitInstance.authApi.register(RegisterRequest(username, email, password))
-                if (response.isSuccessful) {
-                    saveInfo(email, response.body()?._id)
-                    Result.success(response.body()?.token)
-                } else {
-                    val converter = RetrofitInstance.errorConverter<AuthFailedDto>(AuthFailedDto::class.java)
-                    val errorDto = converter.convert(response.errorBody()!!)
-                    val errorMessage = errorDto?.message
-                    Result.failure(Exception(errorMessage))
-                }
-            } catch (e: Exception) {
-                Result.failure(e)
+    suspend fun register(username: String, email: String, password: String): Result<String?, DataError> {
+        return try {
+            val response = RetrofitInstance.authApi.register(RegisterRequest(username, email, password))
+            saveInfo(email, response.body()?._id) // TODO() handle saving errors
+            Result.Success(response.body()?.token)
+        } catch (e: HttpException) {
+            when(e.code()) {
+                408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
+                413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
+                429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
+                in 500..599 -> Result.Error(DataError.Network.SERVER_ERROR)
+                else -> Result.Error(DataError.Network.UNKNOWN)
             }
+        } catch (e: SocketTimeoutException) {
+            Result.Error(DataError.Network.REQUEST_TIMEOUT)
+
+        } catch (e: UnknownHostException) {
+            Result.Error(DataError.Network.NO_INTERNET)
+
+        } catch (e: IOException) {
+            Result.Error(DataError.Network.NO_INTERNET)
+
+        } catch (e: SerializationException) {
+            Result.Error(DataError.Network.SERIALIZATION)
+
+        } catch (e: Exception) {
+            Result.Error(DataError.Network.UNKNOWN)
         }
     }
 
 
     fun saveToken(newToken: String?, remember: Boolean) {
-        token = newToken
-        rememberMe = remember
-
         if (remember && !newToken.isNullOrBlank()) {
             SharedPreferencesRepository.set(KEY_TOKEN, newToken)
             SharedPreferencesRepository.set(KEY_REMEMBER, true)
@@ -91,13 +108,9 @@ object AuthRepository {
 
 
     fun clearToken() {
-        token = null
-        rememberMe = false
         SharedPreferencesRepository.set(KEY_REMEMBER, false)
         SharedPreferencesRepository.remove(KEY_TOKEN)
     }
 
 
-    fun getToken(): String? = token
-    fun isRemembered(): Boolean = rememberMe
 }

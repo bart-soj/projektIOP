@@ -23,13 +23,15 @@ import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.FriendItem
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.screens.components.FriendCard
+import com.example.projektiop.ui.viewmodels.AuthViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
     navController: NavController,
     darkMode: Boolean,
-    onToggleDark: () -> Unit
+    onToggleDark: () -> Unit,
+    authViewModel: AuthViewModel
 ) {
 
     var animationPlayed by remember { mutableStateOf(false) }
@@ -137,7 +139,7 @@ fun SettingsScreen(
                 confirmButton = {
                     Button(onClick = {
                         showLogoutDialog = false
-                        AuthRepository.clearToken()
+                        authViewModel.onLogoutClick()
                         navController.navigate("start")
                     }) {
                         Text(stringResource(R.string.logout_confirm_yes))
@@ -221,5 +223,6 @@ private fun BlockedUsersDialog(
 @Preview
 @Composable
 fun SettingsScreenPreview() {
-    SettingsScreen(navController = NavController(LocalContext.current), darkMode = false, onToggleDark = {})
+    SettingsScreen(navController = NavController(LocalContext.current), darkMode = false, onToggleDark = {}, authViewModel = AuthViewModel(
+        AuthRepository))
 }

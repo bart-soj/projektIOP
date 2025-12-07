@@ -34,7 +34,7 @@ fun UserAvatar(url: String?, modifier: Modifier = Modifier) {
             .data(fullUrl)
             .crossfade(true)
             .apply {
-                val token = AuthRepository.getToken()
+                val token = SharedPreferencesRepository.get("auth_token", "")
                 if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
             }
             .build()

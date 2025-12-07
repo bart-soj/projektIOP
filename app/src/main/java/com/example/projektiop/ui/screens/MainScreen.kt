@@ -38,6 +38,7 @@ import com.example.projektiop.util.realmInstantToMongoTimestamp
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.ui.components.PullToRefresh
+import com.example.projektiop.ui.components.UserAvatar
 import com.example.projektiop.ui.viewmodels.MainViewModel
 
 
@@ -113,43 +114,9 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val ctx = LocalContext.current
                 val rawUrl = user?.profile?.avatarUrl?.takeIf { it.isNotBlank() }
-                val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it" }
-                val versionTag = user?.updatedAt?.takeIf { !realmInstantToMongoTimestamp(it).isNullOrBlank() }?.hashCode()?.toString()
-                val displayUrl = fullUrl?.let { url ->
-                    versionTag?.let { v -> if (url.contains('?')) "$url&v=$v" else "$url?v=$v" } ?: url
-                }
-                if (displayUrl != null) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(ctx)
-                            .data(displayUrl)
-                            .crossfade(true)
-                            .apply {
-                                val token = AuthRepository.getToken()
-                                if (!token.isNullOrBlank()) {
-                                    addHeader("Authorization", "Bearer $token")
-                                }
-                            }
-                            .build(),
-                        contentDescription = stringResource(R.string.profile_photo),
-                        placeholder = painterResource(id = R.drawable.avatar_placeholder),
-                        error = painterResource(id = R.drawable.avatar_placeholder),
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Image(
-                        painter = painterResource(id = R.drawable.avatar_placeholder),
-                        contentDescription = stringResource(R.string.profile_photo),
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                }
+                UserAvatar(rawUrl, modifier = Modifier.size(90.dp))
+
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = when {

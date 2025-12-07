@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Clear
 import coil.request.ImageRequest
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.InterestRepository
+import com.example.projektiop.ui.components.UserAvatar
 
 @Composable
 fun EditProfileScreen(
@@ -485,37 +486,7 @@ private fun AvatarPicker(
         } else {
             // Show current avatar if available, otherwise a placeholder
             val rawUrl = currentAvatarUrl?.takeIf { it.isNotBlank() }
-            val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
-            val displayUrl = fullUrl?.let { url ->
-                versionTag?.let { v -> if (url.contains('?')) "$url&v=$v" else "$url?v=$v" } ?: url
-            }
-            if (displayUrl != null) {
-                val request = ImageRequest.Builder(context)
-                    .data(displayUrl)
-                    .crossfade(true)
-                    .apply {
-                        val token = AuthRepository.getToken()
-                        if (!token.isNullOrBlank()) {
-                            addHeader("Authorization", "Bearer $token")
-                        }
-                    }
-                    .build()
-                AsyncImage(
-                    model = request,
-                    contentDescription = "Aktualny avatar",
-                    placeholder = painterResource(R.drawable.avatar_placeholder),
-                    error = painterResource(R.drawable.avatar_placeholder),
-                    modifier = Modifier.size(96.dp).clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Image(
-                    painter = painterResource(id = R.drawable.avatar_placeholder),
-                    contentDescription = "Brak avatara",
-                    modifier = Modifier.size(96.dp).clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-            }
+            UserAvatar(rawUrl)
         }
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

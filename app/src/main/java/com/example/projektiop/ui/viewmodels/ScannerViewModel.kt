@@ -1,7 +1,9 @@
 package com.example.projektiop.ui.viewmodels
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.content.Context
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.BluetoothLE.BluetoothRepository
 import com.example.projektiop.HelloBeaconApp
@@ -10,6 +12,7 @@ import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.db.objects.FriendshipStatus
 import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.mapping.toRealm
+import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.OtherUserRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
@@ -40,7 +43,7 @@ data class UserWithStatus(val user: User, val status: FriendshipStatus)
 data class UserWithInfo(val user: User, val status: FriendshipStatus, val friendId: String?)
 
 
-class BLEViewModel(application: Application) : AndroidViewModel(application) {
+class ScannerViewModel(application: Application) : ViewModel() {
 
     // userId z SharedPreferences
     private val userId: String = SharedPreferencesRepository.get(ID, "brak")
@@ -253,4 +256,15 @@ fun cosineSimilarity(a: Set<String>, b: Set<String>): Double {
 
     val intersectionSize = a.intersect(b).size
     return intersectionSize / sqrt(a.size.toDouble() * b.size.toDouble())
+}
+
+
+class ScannerViewModelFactory(private val application: Application): ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ScannerViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ScannerViewModel(application) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
 }

@@ -1,6 +1,7 @@
 package com.example.projektiop.ui.screens
 
 import android.content.Context
+import android.util.Log
 import android.util.Patterns
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,8 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,42 +32,39 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.projektiop.R
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.ChatUpdateManager
 import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
+import com.example.projektiop.ui.viewmodels.AuthEvent
+import com.example.projektiop.ui.viewmodels.AuthViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun RegisterScreen(navController: NavController) {
+fun RegisterScreen(navController: NavController, viewModel: AuthViewModel) {
     val context = LocalContext.current
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var usernameError by remember { mutableStateOf<String?>(null) }
-    var emailError by remember { mutableStateOf<String?>(null) }
-    var passwordError by remember { mutableStateOf<String?>(null) }
-    val coroutineScope = rememberCoroutineScope()
-    var registrationError by remember { mutableStateOf<String?>(null) }
-    val isUsernameValid = remember(username) { username.isNotBlank() }
-    val isEmailValid = remember(email) { email.isNotEmpty() && Patterns.EMAIL_ADDRESS.matcher(email).matches() }
-    val isPasswordValid = remember(password) {
-        val hasMinimumLength = password.length >= 8
-        val hasLowercase = password.any { it.isLowerCase() }
-        val hasUppercase = password.any { it.isUpperCase() }
-        val hasDigit = password.any { it.isDigit() }
-        hasMinimumLength && hasLowercase && hasUppercase && hasDigit
-    }
+    val usernameErrors by viewModel.usernameErrors.collectAsState()
+    val emailErrors by viewModel.emailErrors.collectAsState()
+    val passwordErrors by viewModel.passwordErrors.collectAsState()
+    val registrationError by viewModel.errorMessage.collectAsState()
 
-    fun validateFields(context: Context) {
-        usernameError = if (!isUsernameValid) context.getString(R.string.error_invalid_username) else null
-        emailError = if (!isEmailValid) context.getString(R.string.error_invalid_email) else null
-        passwordError = if (!isPasswordValid) {
-            context.getString(R.string.error_invalid_password)
-        } else null
-    }
+    val authEvents = viewModel.authEvent.collectAsStateWithLifecycle(null)
 
+    LaunchedEffect(authEvents.value) {
+        when (val event = authEvents.value) {
+            is AuthEvent.Success -> navController.navigate("main") {
+                popUpTo("login") { inclusive = true }
+            }
+            is AuthEvent.Error -> {}
+            else -> {}
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -88,12 +88,12 @@ fun RegisterScreen(navController: NavController) {
             OutlinedTextFieldWithClearAndError(
                 value = username,
                 onValueChange = {
+                    viewModel.onUsernameChange(it)
                     username = it
-                    usernameError = null
                 },
                 label = stringResource(R.string.username_label),
-                errorMessage = usernameError,
-                isError = usernameError != null,
+                errorList = usernameErrors,
+                isError = emailErrors.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -103,12 +103,12 @@ fun RegisterScreen(navController: NavController) {
             OutlinedTextFieldWithClearAndError(
                 value = email,
                 onValueChange = {
+                    viewModel.onEmailChange(it)
                     email = it
-                    emailError = null
                 },
                 label = stringResource(R.string.email_label),
-                errorMessage = emailError,
-                isError = emailError != null,
+                errorList = emailErrors,
+                isError = emailErrors.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -118,12 +118,12 @@ fun RegisterScreen(navController: NavController) {
             OutlinedTextFieldWithClearAndError(
                 value = password,
                 onValueChange = {
+                    viewModel.onPasswordChange(it)
                     password = it
-                    passwordError = null
                 },
                 label = stringResource(R.string.password_label),
-                errorMessage = passwordError,
-                isError = passwordError != null,
+                errorList = passwordErrors,
+                isError = passwordErrors.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation()
             )
@@ -148,19 +148,7 @@ fun RegisterScreen(navController: NavController) {
 
                 Button(
                     onClick = {
-                        validateFields(context)
-                        if (isUsernameValid && isEmailValid && isPasswordValid) {
-                            coroutineScope.launch {
-                                val result = AuthRepository.register(username, email, password)
-                                result.onSuccess {
-                                    navController.navigate("main")
-                                }.onFailure {
-                                    registrationError = it.message
-                                }
-                            }
-                        } else {
-                            registrationError = context.getString(R.string.form_fields_invalid)
-                        }
+                        viewModel.onRegisterClick(username, email, password)
                     },
                     modifier = Modifier.weight(1f).padding(start = 8.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -181,5 +169,7 @@ fun RegisterScreen(navController: NavController) {
 @Preview
 @Composable
 fun RegisterScreenPreview() {
-    RegisterScreen(navController = NavController(context = LocalContext.current))
+    RegisterScreen(navController = NavController(context = LocalContext.current), viewModel = AuthViewModel(
+        authRepository = AuthRepository
+    ) )
 }

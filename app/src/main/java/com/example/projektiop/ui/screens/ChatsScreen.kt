@@ -27,6 +27,7 @@ import com.example.projektiop.data.repositories.ChatListItem
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.projektiop.data.repositories.AuthRepository
+import com.example.projektiop.ui.components.UserAvatar
 import com.example.projektiop.ui.viewmodels.ChatsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -168,26 +169,7 @@ fun ChatItem(
         ) {
             // 3. Zdjęcie profilowe znajomego
             val avatarUrl = chatData.avatarUrl
-            val ctx = LocalContext.current
-            val fullUrl =
-                avatarUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
-            val imageRequest = ImageRequest.Builder(ctx)
-                .data(fullUrl)
-                .crossfade(true)
-                .apply {
-                    val token = AuthRepository.getToken()
-                    if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
-                }
-                .build()
-            AsyncImage(
-                model = imageRequest,
-                contentDescription = stringResource(R.string.profile_picture_desc),
-                placeholder = painterResource(R.drawable.avatar_placeholder),
-                error = painterResource(R.drawable.avatar_placeholder),
-                fallback = painterResource(R.drawable.avatar_placeholder),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(56.dp).clip(CircleShape)
-            )
+            UserAvatar(avatarUrl, modifier = Modifier.size(56.dp))
 
             Spacer(modifier = Modifier.width(16.dp))
 

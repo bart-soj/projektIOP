@@ -32,7 +32,6 @@ class HelloBeaconApp : Application() {
         DBRepository.init(RealmProvider.getRealm())
         SharedPreferencesRepository.init(this)
         UserRepository.init(this)
-        AuthRepository.init(this)
         applicationScope.launch{
             InterestRepository.init()
         }
@@ -43,7 +42,6 @@ class HelloBeaconApp : Application() {
 
     override fun onTerminate() {
         super.onTerminate()
-
         RealmProvider.close()
     }
 }
