@@ -1,4 +1,4 @@
-package com.example.projektiop.data.mapping
+package com.example.projektiop.util
 
 import io.realm.kotlin.types.RealmInstant
 import java.time.Instant
@@ -25,4 +25,12 @@ fun realmInstantToMongoTimestamp(realmInstant: RealmInstant?): String? {
         realmInstant.nanosecondsOfSecond.toLong()
     )
     return instant.toString()
+}
+
+
+fun RealmInstant.toJavaInstant(): Instant {
+    return Instant.ofEpochSecond(
+        this.epochSeconds,
+        this.nanosecondsOfSecond.toLong()
+    )
 }

@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
 object InterestRepository {
 
     suspend fun init() {
-        getPublicInterests()
+        getPublicInterests() // TODO() they dont end up in db
     }
 
     suspend fun getPublicInterestCategories(): Result<List<PublicInterestCategoryDto>> = withContext(
@@ -73,12 +73,14 @@ object InterestRepository {
                         createdAt = publicInterestDto.createdAt,
                         updatedAt = publicInterestDto.updatedAt
                     )
-                    val PublicInterestCategoryDto = publicInterestDto.category
+                    val publicInterestCategoryDto = publicInterestDto.category
                     try {
                         val realmInterest = interestDto.toRealm()
-                        val realmCategory = PublicInterestCategoryDto?.toRealm()
+                        val realmCategory = publicInterestCategoryDto?.toRealm()
+                        if (realmCategory != null) {
+                            DBRepository.addInterestCategory(realmCategory)
+                        }
                         DBRepository.addInterest(realmInterest)
-                        if (realmCategory != null) DBRepository.addInterestCategory(realmCategory)
                         returnList += interestDto
                     } catch (e: Exception) {
                         return@withContext Result.failure(Exception("Error saving public interest to database: $e"))
@@ -110,7 +112,11 @@ object InterestRepository {
     suspend fun fetchPublicInterestsMap(): Result<Map<String, String>> = withContext(Dispatchers.IO) {
         val resp = getPublicInterests().fold(
             onSuccess = { list ->
-                Result.success(list.associate { it.name to it._id })
+                Result.success(list.associate {
+                    assert(it.name != null)
+                    assert(it._id != null)
+                    it.name!! to it._id!!
+                })
             },
             onFailure = { exception ->
                 Result.failure(exception)
@@ -121,11 +127,11 @@ object InterestRepository {
 
     suspend fun resolveIncomingUserInterests(userInterests: List<UserInterestDto>, userId: String, flowToUpdate: MutableStateFlow<List<UserInterestDto>?>) {
         var localInterestCategories: List<String> = DBRepository.getInterestCategories()
-            .map{ it._id.toString() }
+            .map{ it._id.toHexString() }
 
         if (localInterestCategories == emptyList<String>()) {
             getPublicInterestCategories().onSuccess {
-                localInterestCategories = it.map{ it._id } // just need a list of ids
+                localInterestCategories = it.mapNotNull{ it._id } // just need a list of ids
             }.onFailure { e -> throw e }
         }
 
@@ -136,11 +142,12 @@ object InterestRepository {
                 val userInterestRealm = userInterestDto.toRealm(userId)
                 val interestCategory = userInterestDto.interest.category
                 if (interestCategory !in localInterestCategories ) {
-                    getPublicInterestCategories().onSuccess {
-                        localInterestCategories = it.map{ it._id } // just need a list of ids
+                    getPublicInterests().onSuccess {
+                        localInterestCategories = DBRepository.getInterestCategories()
+                            .map{ it._id.toHexString() }
                     }
                     if (interestCategory !in localInterestCategories) {
-                        throw Exception("invalid interest category id")
+                        throw Exception("invalid interest category id $interestCategory")
                     }
                 }
                 DBRepository.addInterestPair(interestRealm, userInterestRealm)

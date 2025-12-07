@@ -27,7 +27,6 @@ interface UserApi {
     @PUT("users/profile/avatar")
     suspend fun uploadAvatar(@Part avatarImage: MultipartBody.Part): Response<UserProfileResponse>
 
-    // TODO() THIS DOES NOT EXIST SERVERSIDE YET
     // Profil innego użytkownika po ID: GET /api/users/{id}
     @GET("users/{id}")
     suspend fun getUserById(@Path("id") id: String): Response<UserProfileResponse>
@@ -85,8 +84,8 @@ data class UserInterestDto(
 )
 
 data class InterestDto(
-    val _id: String,                 // MongoDB ObjectId
-    val name: String,
+    val _id: String? = null,                 // MongoDB ObjectId
+    val name: String? = null,
     val category: String? = null,
     val description: String? = null,
     val isArchived: Boolean? = false,

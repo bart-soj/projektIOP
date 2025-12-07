@@ -1,5 +1,6 @@
-package com.example.projektiop.screens
+package com.example.projektiop.ui.screens
 
+import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -29,6 +30,7 @@ import coil.compose.AsyncImage
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import coil.request.ImageRequest
+import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.InterestRepository
 
 @Composable
@@ -470,7 +472,7 @@ private fun AvatarPicker(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         val bitmap = remember(avatarPreviewBytes) {
             avatarPreviewBytes?.let { bytes ->
-                kotlin.runCatching { BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap() }.getOrNull()
+                runCatching { BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap() }.getOrNull()
             }
         }
         if (bitmap != null) {
@@ -492,7 +494,7 @@ private fun AvatarPicker(
                     .data(displayUrl)
                     .crossfade(true)
                     .apply {
-                        val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                        val token = AuthRepository.getToken()
                         if (!token.isNullOrBlank()) {
                             addHeader("Authorization", "Bearer $token")
                         }
@@ -527,7 +529,7 @@ private fun AvatarPicker(
     }
 }
 
-private fun queryDisplayName(context: android.content.Context, uri: Uri): String? {
+private fun queryDisplayName(context: Context, uri: Uri): String? {
     val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
     return context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
         val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)

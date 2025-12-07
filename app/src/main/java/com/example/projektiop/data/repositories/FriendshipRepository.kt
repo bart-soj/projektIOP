@@ -42,8 +42,7 @@ object FriendshipRepository {
     // private val _rejectedIds = MutableStateFlow<List<String>>(emptyList())
     // val rejectedIds : StateFlow<List<String>> = _rejectedIds.asStateFlow()
 
-    private val _repositoryCache = MutableStateFlow<Map<String, OtherUserRepository>>(emptyMap())
-    val repositoryCache: StateFlow<Map<String, OtherUserRepository>> = _repositoryCache.asStateFlow()
+
 
     suspend fun fetchAccepted(): Result<List<FriendItem>> = withContext(Dispatchers.IO) {
         try {
@@ -53,7 +52,8 @@ object FriendshipRepository {
                 for (dto in all) {
                     runCatching {
                         DBRepository.addFriendship(dto.toRealm())
-                        val tmpId = dto.user?._id.toString()
+                        val tmpUser = dto.user?.toRealm()
+                        if (tmpUser != null) DBRepository.addUser(tmpUser)
                     }.onFailure { e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 }
                 _friendsIds.value = all.mapNotNull { it._id }
@@ -82,6 +82,8 @@ object FriendshipRepository {
             for (dto in items) {
                 runCatching {
                     DBRepository.addFriendship(dto.toRealm())
+                    val tmpUser = dto.user?.toRealm()
+                    if (tmpUser != null) DBRepository.addUser(tmpUser)
                     val tmpId = dto.user?._id.toString()
                 }.onFailure { e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
             }
@@ -104,6 +106,8 @@ object FriendshipRepository {
             for (dto in items) {
                 runCatching {
                     DBRepository.addFriendship(dto.toRealm())
+                    val tmpUser = dto.user?.toRealm()
+                    if (tmpUser != null) DBRepository.addUser(tmpUser)
                     val tmpId = dto.user?._id.toString()
                 }.onFailure { e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
             }
@@ -122,7 +126,7 @@ object FriendshipRepository {
         try {
             val r = RetrofitInstance.friendshipApi.acceptRequest(friendshipId)
             if (r.isSuccessful) {
-                val friendId = DBRepository.getFriendshipsById(friendshipId)!!._id
+                val friendId = DBRepository.getFriendshipsById(friendshipId)!!._id.toHexString()
                 runCatching { DBRepository.changeFriendshipStatus(friendshipId, FriendshipStatus.ACCEPTED)
                 }.onFailure {} //e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 _friendsIds.update { list ->
@@ -140,7 +144,7 @@ object FriendshipRepository {
         try {
             val r = RetrofitInstance.friendshipApi.rejectRequest(friendshipId)
             if (r.isSuccessful) {
-                val friendId = DBRepository.getFriendshipsById(friendshipId)!!._id
+                val friendId = DBRepository.getFriendshipsById(friendshipId)!!._id.toHexString()
                 runCatching { DBRepository.changeFriendshipStatus(friendshipId, FriendshipStatus.REJECTED)
                 }.onFailure {} //e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 _pendingIds.update { list ->
@@ -185,7 +189,7 @@ object FriendshipRepository {
         try {
             val resp = RetrofitInstance.friendshipApi.blockFriendship(friendshipId)
             if (resp.isSuccessful) {
-                val friendId = DBRepository.getFriendshipsById(friendshipId)!!._id
+                val friendId = DBRepository.getFriendshipsById(friendshipId)!!._id.toHexString()
                 runCatching { DBRepository.changeFriendshipStatus(friendshipId, FriendshipStatus.BLOCKED) }
                 _blockedIds.update { list ->
                     list + friendId.toString()
@@ -211,7 +215,7 @@ object FriendshipRepository {
         try {
             val resp = RetrofitInstance.friendshipApi.unblockFriendship(friendshipId)
             if (resp.isSuccessful) {
-                val friendId = DBRepository.getFriendshipsById(friendshipId)!!._id
+                val friendId = DBRepository.getFriendshipsById(friendshipId)!!._id.toHexString()
                 runCatching {
                     DBRepository.changeFriendshipStatus(friendshipId, FriendshipStatus.ACCEPTED)
                 }

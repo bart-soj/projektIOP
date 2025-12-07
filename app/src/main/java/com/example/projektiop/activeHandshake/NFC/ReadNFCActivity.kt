@@ -32,7 +32,7 @@ class ReadNFCActivity : ComponentActivity() {
     val ndef = IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED).apply {
         try {
             addDataType("*/*")    /* Handles all MIME based dispatches.
-                                 You should specify only the ones that you need. */
+                                 should specify only the ones that you need. */
         } catch (e: IntentFilter.MalformedMimeTypeException) {
             throw RuntimeException("fail", e)
         }

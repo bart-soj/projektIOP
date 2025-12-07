@@ -2,12 +2,13 @@ package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.PublicInterestCategoryDto
 import com.example.projektiop.data.db.objects.InterestCategory
+import io.realm.kotlin.types.RealmInstant
 import org.mongodb.kbson.ObjectId
 
 fun PublicInterestCategoryDto.toRealm(): InterestCategory {
-    require(!this._id.isNullOrBlank()) { "Missing interest id" }
+    require(!this._id.isNullOrBlank()) { "Missing interest category id" }
     val id = this._id
-    require(!this.name.isNullOrBlank()) { "Missing interest name" }
+    require(!this.name.isNullOrBlank()) { "Missing interest category name" }
     val name = this.name
 
 
@@ -16,7 +17,7 @@ fun PublicInterestCategoryDto.toRealm(): InterestCategory {
         id = id,
         name = name,
         // createdAt = TODO(),
-        // updatedAt = TODO()
+        updatedAt = RealmInstant.now()
     )
 }
 

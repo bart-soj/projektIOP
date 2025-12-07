@@ -1,4 +1,4 @@
-package com.example.projektiop.screens
+package com.example.projektiop.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -15,14 +15,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.projektiop.screens.friends.FriendsViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.R
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.FriendItem
+import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.screens.components.FriendCard
 import kotlinx.coroutines.launch
 
@@ -169,7 +168,7 @@ private fun BlockedUsersDialog(
     LaunchedEffect(Unit) {
         scope.launch {
             loading = true
-            com.example.projektiop.data.repositories.UserRepository.fetchMyProfile().onSuccess { myUserId = it._id }
+            UserRepository.fetchMyProfile().onSuccess { myUserId = it._id }
             FriendshipRepository.fetchBlocked()
                 .onSuccess { items = it }
                 .onFailure { error = it.message }

@@ -1,6 +1,7 @@
-package com.example.projektiop.screens
+package com.example.projektiop.ui.screens
 
 import android.content.Context
+import android.util.Patterns
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,9 +25,10 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.example.projektiop.R
-import com.example.projektiop.formelements.OutlinedTextFieldWithClearAndError
-import com.example.projektiop.formelements.SwitchWithText
+import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
+import com.example.projektiop.ui.components.SwitchWithText
 import com.example.projektiop.data.repositories.AuthRepository
+import com.example.projektiop.data.repositories.ChatUpdateManager
 import kotlinx.coroutines.launch
 
 @Composable
@@ -40,7 +42,7 @@ fun LoginScreen(navController: NavController) {
     var apiError by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val isEmailValid = remember(email) { email.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() }
+    val isEmailValid = remember(email) { email.isNotEmpty() && Patterns.EMAIL_ADDRESS.matcher(email).matches() }
     val isPasswordValid = remember(password) { password.isNotEmpty() }
 
     fun validateFields(context: Context) {

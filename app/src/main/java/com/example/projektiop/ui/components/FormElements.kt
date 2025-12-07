@@ -1,11 +1,10 @@
-package com.example.projektiop.formelements
+package com.example.projektiop.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
@@ -21,9 +20,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.projektiop.R
 
-//================================================================================================
-// z zajec, do przerobienia
-//================================================================================================
 
 @Composable
 fun OutlinedTextFieldWithClearAndError(
@@ -70,6 +66,7 @@ fun OutlinedTextFieldWithClearAndError(
         visualTransformation = visualTransformation
     )
 }
+
 
 @Composable
 fun SwitchWithText(

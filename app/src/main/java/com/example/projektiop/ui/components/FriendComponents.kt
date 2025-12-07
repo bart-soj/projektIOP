@@ -15,6 +15,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -22,8 +23,8 @@ import com.example.projektiop.R
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.FriendItem
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.ui.components.UserAvatar
 
-private const val BASE_URL_KEY = "BASE_URL"
 
 @Composable
 fun FriendCard(
@@ -57,7 +58,7 @@ fun FriendCard(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            UserAvatar(url = friend.avatarUrl, size = 56.dp)
+            UserAvatar(url = friend.avatarUrl, modifier = Modifier.size(56.dp))
 
             Spacer(modifier = Modifier.width(12.dp))
 
@@ -143,7 +144,7 @@ fun PendingRequestCard(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            UserAvatar(url = item.avatarUrl, size = 48.dp)
+            UserAvatar(url = item.avatarUrl, Modifier.size(48.dp))
 
             Spacer(Modifier.width(12.dp))
 
@@ -160,72 +161,7 @@ fun PendingRequestCard(
     }
 }
 
-@Composable
-fun UserAvatar(url: String?, size: androidx.compose.ui.unit.Dp) {
-    val context = LocalContext.current
-
-    val fullUrl = remember(url) {
-        url?.let {
-            if (it.startsWith("http")) it
-            else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it"
-        }
-    }
-
-    val model = remember(fullUrl) {
-        ImageRequest.Builder(context)
-            .data(fullUrl)
-            .crossfade(true)
-            .apply {
-                val token = AuthRepository.getToken()
-                if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
-            }
-            .build()
-    }
-
-    AsyncImage(
-        model = model,
-        contentDescription = "Avatar",
-        placeholder = painterResource(R.drawable.avatar_placeholder),
-        error = painterResource(R.drawable.avatar_placeholder),
-        contentScale = ContentScale.Crop,
-        modifier = Modifier
-            .size(size)
-            .clip(CircleShape)
-    )
-}
 
 
-@Composable
-fun AvatarImage(rawUrl: String?) {
-    if (rawUrl != null) {
-        val fullUrl = rawUrl.let { if (it.startsWith("http") ) it else "${SharedPreferencesRepository.get(
-            BASE_URL_KEY, "")}$it" }
-        val req = ImageRequest.Builder(LocalContext.current)
-            .data(fullUrl)
-            .crossfade(true)
-            .apply {
-                val token = AuthRepository.getToken()
-                if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
-            }
-            .build()
-        AsyncImage(
-            model = req,
-            contentDescription = null,
-            placeholder = painterResource(R.drawable.avatar_placeholder),
-            error = painterResource(R.drawable.avatar_placeholder),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-        )
-    } else {
-        Image(
-            painter = painterResource(id = R.drawable.avatar_placeholder),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-        )
-    }
-}
+
+

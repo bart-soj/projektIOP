@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.content.Context
 import android.content.SharedPreferences
+import com.example.projektiop.data.mapping.toUserProfileResponse
 
 private const val BASE_URL_KEY: String = "BASE_URL"
 
@@ -13,7 +14,7 @@ private const val BASE_URL_KEY: String = "BASE_URL"
 private object ChatReadState {
     private const val PREFS = "chat_read_state"
     private const val KEY_PREFIX = "last_read_"
-    @Volatile private var prefs: SharedPreferences? = null
+    private var prefs: SharedPreferences? = null
 
     fun ensure(context: Context) {
         if (prefs == null) {
@@ -75,14 +76,14 @@ object ChatRepository {
                 val body = response.body().orEmpty()
                 val mapped = body.mapNotNull { chat ->
                     val id = chat._id ?: return@mapNotNull null
-                    val participants = chat.participants.orEmpty()
-                    val other = participants.firstOrNull { p ->
-                        (currentUserId != null && p._id != null && p._id != currentUserId) ||
-                        (currentUsername != null && p.username != null && p.username != currentUsername)
-                    } ?: if (participants.size == 2) {
-                        participants.firstOrNull { it.username != null && it.username != currentUsername } ?: participants.firstOrNull()
+                    val participants = chat.participants?.mapNotNull{ DBRepository.getUserById(it)?.toUserProfileResponse() }
+                    val other = participants?.firstOrNull { p ->
+                        (!currentUserId.isNullOrBlank()  && !p._id.isNullOrBlank()  && p._id != currentUserId) && // TODO() was || some issue with currentUserId never failing this, most likely because of conversion from ObjectId
+                                (currentUsername != null && p.username != null && p.username != currentUsername)
+                    } ?: if (participants?.size == 2) {
+                        participants.firstOrNull { !it.username.isNullOrBlank() && !currentUsername.isNullOrBlank() && it.username != currentUsername }
                     } else {
-                        participants.firstOrNull()
+                        return@mapNotNull null
                     }
                     val title = other?.profile?.displayName ?: other?.username ?: "Czat"
                     val lastMsg = chat.lastMessage?.content ?: "(brak wiadomości)"
@@ -121,7 +122,7 @@ object ChatRepository {
             val existing = RetrofitInstance.chatApi.getChats()
             if (existing.isSuccessful) {
                 existing.body().orEmpty().firstOrNull { chat ->
-                    chat.participants?.any { it._id == friendId } == true
+                    chat.participants?.any { it == friendId } == true
                 }?.let { return@withContext Result.success(it._id!!) }
             }
             val created = RetrofitInstance.chatApi.accessChat(mapOf("userId" to friendId))

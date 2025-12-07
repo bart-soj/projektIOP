@@ -43,7 +43,7 @@ class UserInterest : RealmObject {
                 this.interest = interest
                 this.customDescription = customDescription
                 this.createdAt = createdAt
-                this.updatedAt = updatedAt
+                this.updatedAt = RealmInstant.now()
             }
         }
     }

@@ -57,7 +57,6 @@ class BluetoothRepository(private val context: Context) {
         context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
 
-    // --- Stany obserwowane przez UI ---
     private val _isScanning = MutableStateFlow(false)
     val isScanning = _isScanning.asStateFlow()
 
@@ -100,7 +99,6 @@ class BluetoothRepository(private val context: Context) {
                                 _foundDeviceStatus.value = "Status: Znaleziono $foundUserId"
                                 val updatedList = _foundDeviceIds.value + foundUserId
                                 _foundDeviceIds.value = updatedList
-                                // Można dodać więcej logiki, np. zbierać wszystkie ID i pokazywać listę
                                 // _foundDeviceStatus.value = "Status: Znaleziono (${foundDeviceIds.size}): ${foundDeviceIds.joinToString()}"
                             } else if (foundUserId.isNotEmpty()) {
                                 // ID już znane w tej sesji skanowania
@@ -174,7 +172,6 @@ class BluetoothRepository(private val context: Context) {
     }
 
     // --- Publiczne metody kontrolne ---
-
     @SuppressLint("MissingPermission")
     fun startScan() {
         Log.d(TAG_SCAN, "Wywołano startScan()")
@@ -227,7 +224,7 @@ class BluetoothRepository(private val context: Context) {
             .build()
         val scanSettings = ScanSettings.Builder()
             .setLegacy(false)
-            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY) // Najbardziej agresywne skanowanie
+            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             // .setReportDelay(0) // Domyślnie 0 - raportuj natychmiast
             .build()
 
@@ -236,7 +233,7 @@ class BluetoothRepository(private val context: Context) {
             Log.i(TAG_SCAN, "Rozpoczynanie skanowania z filtrem UUID: ${SERVICE_UUID}...")
             bluetoothLeScanner?.startScan(listOf(scanFilter), scanSettings, scanCallback)
             _isScanning.value = true
-            _foundDeviceStatus.value = "Status: Skanowanie..." // Początkowy status
+            _foundDeviceStatus.value = "Status: Skanowanie..."
         } catch (e: SecurityException) {
             Log.e(TAG_PERMISSIONS, "Błąd uprawnień podczas startScan mimo wcześniejszego sprawdzenia!", e)
             _foundDeviceStatus.value = "Status: Błąd uprawnień kryt."
@@ -273,19 +270,18 @@ class BluetoothRepository(private val context: Context) {
         try {
             Log.i(TAG_SCAN, "Zatrzymywanie skanowania...")
             bluetoothLeScanner?.stopScan(scanCallback)
-            // Stan i status aktualizujemy od razu, nie czekamy na callback (stopScan nie ma callbacku sukcesu)
             _isScanning.value = false
-            if (!_isAdvertising.value) { // Jeśli rozgłaszanie też wyłączone
+            if (!_isAdvertising.value) {
                 _foundDeviceStatus.value = "Status: Zatrzymano"
-            } else { // Jeśli rozgłaszanie nadal aktywne
+            } else {
                 _foundDeviceStatus.value = "Status: Rozgłaszanie aktywne"
             }
         } catch (e: IllegalStateException) {
             Log.e(TAG_SCAN, "Błąd stanu podczas stopScan (np. Bluetooth wyłączony)", e)
-            _isScanning.value = false // Popraw stan
-        } catch (e: Exception) { // Złap inne wyjątki
+            _isScanning.value = false
+        } catch (e: Exception) {
             Log.e(TAG_SCAN, "Błąd podczas stopScan", e)
-            _isScanning.value = false // Popraw stan
+            _isScanning.value = false
         }
     }
 

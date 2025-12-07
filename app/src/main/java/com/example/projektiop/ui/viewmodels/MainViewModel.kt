@@ -1,12 +1,10 @@
-package com.example.projektiop.viewmodels
+package com.example.projektiop.ui.viewmodels
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.api.UserInterestDto
-import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.db.objects.User
-import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,7 +30,7 @@ class MainViewModel() : ViewModel() {
 
     init {
         viewModelScope.launch {
-            UserRepository.getMyUserFlow().collect { updatedUser ->
+            UserRepository.myUserFlow.collect { updatedUser ->
                 _user.value = updatedUser
             }
         }

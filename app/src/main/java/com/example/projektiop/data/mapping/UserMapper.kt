@@ -6,6 +6,8 @@ import com.example.projektiop.data.db.objects.Gender
 import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.db.objects.UserProfile
 import com.example.projektiop.data.db.objects.UserRole
+import com.example.projektiop.util.mongoTimestampToRealmInstant
+import com.example.projektiop.util.realmInstantToMongoTimestamp
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.RealmInstant
 
@@ -73,7 +75,7 @@ fun User.toUserProfileResponse(): UserProfileResponse {
             broadcastMessage = this.profile?.broadcastMessage,
             avatarUrl = this.profile?.avatarUrl
         ),
-        _id = this._id.toString(),
+        _id = this._id.toHexString(),
         username = this.username,
         email = this.email,
         role = this.role?.name,

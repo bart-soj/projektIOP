@@ -2,9 +2,7 @@ package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.MessageDto
 import com.example.projektiop.data.db.objects.Message
-import io.realm.kotlin.types.RealmInstant
-import io.realm.kotlin.types.RealmList
-import com.google.gson.JsonElement
+import com.example.projektiop.util.mongoTimestampToRealmInstant
 import io.realm.kotlin.ext.realmListOf
 
 fun MessageDto.toRealm(): Message {

@@ -43,7 +43,7 @@ class Interest : RealmObject {
                 this.description = description
                 this.isArchived = isArchived == true
                 this.createdAt = createdAt
-                this.updatedAt = updatedAt
+                this.updatedAt = RealmInstant.now()
             }
         }
     }

@@ -1,6 +1,5 @@
-package com.example.projektiop.screens
+package com.example.projektiop.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,50 +24,24 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
 import com.example.projektiop.data.repositories.ChatListItem
-import com.example.projektiop.data.repositories.ChatRepository
-import com.example.projektiop.data.repositories.ChatUpdateManager
-import com.example.projektiop.data.repositories.UserRepository
 import coil.compose.AsyncImage
-import kotlinx.coroutines.launch
+import coil.request.ImageRequest
+import com.example.projektiop.data.repositories.AuthRepository
+import com.example.projektiop.ui.viewmodels.ChatsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatsScreen(navController: NavController) {
-    var searchText by remember { mutableStateOf("") }
+fun ChatsScreen(navController: NavController, viewModel: ChatsViewModel) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    var chats by remember { mutableStateOf<List<ChatListItem>>(emptyList()) }
-    var loading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    val scope = rememberCoroutineScope()
-    var myUsername by remember { mutableStateOf<String?>(null) }
+    val filteredChats by viewModel.filteredChats.collectAsState()
+    val loading by viewModel.loading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val searchText by viewModel.searchText.collectAsState()
 
     LaunchedEffect(Unit) {
-        loading = true
-        error = null
-        val me = UserRepository.fetchMyProfile()
-        me.onSuccess { profile ->
-            myUsername = profile.username ?: profile.effectiveDisplayName
-        }
-        // Collect updates
-        launch {
-            ChatUpdateManager.chatsFlow.collect { list ->
-                chats = list
-                loading = false
-            }
-        }
-        // Trigger an immediate refresh once (manager polls anyway)
-        launch {
-            ChatRepository.fetchChats(currentUserId = null, currentUsername = myUsername)
-                .onSuccess { chats = it }
-                .onFailure { error = it.message }
-            loading = false
-        }
-    }
-
-    val filteredChatList = chats.filter {
-        it.title.contains(searchText, ignoreCase = true) || it.lastMessage.contains(searchText, ignoreCase = true)
+        viewModel.refreshAll()
     }
 
     Scaffold(
@@ -86,7 +59,7 @@ fun ChatsScreen(navController: NavController) {
             // 1 & 2. Pole wyszukiwania i przycisk (w jednym komponencie TextField)
             SearchBar(
                 searchText = searchText,
-                onSearchTextChanged = { searchText = it },
+                onSearchTextChanged = { viewModel.searchFor(it) },
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
@@ -105,19 +78,12 @@ fun ChatsScreen(navController: NavController) {
                             Text(error ?: "Błąd", color = MaterialTheme.colorScheme.error)
                             Spacer(Modifier.height(8.dp))
                             Button(onClick = {
-                                scope.launch {
-                                    loading = true
-                                    error = null
-                                    ChatRepository.fetchChats(currentUserId = null, currentUsername = myUsername)
-                                        .onSuccess { chats = it }
-                                        .onFailure { error = it.message }
-                                    loading = false
-                                }
+                                viewModel.refreshAll()
                             }) { Text("Spróbuj ponownie") }
                         }
                     }
                 }
-                filteredChatList.isEmpty() -> {
+                filteredChats.isEmpty() -> {
                     Box(Modifier.fillMaxSize()) {
                         Text(
                             stringResource(R.string.no_chats),
@@ -131,7 +97,7 @@ fun ChatsScreen(navController: NavController) {
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(filteredChatList, key = { it.id }) { chatData ->
+                        items(filteredChats, key = { it.id }) { chatData ->
                             ChatItem(
                                 chatData = chatData,
                                 onClick = {
@@ -205,11 +171,11 @@ fun ChatItem(
             val ctx = LocalContext.current
             val fullUrl =
                 avatarUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
-            val imageRequest = coil.request.ImageRequest.Builder(ctx)
+            val imageRequest = ImageRequest.Builder(ctx)
                 .data(fullUrl)
                 .crossfade(true)
                 .apply {
-                    val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                    val token = AuthRepository.getToken()
                     if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
                 }
                 .build()
@@ -268,6 +234,6 @@ fun ChatsScreenPreview() {
     // Załóżmy, że masz zdefiniowany MaterialTheme w projekcie
     // Jeśli nie, użyj domyślnego lub zastąp go swoim
     MaterialTheme {
-        ChatsScreen(navController = rememberNavController())
+        ChatsScreen(navController = rememberNavController(), viewModel = ChatsViewModel() )
     }
 }

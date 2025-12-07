@@ -1,14 +1,14 @@
 package com.example.projektiop.data.repositories
 
 import android.content.Context
-import coil.network.HttpException
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.data.api.RegisterRequest
 import com.example.projektiop.data.api.LoginRequest
 import com.example.projektiop.data.api.AuthFailedDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.HttpException
+
 
 
 object AuthRepository {
@@ -30,18 +30,17 @@ object AuthRepository {
 
 
     suspend fun login(email: String, password: String): Result<String?> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = RetrofitInstance.authApi.login(LoginRequest(email, password))
-                if (response.isSuccessful) {
-                    saveInfo(email, response.body()?._id)
-                    Result.success(response.body()?.token)
-                } else {
-                    Result.failure(Exception(""))
-                }
-            } catch (e: Exception) {
-                Result.failure(e)
+        return try {
+            val response = RetrofitInstance.authApi.login(LoginRequest(email, password))
+            if (response.isSuccessful) {
+                saveInfo(email, response.body()?._id)
+                Result.success(response.body()?.token)
+            } else {
+                Result.failure(HttpException(response))
             }
+
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
@@ -71,7 +70,7 @@ object AuthRepository {
         rememberMe = remember
 
         if (remember && !newToken.isNullOrBlank()) {
-            SharedPreferencesRepository.set(KEY_TOKEN, newToken!!)
+            SharedPreferencesRepository.set(KEY_TOKEN, newToken)
             SharedPreferencesRepository.set(KEY_REMEMBER, true)
         } else {
             SharedPreferencesRepository.set(KEY_REMEMBER, false)

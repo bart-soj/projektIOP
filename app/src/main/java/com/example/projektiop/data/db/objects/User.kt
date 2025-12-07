@@ -111,7 +111,7 @@ class User : RealmObject {
                 this.isDeleted = isDeleted
                 this.deletedAt = deletedAt
                 this.createdAt = createdAt
-                this.updatedAt = updatedAt
+                this.updatedAt = RealmInstant.now()
             }
         }
     }

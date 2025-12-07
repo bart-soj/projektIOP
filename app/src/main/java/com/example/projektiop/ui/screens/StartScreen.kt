@@ -1,4 +1,4 @@
-package com.example.projektiop.screens
+package com.example.projektiop.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
-import com.example.projektiop.util.GlassPanel
+import com.example.projektiop.ui.components.GlassPanel
 
 @Composable
 

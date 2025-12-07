@@ -1,4 +1,4 @@
-package com.example.projektiop.screens
+package com.example.projektiop.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -17,6 +17,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.R
+import com.example.projektiop.data.repositories.FriendItem
 import com.example.projektiop.screens.components.FriendCard
 import com.example.projektiop.screens.components.PendingRequestCard
 import com.example.projektiop.screens.friends.FriendsUiEffect
@@ -209,7 +210,7 @@ private fun UserSearchDialog(onClose: () -> Unit, viewModel: FriendsViewModel) {
                                 val isAlreadyFriend = uiState.friends.any { it.id == userId }
                                 val inviteSent = userId in uiState.sentRequests
 
-                                val friendItem = com.example.projektiop.data.repositories.FriendItem(
+                                val friendItem = FriendItem(
                                     id = userId,
                                     displayName = user.profile?.displayName ?: user.username ?: stringResource(R.string.no_name),
                                     username = user.username ?: "",

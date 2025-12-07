@@ -8,6 +8,8 @@ import com.example.projektiop.data.db.objects.FriendshipType
 import com.example.projektiop.data.repositories.DBRepository
 import com.example.projektiop.data.repositories.FriendItem
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.util.mongoTimestampToRealmInstant
+import com.example.projektiop.util.realmInstantToMongoTimestamp
 
 
 private const val ID: String = "_id"

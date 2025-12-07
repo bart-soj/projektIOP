@@ -1,4 +1,4 @@
-package com.example.projektiop.screens
+package com.example.projektiop.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -26,10 +26,12 @@ import java.time.Period
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.example.projektiop.data.api.ProfileDto
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.projektiop.data.repositories.AuthRepository
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -119,11 +121,11 @@ fun FriendProfileScreen(
                     val rawUrl = (p.profile?.avatarUrl ?: avatarUrlPrefill)?.takeIf { !it.isNullOrBlank() }
                     val fullUrl = rawUrl?.let { if (it.startsWith("http")) it else "https://hellobeacon.onrender.com$it" }
                     if (fullUrl != null) {
-                        val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                        val req = ImageRequest.Builder(LocalContext.current)
                             .data(fullUrl)
                             .crossfade(true)
                             .apply {
-                                val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                                val token = AuthRepository.getToken()
                                 if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
                             }
                             .build()
@@ -171,9 +173,10 @@ fun FriendProfileScreen(
                         Spacer(Modifier.height(4.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             p.interests!!.forEach { ui ->
-                                val base = ui.interest.name.ifBlank { stringResource(R.string.profile_unknown_interest) }
+                                assert(ui.interest.name != null)
+                                val base = ui.interest.name!!.ifBlank { stringResource(R.string.profile_unknown_interest) }
                                 val label = ui.customDescription?.takeIf { it.isNotBlank() } ?: ""
-                                com.example.projektiop.screens.InterestTag(base = base, label = label)
+                                InterestTag(base = base, label = label)
                             }
                         }
                     }

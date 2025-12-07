@@ -91,7 +91,7 @@ class Friendship() : RealmObject {
                 this.blockedBy = blockedBy
                 this.isBlocked = isBlocked
                 this.createdAt = createdAt
-                this.updatedAt = updatedAt
+                this.updatedAt = RealmInstant.now()
             }
         }
     }

@@ -18,14 +18,13 @@ import com.example.projektiop.data.api.UserSearchDto
 import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.mapping.toUserProfileResponse
+import com.example.projektiop.util.checkDataFreshness
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.util.UUID
 
 
@@ -35,13 +34,21 @@ private const val ID = "_id"
 
 
 object UserRepository {
-    private lateinit var id: String
+    private var id: String? = null
     // private var email: String? = null
     private var prefs: SharedPreferences? = null
     private val _MyUserInterests = MutableStateFlow<List<UserInterestDto>?>(null)
     val MyUserInterests: StateFlow<List<UserInterestDto>?> = _MyUserInterests.asStateFlow()
 
-    suspend fun init(context: Context) {
+    private val _repositoryCache = MutableStateFlow<Map<String, OtherUserRepository>>(emptyMap())
+    val repositoryCache: StateFlow<Map<String, OtherUserRepository>> = _repositoryCache.asStateFlow()
+    val myUserFlow: Flow<User?>
+        get() {
+            assert(!id.isNullOrBlank())
+            return DBRepository.getUserFlowById(id!!)
+        }
+
+    fun init(context: Context) {
         if (prefs == null) {
             prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             updateMyId()
@@ -55,9 +62,19 @@ object UserRepository {
         }
     }
 
-    fun getMyUserFlow(): Flow<User?> {
-        return DBRepository.getUserFlowById(id)
+    suspend fun ensureRepository(id: String): Result<OtherUserRepository> = withContext(Dispatchers.IO) {
+       if (id in repositoryCache.value) {
+           return@withContext Result.success(repositoryCache.value[id]!!)
+       } else {
+           fetchUserById(id).onSuccess {
+               val tmpRep = OtherUserRepository(id)
+               _repositoryCache.value += Pair(id, tmpRep)
+               return@withContext Result.success(repositoryCache.value[id]!!)
+           }.onFailure { res -> return@withContext Result.failure(res) }
+           return@withContext Result.failure(Exception("Can't ensure repository"))
+       }
     }
+
 
     suspend fun fetchMyProfile(): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
         try {

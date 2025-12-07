@@ -1,8 +1,4 @@
-package com.example.projektiop.data
-
-import android.content.Context
-import android.content.SharedPreferences
-import com.example.projektiop.data.repositories.SharedPreferencesRepository
+package com.example.projektiop.data.repositories
 
 object ThemePreference {
     private const val PREFS = "theme_prefs"

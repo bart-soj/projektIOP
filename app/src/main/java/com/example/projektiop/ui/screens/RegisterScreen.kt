@@ -1,4 +1,4 @@
-package com.example.projektiop.screens
+package com.example.projektiop.ui.screens
 
 import android.content.Context
 import android.util.Patterns
@@ -32,7 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.projektiop.R
 import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.formelements.OutlinedTextFieldWithClearAndError
+import com.example.projektiop.data.repositories.ChatUpdateManager
+import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
 import kotlinx.coroutines.launch
 
 @Composable

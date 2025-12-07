@@ -23,7 +23,7 @@ class Chat : RealmObject {
     companion object {
         fun create(
             id: String,
-            participants: RealmList<String>,
+            participants: List<String>,
             lastMessageId: String,
             lastMessageTimestamp: RealmInstant? = RealmInstant.now(),
             createdAt: RealmInstant? = RealmInstant.now(),
@@ -35,11 +35,11 @@ class Chat : RealmObject {
 
             return Chat().apply {
                 this._id = ObjectId(id)
-                this.participants = participants
+                this.participants = realmListOf(*participants.toTypedArray())
                 this.lastMessageId = lastMessageId
                 this.lastMessageTimestamp = lastMessageTimestamp
                 this.createdAt = createdAt
-                this.updatedAt = updatedAt
+                this.updatedAt = RealmInstant.now()
             }
         }
     }

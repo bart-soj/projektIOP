@@ -3,6 +3,8 @@ package com.example.projektiop.data.mapping
 import com.example.projektiop.data.api.InterestDto
 import com.example.projektiop.data.db.objects.Interest
 import com.example.projektiop.data.repositories.DBRepository
+import com.example.projektiop.util.mongoTimestampToRealmInstant
+import com.example.projektiop.util.realmInstantToMongoTimestamp
 
 fun InterestDto.toRealm(): Interest {
     require(!this._id.isNullOrBlank()) {"Missing interest id"}

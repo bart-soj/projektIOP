@@ -1,11 +1,9 @@
-package com.example.projektiop.screens
+package com.example.projektiop.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.runtime.Composable
@@ -17,21 +15,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import com.example.projektiop.viewmodels.BLEViewModel
-import com.example.projektiop.viewmodels.UserWithStatus
+import com.example.projektiop.ui.viewmodels.BLEViewModel
+import com.example.projektiop.ui.viewmodels.UserWithStatus
 import com.example.projektiop.R
 import com.example.projektiop.activeHandshake.NFC.ActiveHandshakeButton
 import com.example.projektiop.data.api.CertificateRequest
@@ -40,7 +33,7 @@ import com.example.projektiop.util.CertificateUtils
 import com.example.projektiop.data.db.objects.FriendshipStatus
 import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.repositories.UserRepository
-import com.example.projektiop.screens.components.AvatarImage
+import com.example.projektiop.ui.components.UserAvatar
 import kotlinx.coroutines.launch
 
 
@@ -57,7 +50,7 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val users by viewModel.userProfiles.collectAsState()
+    val users by viewModel.users.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
     val isAdvertising by viewModel.isAdvertising.collectAsState()
 
@@ -141,7 +134,7 @@ fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, v
                     users = users,
                     onUserClick = { user ->
                         navController.navigate(
-                            "friend_profile/${user._id}?username=${user.username}&displayName=${user.profile?.displayName}&avatarUrl=${user.profile?.avatarUrl}"
+                            "friend_profile/${user._id.toHexString()}?username=${user.username}&displayName=${user.profile?.displayName}&avatarUrl=${user.profile?.avatarUrl}"
                         )
                     },
                     onAddClick = { id: String ->
@@ -206,7 +199,7 @@ fun ScannedUserRow(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AvatarImage(user.profile?.avatarUrl)
+            UserAvatar(user.profile?.avatarUrl)
 
             Spacer(modifier = Modifier.width(12.dp))
 
@@ -214,20 +207,11 @@ fun ScannedUserRow(
                 Text(user.profile?.displayName ?: user.username.toString(), style = MaterialTheme.typography.titleMedium)
                 Text(user.username.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 Text(user.email.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                /*
-                if (!user.interests.isNullOrEmpty()) {
-                    Text(
-                        text = "Zainteresowania: ${user.interests.joinToString { it.interest.name }}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
-                }
-                */
             }
             when (status) {
-                FriendshipStatus.ACCEPTED -> Button(onClick = { onAddClick(user._id.toString()) }) { Text(stringResource(R.string.add)) }
+                FriendshipStatus.ACCEPTED -> Button(onClick = { onAddClick(user._id.toHexString()) }) { Text(stringResource(R.string.add)) }
                 FriendshipStatus.PENDING -> Button(onClick = {}, enabled = false) { Text(stringResource(R.string.sent)) }
-                FriendshipStatus.BLOCKED -> Button(onClick = { onChatClick(user._id.toString()) }) {Text(stringResource(R.string.chat))}
+                FriendshipStatus.BLOCKED -> Button(onClick = { onChatClick(user._id.toHexString()) }) {Text(stringResource(R.string.chat))}
                 FriendshipStatus.NOT_FRIENDS -> Button(onClick = {}, enabled = false) { stringResource(R.string.blocked) }
                 FriendshipStatus.REJECTED -> Button(onClick = {}, enabled = false) { Text(stringResource(R.string.rejected)) }
             }

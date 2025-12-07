@@ -46,7 +46,6 @@ class HostBasedCardEmulatorActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
         cardEmulation = CardEmulation.getInstance(nfcAdapter)
-        Log.d("custom", "here")
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val startIntent = Intent(Intent.ACTION_RUN).apply {

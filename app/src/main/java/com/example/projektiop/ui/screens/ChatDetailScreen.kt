@@ -1,8 +1,9 @@
-package com.example.projektiop.screens
+package com.example.projektiop.ui.screens
 
 import com.example.projektiop.R
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,12 +23,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.projektiop.data.api.MessageDto
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
+import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.BlockInfo
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
@@ -257,20 +260,20 @@ private fun MessageBubble(
             if (avatarUrl != null && avatarUrl.isNotBlank()) {
                 val raw = avatarUrl
                 val fullUrl = if (raw.startsWith("http")) raw else "https://hellobeacon.onrender.com$raw"
-                val req = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                val req = ImageRequest.Builder(LocalContext.current)
                     .data(fullUrl)
                     .crossfade(true)
                     .apply {
-                        val token = com.example.projektiop.data.repositories.AuthRepository.getToken()
+                        val token = AuthRepository.getToken()
                         if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
                     }
                     .build()
                 AsyncImage(
                     model = req,
                     contentDescription = "avatar",
-                    placeholder = painterResource(com.example.projektiop.R.drawable.avatar_placeholder),
-                    error = painterResource(com.example.projektiop.R.drawable.avatar_placeholder),
-                    fallback = painterResource(com.example.projektiop.R.drawable.avatar_placeholder),
+                    placeholder = painterResource(R.drawable.avatar_placeholder),
+                    error = painterResource(R.drawable.avatar_placeholder),
+                    fallback = painterResource(R.drawable.avatar_placeholder),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .padding(end = 6.dp)
@@ -279,8 +282,8 @@ private fun MessageBubble(
                         .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                 )
             } else if (!groupedWithPrev) {
-                androidx.compose.foundation.Image(
-                    painter = painterResource(id = com.example.projektiop.R.drawable.avatar_placeholder),
+                Image(
+                    painter = painterResource(id = R.drawable.avatar_placeholder),
                     contentDescription = "avatar",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

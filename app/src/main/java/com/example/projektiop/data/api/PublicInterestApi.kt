@@ -19,8 +19,8 @@ interface PublicInterestApi {
 }
 
 data class PublicInterestDto(
-    val _id: String,
-    val name: String,
+    val _id: String? = null,
+    val name: String? = null,
     val category: PublicInterestCategoryDto? = null,
     val description: String? = null,
     val isArchived: Boolean? = null,
@@ -29,6 +29,6 @@ data class PublicInterestDto(
 )
 
 data class PublicInterestCategoryDto(
-    val _id: String,
-    val name: String
+    val _id: String? = null,
+    val name: String? = null
 )

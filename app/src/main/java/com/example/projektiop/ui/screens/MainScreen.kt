@@ -1,4 +1,4 @@
-package com.example.projektiop.screens
+package com.example.projektiop.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -34,10 +34,11 @@ import java.time.format.DateTimeParseException
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import com.example.projektiop.data.db.objects.Gender
-import com.example.projektiop.data.mapping.realmInstantToMongoTimestamp
+import com.example.projektiop.util.realmInstantToMongoTimestamp
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
-import com.example.projektiop.viewmodels.MainViewModel
+import com.example.projektiop.ui.components.PullToRefresh
+import com.example.projektiop.ui.viewmodels.MainViewModel
 
 
 private const val BASE_URL_KEY: String = "BASE_URL"
@@ -57,7 +58,7 @@ fun MainScreen(navController: NavController, viewModel: MainViewModel) {
         val isLoading by viewModel.loading.collectAsState()
         val scope = rememberCoroutineScope()
 
-        com.example.projektiop.util.PullToRefresh(
+        PullToRefresh(
             refreshing = isLoading,
             onRefresh = { viewModel.refreshProfile() }
         ) {
@@ -233,7 +234,8 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                     InterestTag(base = stringResource(R.string.profile_no_interests))
                 } else {
                     interests!!.forEach { ui ->
-                        val base = ui.interest.name.ifBlank { stringResource(R.string.profile_unknown_interest) }
+                        assert(ui.interest.name != null)
+                        val base = ui.interest.name!!.ifBlank { stringResource(R.string.profile_unknown_interest) }
                         val label = if (!ui.customDescription.isNullOrBlank()) ui.customDescription else ""
                         InterestTag(base = base, label = label)
                     }

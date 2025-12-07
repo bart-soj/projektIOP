@@ -3,15 +3,21 @@ package com.example.projektiop.data.repositories
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UserProfileResponse
+import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.mapping.toUserProfileResponse
+import com.example.projektiop.util.checkDataFreshness
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import kotlin.collections.filterNotNull
 import kotlin.collections.orEmpty
+import java.time.Duration
+
+private val userFreshnessTimeout: Duration = Duration.ofMinutes(5)
 
 class OtherUserRepository(private val id: String) {
     lateinit var chatId: String
@@ -21,12 +27,30 @@ class OtherUserRepository(private val id: String) {
     val Profile: StateFlow<UserProfileResponse?> = _Profile.asStateFlow()
     private val _UserInterests = MutableStateFlow<List<UserInterestDto>?>(null)
     val UserInterests: StateFlow<List<UserInterestDto>?> = _UserInterests.asStateFlow()
+    val userFlow: Flow<User?>
+        get() {
+            return DBRepository.getUserFlowById(this.id)
+        }
 
     suspend fun init() {
         fetchProfile()
     }
 
     suspend fun fetchProfile(): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
+        val localUser = DBRepository.getUserById(id)
+        val updatedAt = localUser?.updatedAt
+        if (localUser != null && updatedAt != null) {
+            if (checkDataFreshness(updatedAt, userFreshnessTimeout)) {
+                return@withContext Result.success(localUser.toUserProfileResponse())
+            } else {
+                fetchProfileFromApi()
+            }
+        } else {
+            fetchProfileFromApi()
+        }
+    }
+
+    suspend fun fetchProfileFromApi(): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
         try {
             val response = RetrofitInstance.userApi.getUserById(id)
 
@@ -76,5 +100,9 @@ class OtherUserRepository(private val id: String) {
             }
             return@withContext Result.failure(Exception("API error and no local data available: $e"))
         }
+    }
+
+    fun getId(): String {
+        return id
     }
 }

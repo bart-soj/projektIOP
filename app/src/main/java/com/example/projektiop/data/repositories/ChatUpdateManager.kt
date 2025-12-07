@@ -1,6 +1,10 @@
 package com.example.projektiop.data.repositories
 
 import android.content.Context
+import android.util.Log
+import androidx.compose.runtime.collectAsState
+import com.example.projektiop.HelloBeaconApp
+import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.util.NotificationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -9,36 +13,45 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import com.example.projektiop.data.repositories.ChatRepository
-import com.example.projektiop.data.repositories.ChatListItem
-import com.example.projektiop.data.repositories.UserRepository
 
-object ChatUpdateManager {
+object ChatUpdateManager { // TODO() start it at appropriate place, bugged now
     private const val POLL_INTERVAL_MS = 15000L
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _chatsFlow = MutableStateFlow<List<ChatListItem>>(emptyList())
     val chatsFlow: StateFlow<List<ChatListItem>> = _chatsFlow
+    val myUserFlow = UserRepository.myUserFlow
+    val MyUserStateFlow = MutableStateFlow<User?>(null)
 
     @Volatile private var started = false
     private val lastMessageTimes: MutableMap<String, String?> = mutableMapOf()
 
+    init {
+        scope.launch {
+            myUserFlow.collect { value -> MyUserStateFlow.value = value }
+        }
+    }
+
     fun start(context: Context) {
         if (started) return
         started = true
-        scope.launch {
-            // Resolve current username once (used for other participant detection)
-            val profile = UserRepository.fetchMyProfile().getOrNull()
-            val username = profile?.username ?: profile?.effectiveDisplayName
-            while (true) {
-                try {
-                    ChatRepository.fetchChats(currentUserId = null, currentUsername = username)
-                        .onSuccess { list ->
-                            detectNotifications(context, list)
-                            _chatsFlow.value = list
-                        }
-                    // failures silently ignored this cycle
-                } catch (_: Exception) { }
-                delay(POLL_INTERVAL_MS)
+
+        if (MyUserStateFlow.value != null ) {
+            scope.launch {
+                while (started) {
+                    try {
+                        ChatRepository.fetchChats(
+                            currentUserId = MyUserStateFlow.value?._id?.toHexString(),
+                            currentUsername = MyUserStateFlow.value?.username
+                        )
+                            .onSuccess { list ->
+                                detectNotifications(context, list)
+                                _chatsFlow.value = list
+                            }
+                    } catch (e: Exception) {
+                        Log.d("CU", "chat update failed", e)
+                    }
+                    delay(POLL_INTERVAL_MS)
+                }
             }
         }
     }

@@ -32,7 +32,7 @@ class InterestCategory : RealmObject {
                 this.name = name
                 // this.description = description
                 this.createdAt = createdAt
-                this.updatedAt = updatedAt
+                this.updatedAt = RealmInstant.now()
             }
         }
     }
