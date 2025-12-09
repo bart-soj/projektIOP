@@ -78,7 +78,7 @@ object ChatRepository {
                     val id = chat._id ?: return@mapNotNull null
                     val participants = chat.participants?.mapNotNull{ DBRepository.getUserById(it)?.toUserProfileResponse() }
                     val other = participants?.firstOrNull { p ->
-                        (!currentUserId.isNullOrBlank()  && !p._id.isNullOrBlank()  && p._id != currentUserId) && // TODO() was || some issue with currentUserId never failing this, most likely because of conversion from ObjectId
+                        (!currentUserId.isNullOrBlank()  && !p._id.isNullOrBlank()  && p._id != currentUserId) && // TODO() was some issue with currentUserId never failing this, most likely because of conversion from ObjectId
                                 (currentUsername != null && p.username != null && p.username != currentUsername)
                     } ?: if (participants?.size == 2) {
                         participants.firstOrNull { !it.username.isNullOrBlank() && !currentUsername.isNullOrBlank() && it.username != currentUsername }

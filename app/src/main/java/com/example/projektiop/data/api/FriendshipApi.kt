@@ -32,10 +32,10 @@ interface FriendshipApi {
     suspend fun removeFriendship(@Path("id") friendshipId: String): Response<Unit>
 
     @PUT("friendships/{id}/block")
-    suspend fun blockFriendship(@Path("id") friendshipId: String): Response<Unit>
+    suspend fun blockFriendship(@Path("id") friendshipId: String): Response<BlockDto>
 
     @PUT("friendships/{id}/unblock")
-    suspend fun unblockFriendship(@Path("id") friendshipId: String): Response<Unit>
+    suspend fun unblockFriendship(@Path("id") friendshipId: String): Response<BlockDto>
 }
 
 data class FriendRequest(
@@ -56,3 +56,8 @@ data class FriendshipDto(
 ) {
     val _id = friendshipId // quickfix as it was used this way in many places
 }
+
+data class BlockDto (
+    val message: String? = null,
+    val friendship: FriendshipDto? = null
+)

@@ -112,9 +112,13 @@ object DBRepository {
         return realm.query<Friendship>(Friendship::class).find()
     }
 
-    fun getFriendshipsById(friendshipId: String): Friendship? {
+    fun getFriendshipById(friendshipId: String): Friendship? {
         val objectId = ObjectId(friendshipId)
         return realm.query<Friendship>(Friendship::class, "_id == $0", objectId).first().find()
+    }
+
+    fun getFriendshipByFriendId(friendId: String): Friendship? {
+        return realm.query<Friendship>(Friendship::class, "user2Id == $0", friendId).first().find()
     }
 
     fun getFriendshipsByStatus(status: FriendshipStatus): List<Friendship> {
@@ -129,22 +133,37 @@ object DBRepository {
 
     fun changeFriendshipStatus(friendshipId: String, status: FriendshipStatus) {
         realm.writeBlocking {
-            val toUpdate = getFriendshipsById(friendshipId)
+            val objectId = ObjectId(friendshipId)
+            val toUpdate = this.query<Friendship>(Friendship::class, "_id == $0", objectId).first().find()
             if (toUpdate == null) return@writeBlocking
             toUpdate.status = status
-            updateFriendship(toUpdate)
+            if (status == FriendshipStatus.BLOCKED) {
+                toUpdate.isBlocked = true
+            }
         }
     }
 
-    fun updateFriendship(friendship: Friendship) {
+
+
+    fun blockFriendship(friendshipId: String, blockedBy: String) {
         realm.writeBlocking {
-            findLatest(friendship)?.let {
-                it.status = friendship.status
-                it.friendshipType = friendship.friendshipType
-                it.blockedBy = friendship.blockedBy
-                it.isBlocked = friendship.isBlocked
-                it.updatedAt = friendship.updatedAt
-            }
+            val objectId = ObjectId(friendshipId)
+            val toUpdate = this.query<Friendship>(Friendship::class, "_id == $0", objectId).first().find()
+            if (toUpdate == null) return@writeBlocking
+            toUpdate.status = FriendshipStatus.BLOCKED
+            toUpdate.isBlocked = true
+            toUpdate.blockedBy = blockedBy
+        }
+    }
+
+    fun unblockFriendship(friendshipId: String) {
+        realm.writeBlocking {
+            val objectId = ObjectId(friendshipId)
+            val toUpdate = this.query<Friendship>(Friendship::class, "_id == $0", objectId).first().find()
+            if (toUpdate == null) return@writeBlocking
+            toUpdate.status = FriendshipStatus.ACCEPTED
+            toUpdate.isBlocked = false
+            toUpdate.blockedBy = null
         }
     }
 

@@ -23,6 +23,7 @@ class MainViewModel() : ViewModel() {
 
     val myInterests: StateFlow<List<UserInterestDto>?> = UserRepository.MyUserInterests
     private val _loading = MutableStateFlow(false)
+
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
     private val _user = MutableStateFlow<User?>(null)

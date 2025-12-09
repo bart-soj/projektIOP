@@ -62,6 +62,11 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
 
         if (rememberMe.value) {
             token = SharedPreferencesRepository.get(KEY_TOKEN, null)
+            if (token?.isNotEmpty() == true) {
+                viewModelScope.launch {
+                    _authEvent.emit(AuthEvent.Success)
+                }
+            }
         }
     }
 
@@ -117,7 +122,8 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
                             DataError.Network.SERVER_ERROR -> "Server Error"
                             DataError.Network.SERIALIZATION -> "Serialization Error"
                             DataError.Network.UNKNOWN -> "Unknown Error"
-                        }
+                            DataError.Local.NO_DATA -> "no local data"
+                         }
                     }
                     is Result.Success -> {
                         val token = result.data
@@ -151,6 +157,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
                             DataError.Network.SERVER_ERROR -> "Server Error"
                             DataError.Network.SERIALIZATION -> "Serialization Error"
                             DataError.Network.UNKNOWN -> "Unknown Error"
+                            DataError.Local.NO_DATA -> "no local data"
                         }
                     }
 

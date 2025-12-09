@@ -88,7 +88,7 @@ fun Friendship.toFriendItem(): FriendItem {
         displayName = user?.profile?.displayName.toString(),
         username = user?.username ?: "",
         avatarUrl = user?.profile?.avatarUrl,
-        friendshipId = this._id.toString(),
+        friendshipId = this._id.toHexString(),
         blockedBy = this.blockedBy
     )
 }

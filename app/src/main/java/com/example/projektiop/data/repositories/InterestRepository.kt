@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
 object InterestRepository {
 
     suspend fun init() {
-        getPublicInterests() // TODO() can't see interests post fresh install -> this here failed
+        getPublicInterests()
     }
 
     suspend fun getPublicInterestCategories(): Result<List<PublicInterestCategoryDto>> = withContext(
@@ -75,11 +75,11 @@ object InterestRepository {
                     )
                     val publicInterestCategoryDto = publicInterestDto.category
                     try {
-                        val realmInterest = interestDto.toRealm()
                         val realmCategory = publicInterestCategoryDto?.toRealm()
                         if (realmCategory != null) {
                             DBRepository.addInterestCategory(realmCategory)
                         }
+                        val realmInterest = interestDto.toRealm()
                         DBRepository.addInterest(realmInterest)
                         returnList += interestDto
                     } catch (e: Exception) {

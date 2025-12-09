@@ -258,7 +258,7 @@ private fun MessageBubble(
     val timeText = remember(timestampIso) { parseTimeShort(timestampIso) }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (incoming) Arrangement.Start else Arrangement.End) {
         if (incoming) {
-            UserAvatar(avatarUrl)
+            UserAvatar(avatarUrl, modifier = Modifier.size(36.dp))
         }
         Column(horizontalAlignment = if (incoming) Alignment.Start else Alignment.End) {
             Surface(

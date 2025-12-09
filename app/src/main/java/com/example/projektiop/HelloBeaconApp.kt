@@ -43,5 +43,8 @@ class HelloBeaconApp : Application() {
     override fun onTerminate() {
         super.onTerminate()
         RealmProvider.close()
+        if (SharedPreferencesRepository.get("remember_me",false)) {
+            AuthRepository.clearToken()
+        }
     }
 }

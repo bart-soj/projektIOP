@@ -1,10 +1,12 @@
 package com.example.projektiop.data.repositories
 
+import android.util.Log
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.data.api.FriendRequest
 import com.example.projektiop.data.db.objects.FriendshipStatus
 import com.example.projektiop.data.mapping.toFriendItem
 import com.example.projektiop.data.mapping.toRealm
+import com.example.projektiop.util.DataError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,8 +43,11 @@ object FriendshipRepository {
 
     // private val _rejectedIds = MutableStateFlow<List<String>>(emptyList())
     // val rejectedIds : StateFlow<List<String>> = _rejectedIds.asStateFlow()
-
-
+    suspend fun start() {
+        fetchAccepted()
+        fetchIncomingPending()
+        fetchBlocked()
+    }
 
     suspend fun fetchAccepted(): Result<List<FriendItem>> = withContext(Dispatchers.IO) {
         try {
@@ -56,7 +61,7 @@ object FriendshipRepository {
                         if (tmpUser != null) DBRepository.addUser(tmpUser)
                     }.onFailure { e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 }
-                _friendsIds.value = all.mapNotNull { it._id }
+                _friendsIds.value = all.map{ it.user?._id.toString() }
                 Result.success(all.mapNotNull { it.toFriendItem() })
             } else {
                 val localAccepted = DBRepository.getFriendshipsByStatus(FriendshipStatus.ACCEPTED)
@@ -87,7 +92,7 @@ object FriendshipRepository {
                     val tmpId = dto.user?._id.toString()
                 }.onFailure { e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
             }
-            _pendingIds.value = items.mapNotNull { it._id }
+            _pendingIds.value = items.map { it.user?._id.toString() }
             Result.success(items.mapNotNull { it.toFriendItem() })
         } catch (e: Exception) {
             val local = DBRepository.getFriendshipsByStatus(FriendshipStatus.PENDING) // TODO() direction
@@ -103,15 +108,17 @@ object FriendshipRepository {
             val resp = RetrofitInstance.friendshipApi.getFriendships(status = "blocked")
             if (!resp.isSuccessful) throw(Exception("Api failed to fetch blocked (${resp.code()})"))
             val items = resp.body().orEmpty().filter { it.status == "blocked" }
+            var tmpBlockedIds = emptyList<String>()
             for (dto in items) {
                 runCatching {
                     DBRepository.addFriendship(dto.toRealm())
                     val tmpUser = dto.user?.toRealm()
                     if (tmpUser != null) DBRepository.addUser(tmpUser)
                     val tmpId = dto.user?._id.toString()
+                    tmpBlockedIds += tmpId
                 }.onFailure { e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
+                _blockedIds.value = tmpBlockedIds
             }
-            _blockedIds.value = items.mapNotNull { it._id }
             Result.success(items.mapNotNull { it.toFriendItem() })
         } catch (e: Exception) {
             val local = DBRepository.getFriendshipsByStatus(FriendshipStatus.BLOCKED)
@@ -126,7 +133,7 @@ object FriendshipRepository {
         try {
             val r = RetrofitInstance.friendshipApi.acceptRequest(friendshipId)
             if (r.isSuccessful) {
-                val friendId = DBRepository.getFriendshipsById(friendshipId)!!._id.toHexString()
+                val friendId = DBRepository.getFriendshipById(friendshipId)!!.user2Id
                 runCatching { DBRepository.changeFriendshipStatus(friendshipId, FriendshipStatus.ACCEPTED)
                 }.onFailure {} //e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 _friendsIds.update { list ->
@@ -144,7 +151,7 @@ object FriendshipRepository {
         try {
             val r = RetrofitInstance.friendshipApi.rejectRequest(friendshipId)
             if (r.isSuccessful) {
-                val friendId = DBRepository.getFriendshipsById(friendshipId)!!._id.toHexString()
+                val friendId = DBRepository.getFriendshipById(friendshipId)!!.user2Id
                 runCatching { DBRepository.changeFriendshipStatus(friendshipId, FriendshipStatus.REJECTED)
                 }.onFailure {} //e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 _pendingIds.update { list ->
@@ -154,13 +161,6 @@ object FriendshipRepository {
             } else Result.failure(Exception("Błąd odrzucenia (${r.code()})"))
         } catch (e: Exception) { Result.failure(e) }
     }
-
-    // doesn't have db support, don't use
-    private suspend fun mapFriendshipList(status: String): Result<List<FriendItem>> = try {
-        val response = RetrofitInstance.friendshipApi.getFriendships(status = status)
-        if (response.isSuccessful) Result.success(response.body().orEmpty().mapNotNull { it.toFriendItem() })
-        else Result.failure(Exception("Nie udało się pobrać listy (${response.code()})"))
-    } catch (e: Exception) { Result.failure(e) }
 
 
     suspend fun sendFriendRequest(recipientId: String): Result<Unit> = withContext(Dispatchers.IO) {
@@ -189,20 +189,27 @@ object FriendshipRepository {
         try {
             val resp = RetrofitInstance.friendshipApi.blockFriendship(friendshipId)
             if (resp.isSuccessful) {
-                val friendId = DBRepository.getFriendshipsById(friendshipId)!!._id.toHexString()
-                runCatching { DBRepository.changeFriendshipStatus(friendshipId, FriendshipStatus.BLOCKED) }
+                val friendId = DBRepository.getFriendshipById(friendshipId)?.user2Id
+                val blockedBy = resp.body()?.friendship?.blockedBy
+                assert(blockedBy != null && friendId != null)
+                DBRepository.blockFriendship(friendshipId, blockedBy!!)
                 _blockedIds.update { list ->
-                    list + friendId.toString()
+                    list + friendId!!
                 }
                 _pendingIds.update { list ->
-                    list - friendId.toString()
+                    list - friendId!!
                 }
                 _friendsIds.update { list ->
-                    list - friendId.toString()
+                    list - friendId!!
                 }
                 Result.success(Unit)
-            } else Result.failure(Exception("Błąd blokowania (${resp.code()})"))
-        } catch (e: Exception) { Result.failure(e) }
+            } else {
+                Result.failure(Exception("Błąd blokowania (${resp.code()})"))
+            }
+        } catch (e: Exception) {
+            Log.d("block", "failed block $e")
+            Result.failure(e)
+        }
     }
 
     /*
@@ -215,10 +222,8 @@ object FriendshipRepository {
         try {
             val resp = RetrofitInstance.friendshipApi.unblockFriendship(friendshipId)
             if (resp.isSuccessful) {
-                val friendId = DBRepository.getFriendshipsById(friendshipId)!!._id.toHexString()
-                runCatching {
-                    DBRepository.changeFriendshipStatus(friendshipId, FriendshipStatus.ACCEPTED)
-                }
+                val friendId = DBRepository.getFriendshipById(friendshipId)!!.user2Id
+                DBRepository.unblockFriendship(friendshipId)
                 _friendsIds.update { list ->
                     list + friendId.toString()
                 }
@@ -239,5 +244,16 @@ object FriendshipRepository {
             val blockedByMe = target.blockedBy == myId
             Result.success(BlockInfo(isBlocked = true, blockedByMe = blockedByMe, friendshipId = target.friendshipId))
         } catch (e: Exception) { Result.failure(e) }
+    }
+
+    fun getLocalFriendItemByFriendId(friendId: String): com.example.projektiop.util.Result<FriendItem, DataError.Local> {
+        try {
+            val friendship = DBRepository.getFriendshipByFriendId(friendId)
+            if (friendship == null) return com.example.projektiop.util.Result.Error(DataError.Local.NO_DATA)
+            val friendItem = friendship.toFriendItem()
+            return com.example.projektiop.util.Result.Success(friendItem)
+        } catch(e: Exception) {
+            return com.example.projektiop.util.Result.Error(DataError.Local.DB_ERROR)
+        }
     }
 }

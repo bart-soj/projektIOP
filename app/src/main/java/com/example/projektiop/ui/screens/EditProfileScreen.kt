@@ -486,7 +486,7 @@ private fun AvatarPicker(
         } else {
             // Show current avatar if available, otherwise a placeholder
             val rawUrl = currentAvatarUrl?.takeIf { it.isNotBlank() }
-            UserAvatar(rawUrl)
+            UserAvatar(rawUrl, modifier = Modifier.size(128.dp))
         }
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

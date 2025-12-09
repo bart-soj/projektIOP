@@ -61,6 +61,7 @@ object AuthRepository {
             Result.Success(response.body()?.token)
         } catch (e: HttpException) {
             when(e.code()) {
+                // 401 -> unauthorized access
                 408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
                 413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
                 429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
@@ -86,9 +87,9 @@ object AuthRepository {
 
 
     fun saveToken(newToken: String?, remember: Boolean) {
-        if (remember && !newToken.isNullOrBlank()) {
+        if (!newToken.isNullOrBlank()) {
             SharedPreferencesRepository.set(KEY_TOKEN, newToken)
-            SharedPreferencesRepository.set(KEY_REMEMBER, true)
+            SharedPreferencesRepository.set(KEY_REMEMBER, remember)
         } else {
             SharedPreferencesRepository.set(KEY_REMEMBER, false)
             SharedPreferencesRepository.remove(KEY_TOKEN)
@@ -111,6 +112,4 @@ object AuthRepository {
         SharedPreferencesRepository.set(KEY_REMEMBER, false)
         SharedPreferencesRepository.remove(KEY_TOKEN)
     }
-
-
 }

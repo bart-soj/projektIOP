@@ -78,7 +78,7 @@ object ChatUpdateManager { // TODO() start it at appropriate place, bugged now, 
 }
 
 
-class ChatUpdateService: Service() {
+class ChatUpdateService(): Service() {
     override fun onBind(intent: Intent?): IBinder? = null
     // TODO() implement, make ChatsViewModel/mainActivity bind to it
 }

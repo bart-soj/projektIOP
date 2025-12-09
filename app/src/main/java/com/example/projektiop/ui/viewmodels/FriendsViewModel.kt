@@ -53,6 +53,7 @@ class FriendsViewModel : ViewModel() {
 
             val friendsResult = FriendshipRepository.fetchAccepted()
             val pendingResult = FriendshipRepository.fetchIncomingPending()
+            FriendshipRepository.fetchBlocked()
 
             friendsResult.onSuccess { list ->
                 _uiState.update { it.copy(friends = list) }
@@ -136,7 +137,9 @@ class FriendsViewModel : ViewModel() {
 
     fun onBlockFriend(friendshipId: String) {
         viewModelScope.launch {
-            FriendshipRepository.blockFriendship(friendshipId).onSuccess { refreshAll() }
+            FriendshipRepository.blockFriendship(friendshipId)
+                .onSuccess { refreshAll() }
+                .onFailure { e ->  sendEffect(FriendsUiEffect.ShowToast("Błąd blokowania $e")) }
         }
     }
 
@@ -164,7 +167,7 @@ class FriendsViewModel : ViewModel() {
 
     fun onAcceptRequest(friendshipId: String) {
         viewModelScope.launch {
-            FriendshipRepository.acceptFriendship(friendshipId).onSuccess { refreshAll() }
+            FriendshipRepository.acceptFriendship(friendshipId).onSuccess { refreshAll() }.onFailure { refreshAll() }
         }
     }
 

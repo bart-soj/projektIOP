@@ -1,5 +1,6 @@
 package com.example.projektiop
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -25,6 +26,7 @@ import androidx.compose.runtime.setValue
 import com.example.projektiop.data.repositories.ThemePreference
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -49,13 +51,16 @@ import com.example.projektiop.ui.viewmodels.ScannerViewModel
 import com.example.projektiop.BluetoothLE.BTPermissionsManager
 import com.example.projektiop.data.repositories.ChatUpdateManager
 import com.example.projektiop.data.repositories.ChatUpdateService
+import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.ui.screens.ChatDetailScreen
 import com.example.projektiop.ui.viewmodels.AuthEvent
 import com.example.projektiop.ui.viewmodels.AuthViewModel
 import com.example.projektiop.ui.viewmodels.ChatsViewModel
 import com.example.projektiop.ui.viewmodels.MainViewModel
 import com.example.projektiop.ui.viewmodels.ScannerViewModelFactory
+import com.example.projektiop.ui.viewmodels.SettingsViewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -90,11 +95,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MyApp(localScannerViewModel, localAuthViewModel)
+            MyApp(localScannerViewModel, localAuthViewModel, ThemePreference)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val perm = android.Manifest.permission.POST_NOTIFICATIONS
+            val perm = Manifest.permission.POST_NOTIFICATIONS
             if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
                 notificationPermissionLauncher.launch(perm)
             }
@@ -105,6 +110,7 @@ class MainActivity : ComponentActivity() {
                 localAuthViewModel.authEvent.collect { event ->
                     when (event) {
                         is AuthEvent.Success -> {
+                            FriendshipRepository.start()
                             startService(Intent(this@MainActivity, ChatUpdateService::class.java))
                         }
                         is AuthEvent.Logout -> {
@@ -167,8 +173,8 @@ private fun MainActivity.showPermissionDeniedMessage(context: Context, permissio
 
 
 @Composable
-fun MyApp(scannerViewModel: ScannerViewModel, authViewModel: AuthViewModel) {
-    var darkMode by remember { mutableStateOf(ThemePreference.isDark()) }
+fun MyApp(scannerViewModel: ScannerViewModel, authViewModel: AuthViewModel, themePreference: ThemePreference) {
+    val darkMode by themePreference.isDark.collectAsState()
     val navController = rememberNavController()
     val startDestination = if (SharedPreferencesRepository.get("auth_token", "").isBlank()) "start" else "main" // TODO() better logged-in status verification
 
@@ -197,14 +203,8 @@ fun MyApp(scannerViewModel: ScannerViewModel, authViewModel: AuthViewModel) {
                 val friendName = backStack.arguments?.getString("friendName")
                 ChatDetailScreen(navController, chatId, friendId)
             }
-            composable("settings") { SettingsScreen(navController,
-                darkMode = darkMode,
-                onToggleDark = {
-                darkMode = !darkMode
-                ThemePreference.setDark(darkMode)
-                },
-                authViewModel = authViewModel
-            ) }
+            composable("settings") { SettingsScreen(navController, authViewModel = authViewModel,
+                SettingsViewModel(ThemePreference, UserRepository, FriendshipRepository)) }
             composable("edit_profile") { EditProfileScreen(navController) }
             composable("friends_list") { FriendsListScreen(navController) }
             composable(

@@ -21,17 +21,20 @@ import com.example.projektiop.R
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.FriendItem
+import com.example.projektiop.data.repositories.ThemePreference
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.screens.components.FriendCard
 import com.example.projektiop.ui.viewmodels.AuthViewModel
+import com.example.projektiop.ui.viewmodels.SettingsViewModel
+import com.example.projektiop.util.DataError
+import com.example.projektiop.util.Result
 import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
     navController: NavController,
-    darkMode: Boolean,
-    onToggleDark: () -> Unit,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    viewModel: SettingsViewModel
 ) {
 
     var animationPlayed by remember { mutableStateOf(false) }
@@ -39,13 +42,14 @@ fun SettingsScreen(
         targetValue = if (animationPlayed) 1f else 0f,
         animationSpec = tween(durationMillis = 1000)
     )
+    val darkMode by viewModel.darkMode.collectAsState()
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
     LaunchedEffect(Unit) {
         animationPlayed = true
     }
-
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
 
     Scaffold(
         bottomBar = { BottomNavigationBar(navController = navController, currentRoute = currentRoute) }
@@ -77,7 +81,7 @@ fun SettingsScreen(
                     Text(stringResource(id = R.string.dark_mode_label), style = MaterialTheme.typography.titleMedium)
                     Switch(
                         checked = darkMode,
-                        onCheckedChange = { onToggleDark() },
+                        onCheckedChange = { viewModel.onToggleDark() },
                         thumbContent = {
                             if (darkMode) {
                                 Icon(
@@ -129,7 +133,7 @@ fun SettingsScreen(
             }
         }
         if (showBlockedDialog) {
-            BlockedUsersDialog(onClose = { showBlockedDialog = false })
+            BlockedUsersDialog(onClose = { showBlockedDialog = false }, viewModel)
         }
         if (showLogoutDialog) {
             AlertDialog(
@@ -155,28 +159,19 @@ fun SettingsScreen(
     }
 }
 
+typealias blockedId = String
+
 @Composable
 private fun BlockedUsersDialog(
     onClose: () -> Unit,
-    // todo: użyć w blockedusersdialog viewModel: FriendsViewModel = viewModel()
+    viewModel: SettingsViewModel
 ) {
-    val scope = rememberCoroutineScope()
-    var loading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var items by remember { mutableStateOf<List<FriendItem>>(emptyList()) }
-    var processingId by remember { mutableStateOf<String?>(null) }
-    var myUserId by remember { mutableStateOf<String?>(null) }
+    var loading by remember { mutableStateOf(false) } // TODO() is this really necessary
 
-    LaunchedEffect(Unit) {
-        scope.launch {
-            loading = true
-            UserRepository.fetchMyProfile().onSuccess { myUserId = it._id }
-            FriendshipRepository.fetchBlocked()
-                .onSuccess { items = it }
-                .onFailure { error = it.message }
-            loading = false
-        }
-    }
+    val processingIds by viewModel.processingIds.collectAsState()
+    val items by viewModel.blockedFriendItems.collectAsState()
+    val error by viewModel.errorMessage.collectAsState()
+    val myUserId by viewModel.myUserId.collectAsState()
 
     AlertDialog(
         onDismissRequest = onClose,
@@ -191,24 +186,15 @@ private fun BlockedUsersDialog(
                 else -> {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         items.forEach { u ->
-                            val isProcessing = processingId == u.friendshipId
                             val showUnblock = myUserId != null && myUserId == u.blockedBy
 
-                            if (showUnblock && !isProcessing) {
+                            if (showUnblock && u.id !in processingIds) {
                                 FriendCard(
                                     friend = u,
                                     modifier = Modifier.fillMaxWidth(),
                                     onCardClick = {},
                                     onUnblockClick = {
-                                        scope.launch {
-                                            processingId = u.friendshipId
-                                            FriendshipRepository.unblockFriendship(u.friendshipId)
-                                                .onSuccess {
-                                                    items = items.filterNot { it.friendshipId == u.friendshipId }
-                                                    FriendshipRepository.fetchBlocked().onSuccess { items = it }
-                                                }
-                                            processingId = null
-                                        }
+                                        viewModel.onUnblockClick(u.id, u.friendshipId)
                                     }
                                 )
                             }
@@ -223,6 +209,6 @@ private fun BlockedUsersDialog(
 @Preview
 @Composable
 fun SettingsScreenPreview() {
-    SettingsScreen(navController = NavController(LocalContext.current), darkMode = false, onToggleDark = {}, authViewModel = AuthViewModel(
-        AuthRepository))
+    SettingsScreen(navController = NavController(LocalContext.current),  authViewModel = AuthViewModel(
+        AuthRepository), SettingsViewModel(ThemePreference, UserRepository, FriendshipRepository))
 }

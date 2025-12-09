@@ -14,7 +14,8 @@ sealed interface DataError: RootError {
     }
     enum class Local: DataError {
         DISK_FULL,
-        DB_ERROR
+        DB_ERROR,
+        NO_DATA
     }
 }
 
