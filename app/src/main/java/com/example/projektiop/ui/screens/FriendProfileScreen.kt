@@ -120,7 +120,7 @@ fun FriendProfileScreen(
             ) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     val rawUrl = (p.profile?.avatarUrl ?: avatarUrlPrefill)?.takeIf { !it.isNullOrBlank() }
-                    UserAvatar(rawUrl)
+                    UserAvatar(rawUrl, modifier = Modifier.size(90.dp))
                     Spacer(Modifier.width(16.dp))
                     Column(Modifier.weight(1f)) {
                         Text(p.effectiveDisplayName ?: p.username ?: "(bez nazwy)", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)

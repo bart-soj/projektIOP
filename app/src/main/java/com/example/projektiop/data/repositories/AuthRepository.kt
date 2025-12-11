@@ -1,8 +1,6 @@
 package com.example.projektiop.data.repositories
 
 import android.content.Context
-import arrow.core.Either
-import arrow.core.raise.result
 import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.data.api.RegisterRequest
 import com.example.projektiop.data.api.LoginRequest
@@ -50,6 +48,7 @@ object AuthRepository {
 
         } catch (e: Exception) {
             Result.Error(DataError.Network.UNKNOWN)
+
         }
     }
 
