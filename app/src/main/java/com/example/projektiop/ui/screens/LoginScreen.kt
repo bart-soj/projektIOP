@@ -1,8 +1,5 @@
 package com.example.projektiop.ui.screens
 
-import android.content.Context
-import android.util.Log
-import android.util.Patterns
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,10 +24,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.projektiop.R
+import com.example.projektiop.data.repositories.AuthEvent
 import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
 import com.example.projektiop.ui.components.SwitchWithText
 import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.ui.viewmodels.AuthEvent
+import com.example.projektiop.ui.components.ObserveAsEvents
 import com.example.projektiop.ui.viewmodels.AuthViewModel
 
 @Composable
@@ -47,19 +45,13 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
     val inputsValid by viewModel.inputsValid.collectAsState()
 
 
-    val authEvents = viewModel.authEvent.collectAsStateWithLifecycle(null)
+    val authEvents = viewModel.authEventFlow
 
-    LaunchedEffect(authEvents.value) {
-        when (val event = authEvents.value) {
-            is AuthEvent.Success -> navController.navigate("main") {
-                popUpTo("login") { inclusive = true }
-            }
-            is AuthEvent.Error -> {}
-            else -> {}
-        }
-    }
-
-
+    ObserveAsEvents(authEvents) { event -> when(event) {
+        is AuthEvent.Error -> {}
+        AuthEvent.Logout -> {}
+        AuthEvent.Success -> navController.navigate("main")
+    } }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -174,11 +166,4 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun LoginScreenPreview() {
-    val navController = NavController(LocalContext.current)
-    LoginScreen(navController, AuthViewModel(authRepository = AuthRepository))
 }

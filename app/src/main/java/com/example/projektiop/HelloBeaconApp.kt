@@ -27,9 +27,6 @@ class HelloBeaconApp : Application() {
 
     val bluetoothRepository by lazy { BluetoothRepository(this) }
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    val appModule = module {
-
-    }
 
     override fun onCreate() {
         super.onCreate()
@@ -37,17 +34,17 @@ class HelloBeaconApp : Application() {
         startKoin {
             androidLogger()
             androidContext(this@HelloBeaconApp)
-            modules(appModule)
+            modules(rootKoinModule)
         }
 
         RealmProvider.init(this)
         DBRepository.init(RealmProvider.getRealm())
         SharedPreferencesRepository.init(this)
-        UserRepository.init(this)
+        UserRepository.init()
         applicationScope.launch{
+            AuthRepository.init()
             InterestRepository.init()
         }
-        // ChatUpdateManager.start(this)
         NotificationHelper.initChannels(this)
         com.example.projektiop.data.repositories.ChatRepository.init(this)
     }

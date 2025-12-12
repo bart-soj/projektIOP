@@ -28,7 +28,6 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 
 
-private const val PREFS_NAME = "auth_prefs"
 private const val EMAIL = "my_email"
 private const val ID = "_id"
 
@@ -36,7 +35,6 @@ private const val ID = "_id"
 object UserRepository {
     private var id: String? = null
     // private var email: String? = null
-    private var prefs: SharedPreferences? = null
     private val _MyUserInterests = MutableStateFlow<List<UserInterestDto>?>(null)
     val MyUserInterests: StateFlow<List<UserInterestDto>?> = _MyUserInterests.asStateFlow()
 
@@ -44,15 +42,12 @@ object UserRepository {
     val repositoryCache: StateFlow<Map<String, OtherUserRepository>> = _repositoryCache.asStateFlow()
     val myUserFlow: Flow<User?>
         get() {
-            assert(!id.isNullOrBlank())
+            // assert(!id.isNullOrBlank())
             return DBRepository.getUserFlowById(id!!)
         }
 
-    fun init(context: Context) {
-        if (prefs == null) {
-            prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            updateMyId()
-        }
+    fun init() {
+        updateMyId()
     }
 
     fun updateMyId() {

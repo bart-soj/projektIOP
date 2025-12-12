@@ -55,7 +55,10 @@ class HostBasedCardEmulatorActivity : ComponentActivity() {
             ProjektIOPTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     SimpleDistinguishableView (
-                        modifier = Modifier.padding(innerPadding)
+                        text = "HBCEA",
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .background(Color.Green)
                     )
                 }
             }
@@ -90,28 +93,5 @@ class HostBasedCardEmulatorActivity : ComponentActivity() {
             component = ComponentName("com.example.projektiop", "com.example.projektiop.activeHandshake.NFC.HCEApduService")
         }
         this.bindService(intent, serviceConnection, BIND_AUTO_CREATE)
-    }
-}
-
-@Composable
-fun SimpleDistinguishableView(
-    modifier: Modifier = Modifier
-) {
-    Surface (
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color.Green)
-    ) {
-        Box {
-            Text(text = "HBCEA")
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    ProjektIOPTheme {
-        SimpleDistinguishableView()
     }
 }

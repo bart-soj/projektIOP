@@ -12,29 +12,22 @@ import androidx.core.content.ContextCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.example.projektiop.data.repositories.AuthRepository
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.projektiop.ui.theme.ProjektIOPTheme
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import com.example.projektiop.data.repositories.ThemePreference
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
+import com.example.projektiop.BluetoothLE.BLEActions
 import com.example.projektiop.BluetoothLE.BLEService
-import com.example.projektiop.BluetoothLE.BLEService.Actions
 import com.example.projektiop.ui.screens.ChatsScreen
 
 import com.example.projektiop.ui.screens.StartScreen
@@ -49,19 +42,22 @@ import com.example.projektiop.ui.screens.FriendProfileScreen
 
 import com.example.projektiop.ui.viewmodels.ScannerViewModel
 import com.example.projektiop.BluetoothLE.BTPermissionsManager
-import com.example.projektiop.data.repositories.ChatUpdateManager
+import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.ChatUpdateService
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
-import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.ui.screens.ChatDetailScreen
-import com.example.projektiop.ui.viewmodels.AuthEvent
 import com.example.projektiop.ui.viewmodels.AuthViewModel
 import com.example.projektiop.ui.viewmodels.ChatsViewModel
 import com.example.projektiop.ui.viewmodels.MainViewModel
-import com.example.projektiop.ui.viewmodels.ScannerViewModelFactory
 import com.example.projektiop.ui.viewmodels.SettingsViewModel
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
+import org.koin.androidx.compose.koinViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinActivityViewModel
+import com.example.projektiop.data.repositories.AuthEvent
 
 class MainActivity : ComponentActivity() {
 
@@ -82,20 +78,20 @@ class MainActivity : ComponentActivity() {
         }
 
 
-    private val localScannerViewModel: ScannerViewModel by viewModels {
-        ScannerViewModelFactory(application)
-    }
+    private val scannerViewModel: ScannerViewModel by viewModel()
     private val localBTPermissionsManager: BTPermissionsManager by lazy {
         BTPermissionsManager(this)
     }
 
-    private val localAuthViewModel: AuthViewModel = AuthViewModel(AuthRepository)
+    private val authViewModel: AuthViewModel by viewModel()
+    private val authRepository: AuthRepository by inject()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MyApp(localScannerViewModel, localAuthViewModel, ThemePreference)
+            MyApp()
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -107,7 +103,7 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                localAuthViewModel.authEvent.collect { event ->
+                authRepository.authEvent.collect { event ->
                     when (event) {
                         is AuthEvent.Success -> {
                             FriendshipRepository.start()
@@ -124,39 +120,39 @@ class MainActivity : ComponentActivity() {
 
 
         lifecycleScope.launch {
-            localScannerViewModel.uiEvents.collect { event ->
+            scannerViewModel.bleEvents.collect { event ->
                 when (event) {
-                    ScannerViewModel.Actions.STOP -> {
+                    BLEActions.STOP -> {
                         val intent = Intent(this@MainActivity, BLEService::class.java).apply {
-                            action = Actions.STOP.toString()
+                            action = BLEActions.STOP.toString()
                         }
                         startService(intent)
                     }
-                    ScannerViewModel.Actions.START_SCAN -> {
+                    BLEActions.START_SCAN -> {
                         localBTPermissionsManager.requestBluetoothPermissions(this@MainActivity, permissionsLauncher)
                         localBTPermissionsManager.showBluetoothLocationSnackbar(this@MainActivity)
                         val intent = Intent(this@MainActivity, BLEService::class.java).apply {
-                            action = Actions.START_SCAN.toString()
+                            action = BLEActions.START_SCAN.toString()
                         }
                         startService(intent)
                     }
-                    ScannerViewModel.Actions.STOP_SCAN -> {
+                    BLEActions.STOP_SCAN -> {
                         val intent = Intent(this@MainActivity, BLEService::class.java).apply {
-                            action = Actions.STOP_SCAN.toString()
+                            action = BLEActions.STOP_SCAN.toString()
                         }
                         startService(intent)
                     }
-                    ScannerViewModel.Actions.START_ADVERTISE -> {
+                    BLEActions.START_ADVERTISE -> {
                         localBTPermissionsManager.requestBluetoothPermissions(this@MainActivity, permissionsLauncher)
                         localBTPermissionsManager.showBluetoothLocationSnackbar(this@MainActivity)
                         val intent = Intent(this@MainActivity, BLEService::class.java).apply {
-                            action = Actions.START_ADVERTISE.toString()
+                            action = BLEActions.START_ADVERTISE.toString()
                         }
                         startService(intent)
                     }
-                    ScannerViewModel.Actions.STOP_ADVERTISE -> {
+                    BLEActions.STOP_ADVERTISE -> {
                         val intent = Intent(this@MainActivity, BLEService::class.java).apply {
-                            action = Actions.STOP_ADVERTISE.toString()
+                            action = BLEActions.STOP_ADVERTISE.toString()
                         }
                         startService(intent)
                     }
@@ -166,6 +162,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 private fun MainActivity.showPermissionDeniedMessage(context: Context, permission: String) {
     Log.w("BLE_PERMISSIONS", "Użytkownik odmówił uprawnienia: $permission. Funkcjonalność może być ograniczona.")
     Toast.makeText(context, "Odmówiono uprawnienia: $permission", Toast.LENGTH_SHORT).show()
@@ -173,7 +170,11 @@ private fun MainActivity.showPermissionDeniedMessage(context: Context, permissio
 
 
 @Composable
-fun MyApp(scannerViewModel: ScannerViewModel, authViewModel: AuthViewModel, themePreference: ThemePreference) {
+fun MyApp() {
+    val authViewModel: AuthViewModel = koinActivityViewModel()
+    val scannerViewModel: ScannerViewModel = koinActivityViewModel()
+    val themePreference: ThemePreference = koinInject<ThemePreference>()
+
     val darkMode by themePreference.isDark.collectAsState()
     val navController = rememberNavController()
     val startDestination = if (SharedPreferencesRepository.get("auth_token", "").isBlank()) "start" else "main" // TODO() better logged-in status verification
@@ -190,8 +191,8 @@ fun MyApp(scannerViewModel: ScannerViewModel, authViewModel: AuthViewModel, them
                     viewModel = scannerViewModel
                 )
             }
-            composable("main") { MainScreen(navController, viewModel = MainViewModel()) }
-            composable("chats") { ChatsScreen(navController, viewModel = ChatsViewModel()) }
+            composable("main") { MainScreen(navController) }
+            composable("chats") { ChatsScreen(navController) }
             composable("chat_detail?chatId={chatId}&friendId={friendId}",
                 arguments = listOf(
                     navArgument("chatId") { nullable = true; defaultValue = null },
@@ -203,8 +204,7 @@ fun MyApp(scannerViewModel: ScannerViewModel, authViewModel: AuthViewModel, them
                 val friendName = backStack.arguments?.getString("friendName")
                 ChatDetailScreen(navController, chatId, friendId)
             }
-            composable("settings") { SettingsScreen(navController, authViewModel = authViewModel,
-                SettingsViewModel(ThemePreference, UserRepository, FriendshipRepository)) }
+            composable("settings") { SettingsScreen(navController, authViewModel = authViewModel) }
             composable("edit_profile") { EditProfileScreen(navController) }
             composable("friends_list") { FriendsListScreen(navController) }
             composable(
@@ -223,13 +223,5 @@ fun MyApp(scannerViewModel: ScannerViewModel, authViewModel: AuthViewModel, them
                 FriendProfileScreen(navController, uid, uname, dname, avatar)
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    ProjektIOPTheme() {
-        ScannerScreen(navController = rememberNavController(), viewModel = viewModel())
     }
 }

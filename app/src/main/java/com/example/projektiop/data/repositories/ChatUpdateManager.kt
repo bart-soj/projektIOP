@@ -15,6 +15,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 object ChatUpdateManager { // TODO() start it at appropriate place, bugged now, make into a service
@@ -22,21 +23,17 @@ object ChatUpdateManager { // TODO() start it at appropriate place, bugged now, 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val _chatsFlow = MutableStateFlow<List<ChatListItem>>(emptyList())
     val chatsFlow: StateFlow<List<ChatListItem>> = _chatsFlow
-    val myUserFlow = UserRepository.myUserFlow
     val MyUserStateFlow = MutableStateFlow<User?>(null)
 
     @Volatile private var started = false
     private val lastMessageTimes: MutableMap<String, String?> = mutableMapOf()
 
-    init {
-        scope.launch {
-            myUserFlow.collect { value -> MyUserStateFlow.value = value }
-        }
-    }
-
     fun start(context: Context) {
         if (started) return
         started = true
+        scope.launch {
+            UserRepository.myUserFlow.collect { value -> MyUserStateFlow.value = value }
+        }
 
         if (MyUserStateFlow.value != null ) {
             scope.launch {

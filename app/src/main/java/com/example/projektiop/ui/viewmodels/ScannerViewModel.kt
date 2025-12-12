@@ -1,10 +1,9 @@
 package com.example.projektiop.ui.viewmodels
 
 import android.app.Application
-import android.content.Context
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.projektiop.BluetoothLE.BLEActions
 import com.example.projektiop.BluetoothLE.BluetoothRepository
 import com.example.projektiop.HelloBeaconApp
 import com.example.projektiop.data.api.UserInterestDto
@@ -12,7 +11,6 @@ import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.db.objects.FriendshipStatus
 import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.mapping.toRealm
-import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.OtherUserRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
@@ -43,7 +41,7 @@ data class UserWithStatus(val user: User, val status: FriendshipStatus)
 data class UserWithInfo(val user: User, val status: FriendshipStatus, val friendId: String?)
 
 
-class ScannerViewModel(application: Application) : ViewModel() {
+class ScannerViewModel(application: Application, private val userRepository: UserRepository, private val friendshipRepository: FriendshipRepository) : ViewModel() {
 
     // userId z SharedPreferences
     private val userId: String = SharedPreferencesRepository.get(ID, "brak")
@@ -51,8 +49,8 @@ class ScannerViewModel(application: Application) : ViewModel() {
     // Instancja BLE managera z kontekstem aplikacji, aby uniknąć wycieków pamięci
     private val bleManager: BluetoothRepository = (application as HelloBeaconApp).bluetoothRepository
 
-    private val _uiEvents = MutableSharedFlow<Actions>()
-    val uiEvents = _uiEvents.asSharedFlow<Actions>()
+    private val _bleEvents = MutableSharedFlow<BLEActions>()
+    val bleEvents = _bleEvents.asSharedFlow<BLEActions>()
 
     // Publiczne StateFlow do obserwowania w UI
     val isScanning: StateFlow<Boolean> = bleManager.isScanning
@@ -61,10 +59,10 @@ class ScannerViewModel(application: Application) : ViewModel() {
     val foundDeviceIds: StateFlow<List<String>> = bleManager.foundDeviceIds
     //private val _user = MutableStateFlow<User?>(null)
     //val user: StateFlow<User?> = _user.asStateFlow()
-    val myInterests: StateFlow<List<UserInterestDto>?> = UserRepository.MyUserInterests
-    val friendsIds: StateFlow<List<String>> = FriendshipRepository.friendsIds
-    val pendingIds: StateFlow<List<String>> = FriendshipRepository.pendingIds
-    val blockedIds: StateFlow<List<String>> = FriendshipRepository.blockedIds
+    val myInterests: StateFlow<List<UserInterestDto>?> = userRepository.MyUserInterests
+    val friendsIds: StateFlow<List<String>> = friendshipRepository.friendsIds
+    val pendingIds: StateFlow<List<String>> = friendshipRepository.pendingIds
+    val blockedIds: StateFlow<List<String>> = friendshipRepository.blockedIds
     val combinedIds: StateFlow<Triple<List<String>, List<String>, List<String>>> = combine(
         friendsIds,
         pendingIds,
@@ -182,7 +180,7 @@ class ScannerViewModel(application: Application) : ViewModel() {
                 val idsToFetch = currentIds.filter { it !in existingProfileIds }
                 if (idsToFetch.isNotEmpty()) {
                     val newProfiles = idsToFetch.map { id ->
-                        UserRepository.fetchUserById(id)
+                        userRepository.fetchUserById(id)
                     }.mapNotNull { result -> result.getOrNull() }
                     _userProfiles.update { oldProfiles ->
                         val updatedOldProfiles = oldProfiles.filter { it._id in currentIds }
@@ -202,7 +200,7 @@ class ScannerViewModel(application: Application) : ViewModel() {
                 val idsToFetch = currentIds.filter { it !in existingProfileIds }
                 if (idsToFetch.isNotEmpty()) {
                     val newProfiles = idsToFetch.map { id ->
-                        UserRepository.ensureRepository(id)
+                        userRepository.ensureRepository(id)
                     }.mapNotNull { result -> result.getOrNull() }
                     _userRepositories.update { oldProfiles ->
                         val updatedOldProfiles = oldProfiles.filter { it.getId() in currentIds }
@@ -218,36 +216,32 @@ class ScannerViewModel(application: Application) : ViewModel() {
     }
 
     fun addFriend(userId: String): Unit {
-        viewModelScope.launch{ FriendshipRepository.sendFriendRequest(userId) }
+        viewModelScope.launch{ friendshipRepository.sendFriendRequest(userId) }
     }
 
     // Akcje BLE
     fun startScan() {
         viewModelScope.launch {
-            _uiEvents.emit(Actions.START_SCAN)
+            _bleEvents.emit(BLEActions.START_SCAN)
         }
     }
     fun stopScan() {
         viewModelScope.launch {
-            _uiEvents.emit(Actions.STOP_SCAN)
+            _bleEvents.emit(BLEActions.STOP_SCAN)
         }
     }
     fun startAdvertising() {
         viewModelScope.launch {
-            _uiEvents.emit(Actions.START_ADVERTISE)
+            _bleEvents.emit(BLEActions.START_ADVERTISE)
         }
     }
     fun stopAdvertising() {
         viewModelScope.launch {
-            _uiEvents.emit(Actions.STOP_ADVERTISE)
+            _bleEvents.emit(BLEActions.STOP_ADVERTISE)
         }
     }
 
     fun getUserId(): String = userId
-
-    enum class Actions {
-       STOP, START_SCAN, STOP_SCAN, START_ADVERTISE, STOP_ADVERTISE
-    }
 }
 
 
@@ -256,15 +250,4 @@ fun cosineSimilarity(a: Set<String>, b: Set<String>): Double {
 
     val intersectionSize = a.intersect(b).size
     return intersectionSize / sqrt(a.size.toDouble() * b.size.toDouble())
-}
-
-
-class ScannerViewModelFactory(private val application: Application): ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ScannerViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return ScannerViewModel(application) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
 }

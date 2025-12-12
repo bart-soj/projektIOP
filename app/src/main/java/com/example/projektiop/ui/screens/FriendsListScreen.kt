@@ -23,13 +23,14 @@ import com.example.projektiop.screens.components.PendingRequestCard
 import com.example.projektiop.screens.friends.FriendsUiEffect
 import com.example.projektiop.screens.friends.FriendsViewModel
 import com.example.projektiop.util.NotificationHelper
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendsListScreen(
     navController: NavController,
-    viewModel: FriendsViewModel = viewModel()
 ) {
+    val viewModel = koinViewModel<FriendsViewModel>()
     val context = LocalContext.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route

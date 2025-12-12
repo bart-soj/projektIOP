@@ -20,6 +20,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 
+enum class BLEActions {
+    STOP, START_SCAN, STOP_SCAN, START_ADVERTISE, STOP_ADVERTISE
+}
+
+
 class BLEService : Service() {
     private lateinit var bleManager: BluetoothRepository
     private lateinit var userId: String
@@ -28,11 +33,11 @@ class BLEService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when(intent?.action) {
-            Actions.STOP.toString() -> { stop(); return START_NOT_STICKY }
-            Actions.START_ADVERTISE.toString() -> startAdvertise()
-            Actions.START_SCAN.toString() -> startScan()
-            Actions.STOP_SCAN.toString() -> stopScan()
-            Actions.STOP_ADVERTISE.toString() -> stopAdvertise()
+            BLEActions.STOP.toString() -> { stop(); return START_NOT_STICKY }
+            BLEActions.START_ADVERTISE.toString() -> startAdvertise()
+            BLEActions.START_SCAN.toString() -> startScan()
+            BLEActions.STOP_SCAN.toString() -> stopScan()
+            BLEActions.STOP_ADVERTISE.toString() -> stopAdvertise()
         }
         return START_STICKY
     }
@@ -85,7 +90,7 @@ class BLEService : Service() {
             .setContentTitle("HelloBeacon")
             .setContentText(text)
             .setSmallIcon(R.mipmap.ic_launcher_round)
-            .setDeleteIntent(PendingIntent.getService(this, 0, Intent(this, BLEService::class.java).apply {action=Actions.STOP.toString()}, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+            .setDeleteIntent(PendingIntent.getService(this, 0, Intent(this, BLEService::class.java).apply {action=BLEActions.STOP.toString()}, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE))
             .build()
     }
 
@@ -94,9 +99,5 @@ class BLEService : Service() {
     override fun onDestroy() {
         stop()
         super.onDestroy()
-    }
-
-    enum class Actions {
-        STOP, START_SCAN, STOP_SCAN, START_ADVERTISE, STOP_ADVERTISE
     }
 }

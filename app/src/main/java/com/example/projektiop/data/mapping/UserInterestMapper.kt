@@ -3,6 +3,7 @@ package com.example.projektiop.data.mapping
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.db.objects.UserInterest
 import com.example.projektiop.data.repositories.DBRepository
+import io.realm.kotlin.types.RealmInstant
 
 fun UserInterestDto.toRealm(userId: String): UserInterest {
 
@@ -22,13 +23,13 @@ fun UserInterestDto.toRealm(userId: String): UserInterest {
         interest = interest,
         customDescription = this.customDescription ?: "",
         // createdAt = TODO(),
-        // updatedAt = TODO()
+        updatedAt = RealmInstant.now()
     )
 }
 
 fun UserInterest.toDto(): UserInterestDto {
     return UserInterestDto(
-        userInterestId = this._id.toString(),
+        userInterestId = this._id.toHexString(),
         interest = this.interest!!.toDto(),
         customDescription = this.customDescription
     )
