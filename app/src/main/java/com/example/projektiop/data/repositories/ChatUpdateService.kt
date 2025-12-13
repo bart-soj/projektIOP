@@ -8,7 +8,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Binder
-import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -57,14 +56,6 @@ class ChatUpdateService(): Service(), KoinComponent {
     override fun onCreate() {
         super.onCreate()
         Log.d("ChatUpdateService", "Service Created")
-        UserRepository.updateMyId()
-        val storedId = SharedPreferencesRepository.get("_id", "")
-
-        if (storedId.isBlank()) {
-            Log.w("ChatUpdateService", "No user logged in.")
-            stopSelf()
-            return
-        }
 
         startForegroundServiceNotification()
 

@@ -116,8 +116,8 @@ object AuthRepository {
             Result.Error(DataError.Network.REQUEST_TIMEOUT)
 
         } catch (e: UnknownHostException) {
-            Result.Error(DataError.Network.NO_INTERNET)
-
+            // Result.Error(DataError.Network.NO_INTERNET)
+            Result.Error(DataError.Network.SERVER_ERROR)
         } catch (e: IOException) {
             Result.Error(DataError.Network.NO_INTERNET)
 

@@ -23,7 +23,6 @@ fun UserInterestDto.toRealm(userId: String): UserInterest {
         interest = interest,
         customDescription = this.customDescription ?: "",
         // createdAt = TODO(),
-        updatedAt = RealmInstant.now()
     )
 }
 

@@ -61,6 +61,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
 import com.example.projektiop.data.repositories.AuthEvent
+import com.example.projektiop.data.repositories.ChatRepository
 
 class MainActivity : ComponentActivity() {
 
@@ -86,21 +87,16 @@ class MainActivity : ComponentActivity() {
 
     private val authRepository: AuthRepository by inject()
 
-    // TODO() wywalic to
-    private val chatsViewModel: ChatsViewModel by viewModel()
-
-    // Zmienne do obsługi serwisu powiadomień
     private var chatService: ChatUpdateService? = null
     private var isBound = false
 
-    // Połączenie serwisu
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             val binder = service as ChatUpdateService.LocalBinder
             chatService = binder.getService()
             isBound = true
 
-            chatsViewModel.connectToService(chatService!!.chatsFlow)
+            ChatRepository.connectToService(chatService!!.chatsFlow)
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
@@ -129,14 +125,17 @@ class MainActivity : ComponentActivity() {
                     when (event) {
                         is AuthEvent.Success -> {
                             FriendshipRepository.start()
-                            val token = SharedPreferencesRepository.get("auth_token", "") // sprawdzane logowanie
-                            if (token.isNotBlank()) {
-                                val intent = Intent(this, ChatUpdateService::class.java)
-                                startForegroundService(intent)
+                            val intent = Intent(this@MainActivity, ChatUpdateService::class.java)
+                            startForegroundService(intent)
+                            Intent(this@MainActivity, ChatUpdateService::class.java).also { intent ->
+                                bindService(intent, serviceConnection, Context.BIND_ADJUST_WITH_ACTIVITY)
                             }
-                            startService(Intent(this@MainActivity, ChatUpdateService::class.java))
                         }
                         is AuthEvent.Logout -> {
+                            if (isBound) {
+                                unbindService(serviceConnection)
+                                isBound = false
+                            }
                             stopService(Intent(Intent(this@MainActivity, ChatUpdateService::class.java)))
                         }
                         else -> {}
@@ -188,15 +187,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Bindowanie serwisu gdy aplikacja jest widoczna
     override fun onStart() {
         super.onStart()
         Intent(this, ChatUpdateService::class.java).also { intent ->
-            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+            bindService(intent, serviceConnection, Context.BIND_ADJUST_WITH_ACTIVITY)
         }
     }
 
-    // Odpinanie serwisu gdy aplikacja znika
     override fun onStop() {
         super.onStop()
         if (isBound) {

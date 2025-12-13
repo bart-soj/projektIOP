@@ -55,6 +55,10 @@ class ChatsViewModel(
                 _myUser.value = value
             }
         }
+        viewModelScope.launch {
+            chatRepository.chats.collect { newList ->
+                _chats.value = newList            }
+        }
     }
 
     fun refreshAll() {
@@ -76,12 +80,5 @@ class ChatsViewModel(
 
     fun searchFor(string: String) {
         _searchText.value = string
-    }
-
-    fun connectToService(serviceFlow: StateFlow<List<ChatListItem>>) {
-        viewModelScope.launch {
-            serviceFlow.collect { newList ->
-                _chats.value = newList            }
-        }
     }
 }

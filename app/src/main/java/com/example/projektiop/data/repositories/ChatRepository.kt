@@ -7,6 +7,8 @@ import kotlinx.coroutines.withContext
 import android.content.Context
 import android.content.SharedPreferences
 import com.example.projektiop.data.mapping.toUserProfileResponse
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 private const val BASE_URL_KEY: String = "BASE_URL"
 
@@ -55,6 +57,9 @@ data class ChatListItem(
 )
 
 object ChatRepository {
+
+    lateinit var chats: StateFlow<List<ChatListItem>>
+
     private fun normalizeUrl(url: String?): String? {
         if (url.isNullOrBlank()) return null
         val trimmed = url.trim()
@@ -144,5 +149,9 @@ object ChatRepository {
             val r = RetrofitInstance.chatApi.sendMessage(mapOf("chatId" to chatId, "content" to content))
             if (r.isSuccessful) Result.success(r.body()!!) else Result.failure(Exception("Błąd wysyłania (${r.code()})"))
         } catch (e: Exception) { Result.failure(e) }
+    }
+
+    fun connectToService(serviceFlow: StateFlow<List<ChatListItem>>) {
+        chats = serviceFlow
     }
 }
