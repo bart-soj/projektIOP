@@ -1,11 +1,14 @@
 package com.example.projektiop
 
 import android.Manifest
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.Build
 import android.content.pm.PackageManager
+import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -72,20 +75,41 @@ class MainActivity : ComponentActivity() {
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (!granted) {
-                // Optional: could show a Snackbar/toast; keeping silent for now
-            }
+            // Obsługa powiadomień
         }
 
 
     private val scannerViewModel: ScannerViewModel by viewModel()
+
     private val localBTPermissionsManager: BTPermissionsManager by lazy {
         BTPermissionsManager(this)
     }
 
     private val authViewModel: AuthViewModel by viewModel()
+
     private val authRepository: AuthRepository by inject()
 
+    private val chatsViewModel: ChatsViewModel by viewModel()
+
+    // Zmienne do obsługi serwisu powiadomień
+    private var chatService: ChatUpdateService? = null
+    private var isBound = false
+
+    // Połączenie serwisu
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            val binder = service as ChatUpdateService.LocalBinder
+            chatService = binder.getService()
+            isBound = true
+
+            chatsViewModel.connectToService(chatService!!.chatsFlow)
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            isBound = false
+            chatService = null
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,21 +125,10 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                authRepository.authEvent.collect { event ->
-                    when (event) {
-                        is AuthEvent.Success -> {
-                            FriendshipRepository.start()
-                            startService(Intent(this@MainActivity, ChatUpdateService::class.java))
-                        }
-                        is AuthEvent.Logout -> {
-                            stopService(Intent(Intent(this@MainActivity, ChatUpdateService::class.java)))
-                        }
-                        else -> {}
-                    }
-                }
-            }
+        val token = SharedPreferencesRepository.get("auth_token", "") // sprawdzane logowanie
+        if (token.isNotBlank()) {
+            val intent = Intent(this, ChatUpdateService::class.java)
+            startForegroundService(intent)
         }
 
 
@@ -158,6 +171,23 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    // Bindowanie serwisu gdy aplikacja jest widoczna
+    override fun onStart() {
+        super.onStart()
+        Intent(this, ChatUpdateService::class.java).also { intent ->
+            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    // Odpinanie serwisu gdy aplikacja znika
+    override fun onStop() {
+        super.onStop()
+        if (isBound) {
+            unbindService(serviceConnection)
+            isBound = false
         }
     }
 }
