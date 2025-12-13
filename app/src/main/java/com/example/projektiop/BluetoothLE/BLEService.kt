@@ -18,6 +18,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 
 
 enum class BLEActions {
@@ -26,25 +27,30 @@ enum class BLEActions {
 
 
 class BLEService : Service() {
+    private val sharedPreferencesRepository by inject<SharedPreferencesRepository>()
     private lateinit var bleManager: BluetoothRepository
     private lateinit var userId: String
     private val notificationId: Int = 1
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when(intent?.action) {
-            BLEActions.STOP.toString() -> { stop(); return START_NOT_STICKY }
+        when (intent?.action) {
+            BLEActions.STOP.toString() -> {
+                stop(); return START_NOT_STICKY
+            }
+
             BLEActions.START_ADVERTISE.toString() -> startAdvertise()
             BLEActions.START_SCAN.toString() -> startScan()
             BLEActions.STOP_SCAN.toString() -> stopScan()
             BLEActions.STOP_ADVERTISE.toString() -> stopAdvertise()
         }
+
         return START_STICKY
     }
 
     override fun onCreate() {
         super.onCreate()
-        userId = SharedPreferencesRepository.get("_id", "brak")
+        userId = sharedPreferencesRepository.get("_id", "")
         startForeground(notificationId, createNotification("Idle."))
         bleManager = (application as HelloBeaconApp).bluetoothRepository
         serviceScope.launch {
@@ -73,7 +79,8 @@ class BLEService : Service() {
     }
 
     private fun startAdvertise() {
-        bleManager.startAdvertising()
+        assert(userId.isNotBlank())
+        bleManager.startAdvertising(userId)
     }
 
     private fun stopScan() {

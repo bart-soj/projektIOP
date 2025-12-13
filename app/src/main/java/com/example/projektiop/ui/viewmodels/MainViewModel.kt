@@ -18,9 +18,6 @@ private const val ID: String = "_id"
 
 class MainViewModel(private val userRepository: UserRepository) : ViewModel() {
 
-    // userId z SharedPreferences
-    private val userId: String = SharedPreferencesRepository.get(ID, "brak")
-
     val myInterests: StateFlow<List<UserInterestDto>?> = userRepository.MyUserInterests
     private val _loading = MutableStateFlow(false)
 

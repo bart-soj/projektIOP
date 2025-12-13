@@ -123,7 +123,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
             _errorMessage.value = null
 
             viewModelScope.launch {
-                val result = AuthRepository.register(email, username, password)
+                val result = AuthRepository.register(username, email, password)
 
                 when (result) {
                     is Result.Error -> {

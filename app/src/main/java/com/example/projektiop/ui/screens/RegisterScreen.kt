@@ -42,7 +42,6 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun RegisterScreen(navController: NavController) {
     val viewModel = koinViewModel<AuthViewModel>()
-    val context = LocalContext.current
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }

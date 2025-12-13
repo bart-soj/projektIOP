@@ -53,7 +53,7 @@ object AuthRepository {
             val response = RetrofitInstance.authApi.login(LoginRequest(email, password))
             saveInfo(email, response.body()?._id) // TODO() handle saving errors
             token = response.body()?.token
-            if (!token.isNullOrBlank()) saveToken(token, remember = rememberMe.value) else throw Exception("bad token") // TODO() better token validation
+            if (validateToken(token)) saveToken(token, remember = rememberMe.value) else throw Exception("bad token")
             _authEvent.emit(AuthEvent.Success)
             Result.Success(token)
         } catch (e: HttpException) {
@@ -73,16 +73,12 @@ object AuthRepository {
             }
         } catch (e: SocketTimeoutException) {
             Result.Error(DataError.Network.REQUEST_TIMEOUT)
-
         } catch (e: UnknownHostException) {
-            Result.Error(DataError.Network.NO_INTERNET)
-
+            Result.Error(DataError.Network.SERVER_ERROR)
         } catch (e: IOException) {
             Result.Error(DataError.Network.NO_INTERNET)
-
         } catch (e: SerializationException) {
             Result.Error(DataError.Network.SERIALIZATION)
-
         } catch (e: Exception) {
             Result.Error(DataError.Network.UNKNOWN)
         }
@@ -94,7 +90,7 @@ object AuthRepository {
             val response = RetrofitInstance.authApi.register(RegisterRequest(username, email, password))
             saveInfo(email, response.body()?._id) // TODO() handle saving errors
             token = response.body()?.token
-            if (!token.isNullOrBlank()) saveToken(token, remember = rememberMe.value) else throw Exception("bad token") // TODO() better token validation
+            if (validateToken(token)) saveToken(token, remember = rememberMe.value) else throw Exception("bad token")
             _authEvent.emit(AuthEvent.Success)
             Result.Success(token)
         } catch (e: HttpException) {
@@ -116,7 +112,6 @@ object AuthRepository {
             Result.Error(DataError.Network.REQUEST_TIMEOUT)
 
         } catch (e: UnknownHostException) {
-            // Result.Error(DataError.Network.NO_INTERNET)
             Result.Error(DataError.Network.SERVER_ERROR)
         } catch (e: IOException) {
             Result.Error(DataError.Network.NO_INTERNET)
@@ -162,9 +157,26 @@ object AuthRepository {
         UserRepository.updateMyId()
     }
 
+    fun onTerminate() {
+        if (!rememberMe.value) {
+            clearToken()
+        }
+    }
+
 
     fun clearToken() {
         SharedPreferencesRepository.set(KEY_REMEMBER, false)
         SharedPreferencesRepository.remove(KEY_TOKEN)
+    }
+
+    fun validateToken(token: String?): Boolean {  // TODO() better token validation
+
+        if (token.isNullOrBlank())
+            return false
+
+        if (token.length < 16) // from server code
+            return false
+
+        return true
     }
 }

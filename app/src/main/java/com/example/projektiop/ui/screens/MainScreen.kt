@@ -59,7 +59,6 @@ fun MainScreen(navController: NavController) {
         }
     ) { paddingValues ->
         val isLoading by viewModel.loading.collectAsState()
-        val scope = rememberCoroutineScope()
 
         PullToRefresh(
             refreshing = isLoading,

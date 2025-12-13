@@ -1,6 +1,5 @@
 package com.example.projektiop.BluetoothLE
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
@@ -15,26 +14,14 @@ import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.location.LocationManager
-import android.os.Build
 import android.os.ParcelUuid
-import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.result.ActivityResultLauncher
-import androidx.core.app.ActivityCompat
-import androidx.core.location.LocationManagerCompat
-import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.repositories.OtherUserRepository
-import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import java.nio.charset.Charset
 import java.util.UUID
 
@@ -49,7 +36,6 @@ private const val TAG_PERMISSIONS = "BLE_PERMISSIONS"
 private const val ID: String = "_id"
 
 class BluetoothRepository(private val context: Context) {
-    private val ownUserId = SharedPreferencesRepository.get(ID, "")
     private val bluetoothManager: BluetoothManager by lazy {
         context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     }
@@ -152,7 +138,6 @@ class BluetoothRepository(private val context: Context) {
         ) {
             super.onAdvertisingSetStarted(advertisingSet, txPower, status)
             if (status == ADVERTISE_SUCCESS) {
-                Log.i(TAG_ADVERTISE, ">>> Rozgłaszanie rozpoczęte pomyślnie (ID: $ownUserId, UUID: $SERVICE_UUID) <<<")
                 this@BluetoothRepository.advertisingSet = advertisingSet
                 _isAdvertising.value = true
             } else {
@@ -256,7 +241,7 @@ class BluetoothRepository(private val context: Context) {
     }
 
     @SuppressLint("MissingPermission")
-    fun startAdvertising() {
+    fun startAdvertising(ownUserId: String) {
         if (!permissionsManager.hasPermissions(permissionsManager.getRequiredPermissionsAdvertise())) {
             _foundDeviceStatus.value = "Status: Brak uprawnień rozgł."
             return

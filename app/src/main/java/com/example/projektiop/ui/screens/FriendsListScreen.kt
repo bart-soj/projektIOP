@@ -47,6 +47,9 @@ fun FriendsListScreen(
                 is FriendsUiEffect.ShowToast -> Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    LaunchedEffect(Unit) {
         viewModel.refreshAll()
     }
 

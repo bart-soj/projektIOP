@@ -97,7 +97,7 @@ class ScannerViewModel(application: Application, private val userRepository: Use
         initialValue = emptyList()
     )
 
-    val users: StateFlow<List<UserWithStatus>> = combine (
+    val usersFromRepo: StateFlow<List<UserWithStatus>> = combine (
         myInterests,
         _userFlows,
         combinedIds
@@ -134,7 +134,7 @@ class ScannerViewModel(application: Application, private val userRepository: Use
     )
 
     private val _userProfiles = MutableStateFlow<List<UserProfileResponse>>(emptyList())
-    val userProfiles: StateFlow<List<UserWithStatus>> = combine(
+    val users: StateFlow<List<UserWithStatus>> = combine(
         _userProfiles,
         myInterests,
         friendsIds,

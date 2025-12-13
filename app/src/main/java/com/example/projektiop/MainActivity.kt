@@ -50,18 +50,14 @@ import com.example.projektiop.data.repositories.ChatUpdateService
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.ui.screens.ChatDetailScreen
-import com.example.projektiop.ui.viewmodels.AuthViewModel
-import com.example.projektiop.ui.viewmodels.ChatsViewModel
-import com.example.projektiop.ui.viewmodels.MainViewModel
-import com.example.projektiop.ui.viewmodels.SettingsViewModel
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
-import org.koin.androidx.compose.koinViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
 import com.example.projektiop.data.repositories.AuthEvent
 import com.example.projektiop.data.repositories.ChatRepository
+import com.example.projektiop.data.repositories.UserRepository
+import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
 

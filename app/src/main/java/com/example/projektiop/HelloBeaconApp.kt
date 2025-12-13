@@ -2,6 +2,7 @@ package com.example.projektiop
 
 import android.app.Application
 import com.example.projektiop.BluetoothLE.BluetoothRepository
+import com.example.projektiop.activeHandshake.NFC.nfcKoinModule
 import com.example.projektiop.data.db.RealmProvider
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.DBRepository
@@ -34,7 +35,7 @@ class HelloBeaconApp : Application() {
         startKoin {
             androidLogger()
             androidContext(this@HelloBeaconApp)
-            modules(rootKoinModule)
+            modules(rootKoinModule, nfcKoinModule)
         }
 
         RealmProvider.init(this)
@@ -52,8 +53,6 @@ class HelloBeaconApp : Application() {
     override fun onTerminate() {
         super.onTerminate()
         RealmProvider.close()
-        if (SharedPreferencesRepository.get("remember_me",false)) {
-            AuthRepository.clearToken()
-        }
+        AuthRepository.onTerminate()
     }
 }

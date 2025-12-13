@@ -198,7 +198,7 @@ fun ScannedUserRow(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            UserAvatar(user.profile?.avatarUrl)
+            UserAvatar(user.profile?.avatarUrl, modifier = Modifier.size(56.dp) )
 
             Spacer(modifier = Modifier.width(12.dp))
 
@@ -208,10 +208,10 @@ fun ScannedUserRow(
                 Text(user.email.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
             }
             when (status) {
-                FriendshipStatus.ACCEPTED -> Button(onClick = { onAddClick(user._id.toHexString()) }) { Text(stringResource(R.string.add)) }
+                FriendshipStatus.NOT_FRIENDS-> Button(onClick = { onAddClick(user._id.toHexString()) }) { Text(stringResource(R.string.add)) }
                 FriendshipStatus.PENDING -> Button(onClick = {}, enabled = false) { Text(stringResource(R.string.sent)) }
-                FriendshipStatus.BLOCKED -> Button(onClick = { onChatClick(user._id.toHexString()) }) {Text(stringResource(R.string.chat))}
-                FriendshipStatus.NOT_FRIENDS -> Button(onClick = {}, enabled = false) { stringResource(R.string.blocked) }
+                FriendshipStatus.ACCEPTED -> Button(onClick = { onChatClick(user._id.toHexString()) }) {Text(stringResource(R.string.chat))}
+                FriendshipStatus.BLOCKED -> Button(onClick = {}, enabled = false) { stringResource(R.string.blocked) }
                 FriendshipStatus.REJECTED -> Button(onClick = {}, enabled = false) { Text(stringResource(R.string.rejected)) }
             }
         }

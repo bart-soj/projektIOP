@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +42,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.projektiop.ui.theme.ProjektIOPTheme
+import org.koin.androidx.compose.koinViewModel
 import kotlin.math.abs
 
 
@@ -58,6 +60,7 @@ fun ActiveHandshakeButton(
     val context = LocalContext.current
     val swipeThresholdPx = with(LocalDensity.current) { SWIPE_THRESHOLD_DP.dp.toPx() }
     var totalDragAmount by remember { mutableStateOf(Offset.Zero) }
+    val viewModel = koinViewModel<NFCVIewModel>()
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -111,9 +114,9 @@ fun ActiveHandshakeButton(
 
                                     if (dragAmount_x > swipeThresholdPx) {
                                         if (totalDragAmount.x < 0) {
-                                            launchActivity(context, HostBasedCardEmulatorActivity::class.java) // left
+                                            viewModel.onBlueClick(context)
                                         } else {
-                                            launchActivity(context, ReadNFCActivity::class.java) // right
+                                            viewModel.onGreenClick(context)
                                         }
                                     }
 
@@ -128,25 +131,29 @@ fun ActiveHandshakeButton(
                         },
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Box(
+                   Button (
+                        onClick = {viewModel.onGreenClick(context)},
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
                             .weight(1f)
                             .background(Color.Green)
-                            .fillMaxHeight(),
-                        contentAlignment = Alignment.Center
+                            .fillMaxHeight()
                     ) {
-                        Text(leftButtonText)
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(leftButtonText)
+                        }
                     }
-                    Box(
+                    Button (
+                        onClick = {viewModel.onBlueClick(context)},
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
                             .weight(1f)
                             .background(Color.Blue)
-                            .fillMaxHeight(),
-                        contentAlignment = Alignment.Center
+                            .fillMaxHeight()
                     ) {
-                        Text(rightButtonText)
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(rightButtonText)
+                        }
                     }
                 }
             }
@@ -160,14 +167,4 @@ fun BeforeScreenPreview() {
     ProjektIOPTheme {
         ActiveHandshakeButton() {}
     }
-}
-
-private fun launchActivity(context: Context, activityClass: Class<out Activity>) {
-    val intent = Intent(context, activityClass)
-    context.startActivity(intent)
-    // can add animations in here
-    // (context as? Activity)?.overridePendingTransition(
-    //    R.anim.slide_in_right,
-    //    R.anim.slide_out_left
-    // )
 }
