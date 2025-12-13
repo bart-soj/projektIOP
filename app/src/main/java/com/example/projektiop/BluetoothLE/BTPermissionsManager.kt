@@ -33,7 +33,7 @@ class BTPermissionsManager(private val context: Context) {
     private val TAG_LOCATION = "BLE_LOCATION_CHECK"
     private val TAG_PERMISSIONS = "BLE_PERMISSIONS"
 
-    private fun isLocationEnabled(): Boolean {
+    fun isLocationEnabled(): Boolean {
         return LocationManagerCompat.isLocationEnabled(locationManager)
     }
 
@@ -70,7 +70,6 @@ class BTPermissionsManager(private val context: Context) {
         return permissions.toTypedArray()
     }
 
-    // Uprawnienia specyficznie dla skanowania
     fun getRequiredPermissionsScan(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -80,7 +79,6 @@ class BTPermissionsManager(private val context: Context) {
         }
     }
 
-    // Uprawnienia specyficznie dla rozgłaszania
     fun getRequiredPermissionsAdvertise(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(Manifest.permission.BLUETOOTH_ADVERTISE)
@@ -90,10 +88,8 @@ class BTPermissionsManager(private val context: Context) {
         }
     }
 
-    // Sprawdza, czy wszystkie podane uprawnienia są przyznane
     fun hasPermissions(permissions: Array<String>): Boolean {
         if (permissions.isEmpty()) {
-            Log.d(TAG_PERMISSIONS, "hasPermissions: Lista uprawnień do sprawdzenia jest pusta.")
             return true
         }
         val hasAll = permissions.all { permission ->
@@ -121,21 +117,16 @@ class BTPermissionsManager(private val context: Context) {
         }
     }
 
-    // Pokazuje wiadomość o odmowie
     fun showPermissionDeniedMessage(context: Context, permission: String) {
-        Log.w(TAG_PERMISSIONS, "Użytkownik odmówił uprawnienia: $permission. Funkcjonalność może być ograniczona.")
         Toast.makeText(context, "Odmówiono uprawnienia: $permission", Toast.LENGTH_SHORT).show()
     }
 
-    // Otwiera ustawienia lokalizacji systemowej
     fun openLocationSettings(context: Context) {
-        Log.d(TAG_LOCATION, "Otwieranie ustawień lokalizacji systemowej...")
         val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
         // Sprawdź, czy jest aktywność obsługująca ten intent
         if (intent.resolveActivity(context.packageManager) != null) {
             context.startActivity(intent)
         } else {
-            Log.e(TAG_LOCATION, "Nie można znaleźć aktywności obsługującej ACTION_LOCATION_SOURCE_SETTINGS.")
             Toast.makeText(context, "Nie można otworzyć ustawień lokalizacji.", Toast.LENGTH_SHORT).show()
         }
     }

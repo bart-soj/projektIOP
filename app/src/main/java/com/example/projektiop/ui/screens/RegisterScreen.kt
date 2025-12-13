@@ -37,9 +37,11 @@ import com.example.projektiop.data.repositories.AuthEvent
 import com.example.projektiop.ui.components.ObserveAsEvents
 import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
 import com.example.projektiop.ui.viewmodels.AuthViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun RegisterScreen(navController: NavController, viewModel: AuthViewModel) {
+fun RegisterScreen(navController: NavController) {
+    val viewModel = koinViewModel<AuthViewModel>()
     val context = LocalContext.current
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }

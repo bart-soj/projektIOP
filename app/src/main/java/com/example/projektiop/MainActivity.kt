@@ -83,7 +83,6 @@ class MainActivity : ComponentActivity() {
         BTPermissionsManager(this)
     }
 
-    private val authViewModel: AuthViewModel by viewModel()
     private val authRepository: AuthRepository by inject()
 
 
@@ -171,7 +170,6 @@ private fun MainActivity.showPermissionDeniedMessage(context: Context, permissio
 
 @Composable
 fun MyApp() {
-    val authViewModel: AuthViewModel = koinActivityViewModel()
     val scannerViewModel: ScannerViewModel = koinActivityViewModel()
     val themePreference: ThemePreference = koinInject<ThemePreference>()
 
@@ -182,8 +180,8 @@ fun MyApp() {
     ProjektIOPTheme(darkTheme = darkMode) {
         NavHost(navController, startDestination = startDestination) {
             composable("start") { StartScreen(navController) }
-            composable("login") { LoginScreen(navController, authViewModel) }
-            composable("register") { RegisterScreen(navController, authViewModel) }
+            composable("login") { LoginScreen(navController) }
+            composable("register") { RegisterScreen(navController) }
             composable("scanner") {
                 ScannerScreen(
                     modifier = Modifier.padding(10.dp),
@@ -204,7 +202,7 @@ fun MyApp() {
                 val friendName = backStack.arguments?.getString("friendName")
                 ChatDetailScreen(navController, chatId, friendId)
             }
-            composable("settings") { SettingsScreen(navController, authViewModel = authViewModel) }
+            composable("settings") { SettingsScreen(navController) }
             composable("edit_profile") { EditProfileScreen(navController) }
             composable("friends_list") { FriendsListScreen(navController) }
             composable(

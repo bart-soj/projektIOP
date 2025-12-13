@@ -28,13 +28,11 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 
 
-private const val EMAIL = "my_email"
 private const val ID = "_id"
 
 
 object UserRepository {
     private var id: String? = null
-    // private var email: String? = null
     private val _MyUserInterests = MutableStateFlow<List<UserInterestDto>?>(null)
     val MyUserInterests: StateFlow<List<UserInterestDto>?> = _MyUserInterests.asStateFlow()
 

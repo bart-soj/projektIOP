@@ -33,8 +33,7 @@ class UserInterest : RealmObject {
             interestId: String,
             interest: Interest,
             customDescription: String = "",
-            createdAt: RealmInstant? = RealmInstant.now(),
-            updatedAt: RealmInstant? = null
+            createdAt: RealmInstant? = null,
         ): UserInterest {
             return UserInterest().apply {
                 this._id = ObjectId(id)

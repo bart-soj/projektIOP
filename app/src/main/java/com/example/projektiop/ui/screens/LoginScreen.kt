@@ -30,9 +30,11 @@ import com.example.projektiop.ui.components.SwitchWithText
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.ui.components.ObserveAsEvents
 import com.example.projektiop.ui.viewmodels.AuthViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
+fun LoginScreen(navController: NavController) {
+    val viewModel = koinViewModel<AuthViewModel>()
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }

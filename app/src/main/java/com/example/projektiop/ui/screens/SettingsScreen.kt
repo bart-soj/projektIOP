@@ -33,9 +33,9 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SettingsScreen(
-    navController: NavController,
-    authViewModel: AuthViewModel
+    navController: NavController
 ) {
+    val authViewModel = koinViewModel<AuthViewModel>()
     val viewModel = koinViewModel<SettingsViewModel>()
     var animationPlayed by remember { mutableStateOf(false) }
     val alphaAnimation = animateFloatAsState(

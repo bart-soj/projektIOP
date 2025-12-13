@@ -59,7 +59,6 @@ class BLEService : Service() {
                 notificationManager.notify(notificationId, createNotification(text))
             }.collect()
         }
-
     }
 
     private fun stop() {

@@ -182,7 +182,6 @@ fun ScannedUserRow(
     onAddClick: (String) -> Unit,
     onChatClick: (String) -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
     val user = userWithStatus.user
     val status = userWithStatus.status
 

@@ -32,7 +32,7 @@ class Message : RealmObject {
             senderId: String,
             content: String = "",
             readBy: List<String> = emptyList(),
-            createdAt: RealmInstant? = RealmInstant.now(),
+            createdAt: RealmInstant? = null,
         ): Message {
             return Message().apply {
                 this._id = ObjectId(id)
