@@ -30,18 +30,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.projektiop.R
-import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.data.repositories.ChatUpdateManager
+import com.example.projektiop.data.repositories.AuthEvent
+import com.example.projektiop.ui.components.ObserveAsEvents
 import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
-import com.example.projektiop.ui.viewmodels.AuthEvent
 import com.example.projektiop.ui.viewmodels.AuthViewModel
-import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterScreen(navController: NavController, viewModel: AuthViewModel) {
@@ -54,17 +49,15 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel) {
     val passwordErrors by viewModel.passwordErrors.collectAsState()
     val registrationError by viewModel.errorMessage.collectAsState()
 
-    val authEvents = viewModel.authEvent.collectAsStateWithLifecycle(null)
 
-    LaunchedEffect(authEvents.value) {
-        when (val event = authEvents.value) {
-            is AuthEvent.Success -> navController.navigate("main") {
-                popUpTo("login") { inclusive = true }
-            }
-            is AuthEvent.Error -> {}
-            else -> {}
-        }
-    }
+    val authEvents = viewModel.authEventFlow
+
+    ObserveAsEvents(authEvents) { event -> when(event) {
+        is AuthEvent.Error -> {}
+        AuthEvent.Logout -> {}
+        AuthEvent.Success -> navController.navigate("main")
+    } }
+
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -164,12 +157,4 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel) {
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun RegisterScreenPreview() {
-    RegisterScreen(navController = NavController(context = LocalContext.current), viewModel = AuthViewModel(
-        authRepository = AuthRepository
-    ) )
 }

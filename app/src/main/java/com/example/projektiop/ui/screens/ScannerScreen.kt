@@ -337,13 +337,3 @@ fun CertificateRequester(
         }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun ScannerScreenPreview() {
-    MaterialTheme {
-        ScannerScreen(navController = rememberNavController(), viewModel = ScannerViewModel(
-            application = TODO()
-        ))
-    }
-}

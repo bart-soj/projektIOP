@@ -29,14 +29,14 @@ import com.example.projektiop.ui.viewmodels.SettingsViewModel
 import com.example.projektiop.util.DataError
 import com.example.projektiop.util.Result
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SettingsScreen(
     navController: NavController,
-    authViewModel: AuthViewModel,
-    viewModel: SettingsViewModel
+    authViewModel: AuthViewModel
 ) {
-
+    val viewModel = koinViewModel<SettingsViewModel>()
     var animationPlayed by remember { mutableStateOf(false) }
     val alphaAnimation = animateFloatAsState(
         targetValue = if (animationPlayed) 1f else 0f,
@@ -204,11 +204,4 @@ private fun BlockedUsersDialog(
             }
         }
     )
-}
-
-@Preview
-@Composable
-fun SettingsScreenPreview() {
-    SettingsScreen(navController = NavController(LocalContext.current),  authViewModel = AuthViewModel(
-        AuthRepository), SettingsViewModel(ThemePreference, UserRepository, FriendshipRepository))
 }

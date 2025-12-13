@@ -13,13 +13,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.example.projektiop.ui.theme.ProjektIOPTheme
@@ -27,12 +23,12 @@ import com.example.projektiop.ui.theme.ProjektIOPTheme
 class ReadNFCActivity : ComponentActivity() {
     lateinit var adapter : NfcAdapter
     // for foreground dispatch system
-    lateinit var myintent: Intent
+    lateinit var myIntent: Intent
     lateinit var pendingIntent: PendingIntent
     val ndef = IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED).apply {
         try {
             addDataType("*/*")    /* Handles all MIME based dispatches.
-                                 should specify only the ones that you need. */
+                                 should specify only the ones needed */
         } catch (e: IntentFilter.MalformedMimeTypeException) {
             throw RuntimeException("fail", e)
         }
@@ -55,15 +51,18 @@ class ReadNFCActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         adapter = getDefaultAdapter(this)
-        myintent = Intent(this, javaClass).apply { addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP) }
-        pendingIntent = PendingIntent.getActivity(this, 0, myintent,
+        myIntent = Intent(this, javaClass).apply { addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP) }
+        pendingIntent = PendingIntent.getActivity(this, 0, myIntent,
             PendingIntent.FLAG_MUTABLE)
         enableEdgeToEdge()
         setContent {
             ProjektIOPTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    SimpleDistinguishableView2 (
-                        modifier = Modifier.padding(innerPadding)
+                    SimpleDistinguishableView (
+                        text = "RNFCA",
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .background(Color.Blue)
                     )
                 }
             }
@@ -82,7 +81,7 @@ class ReadNFCActivity : ComponentActivity() {
         // adapter.enableForegroundDispatch(this, pendingIntent, intentFiltersArray, techListsArray)
         adapter.enableReaderMode(this, { tag ->
             Log.d("READ_NFC", "Detected tag via ReaderMode: $tag")
-            // You can also check if it's IsoDep (usually used for HCE)
+            // can also check if it's IsoDep (usually used for HCE)
             val isoDep = IsoDep.get(tag)
             if (isoDep != null) {
                 Log.d("READ_NFC", "This tag uses IsoDep (likely HCE)")
@@ -115,20 +114,5 @@ class ReadNFCActivity : ComponentActivity() {
         println("Received response: ${response.joinToString(" ")}")
 
         isoDep.close()
-    }
-}
-
-@Composable
-fun SimpleDistinguishableView2(
-    modifier: Modifier = Modifier
-) {
-    Surface (
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color.Blue)
-    ) {
-        Box {
-            Text(text = "RNFCA")
-        }
     }
 }

@@ -26,8 +26,7 @@ class Chat : RealmObject {
             participants: List<String>,
             lastMessageId: String,
             lastMessageTimestamp: RealmInstant? = RealmInstant.now(),
-            createdAt: RealmInstant? = RealmInstant.now(),
-            updatedAt: RealmInstant? = RealmInstant.now()
+            createdAt: RealmInstant? = null,
         ): Chat {
             require(participants.isNotEmpty()) {
                 "Chat must have at least one participant"

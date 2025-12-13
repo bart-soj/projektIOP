@@ -40,6 +40,7 @@ import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.ui.components.PullToRefresh
 import com.example.projektiop.ui.components.UserAvatar
 import com.example.projektiop.ui.viewmodels.MainViewModel
+import org.koin.androidx.compose.koinViewModel
 
 
 private const val BASE_URL_KEY: String = "BASE_URL"
@@ -47,7 +48,8 @@ private const val BASE_URL_KEY: String = "BASE_URL"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(navController: NavController, viewModel: MainViewModel) {
+fun MainScreen(navController: NavController) {
+    val viewModel = koinViewModel<MainViewModel>()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -315,7 +317,7 @@ fun BottomNavigationBar(navController: NavController, currentRoute: String?) {
 @Composable
 fun MainScreenPreview() {
     MaterialTheme {
-        MainScreen(navController = rememberNavController(), viewModel = MainViewModel())
+        MainScreen(navController = rememberNavController())
     }
 }
 

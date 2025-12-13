@@ -16,12 +16,12 @@ import kotlinx.coroutines.launch
 private const val ID: String = "_id"
 
 
-class MainViewModel() : ViewModel() {
+class MainViewModel(private val userRepository: UserRepository) : ViewModel() {
 
     // userId z SharedPreferences
     private val userId: String = SharedPreferencesRepository.get(ID, "brak")
 
-    val myInterests: StateFlow<List<UserInterestDto>?> = UserRepository.MyUserInterests
+    val myInterests: StateFlow<List<UserInterestDto>?> = userRepository.MyUserInterests
     private val _loading = MutableStateFlow(false)
 
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
@@ -31,7 +31,7 @@ class MainViewModel() : ViewModel() {
 
     init {
         viewModelScope.launch {
-            UserRepository.myUserFlow.collect { updatedUser ->
+            userRepository.myUserFlow.collect { updatedUser ->
                 _user.value = updatedUser
             }
         }
@@ -41,7 +41,7 @@ class MainViewModel() : ViewModel() {
         _loading.value = true
         viewModelScope.launch{
             try {
-                UserRepository.fetchMyProfile()
+                userRepository.fetchMyProfile()
             } catch (e: Exception) {
                 Log.e("ProfileRefresh", "Error fetching profile", e)
             } finally {

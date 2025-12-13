@@ -35,7 +35,7 @@ sealed interface FriendsUiEffect {
 
 // --- VIEWMODEL ---
 
-class FriendsViewModel : ViewModel() {
+class FriendsViewModel(private val friendshipRepository: FriendshipRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FriendsUiState())
     val uiState = _uiState.asStateFlow()
@@ -51,9 +51,9 @@ class FriendsViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            val friendsResult = FriendshipRepository.fetchAccepted()
-            val pendingResult = FriendshipRepository.fetchIncomingPending()
-            FriendshipRepository.fetchBlocked()
+            val friendsResult = friendshipRepository.fetchAccepted()
+            val pendingResult = friendshipRepository.fetchIncomingPending()
+            friendshipRepository.fetchBlocked()
 
             friendsResult.onSuccess { list ->
                 _uiState.update { it.copy(friends = list) }
@@ -91,7 +91,7 @@ class FriendsViewModel : ViewModel() {
 
     fun onInviteUser(userId: String) {
         viewModelScope.launch {
-            FriendshipRepository.sendFriendRequest(userId)
+            friendshipRepository.sendFriendRequest(userId)
                 .onSuccess {
                     _uiState.update { state ->
                         state.copy(sentRequests = state.sentRequests + userId)
@@ -129,7 +129,7 @@ class FriendsViewModel : ViewModel() {
 
     fun onRemoveFriend(friendshipId: String) {
         viewModelScope.launch {
-            FriendshipRepository.removeFriend(friendshipId)
+            friendshipRepository.removeFriend(friendshipId)
                 .onSuccess { refreshAll() }
                 .onFailure { sendEffect(FriendsUiEffect.ShowToast("Błąd usuwania")) }
         }
@@ -137,7 +137,7 @@ class FriendsViewModel : ViewModel() {
 
     fun onBlockFriend(friendshipId: String) {
         viewModelScope.launch {
-            FriendshipRepository.blockFriendship(friendshipId)
+            friendshipRepository.blockFriendship(friendshipId)
                 .onSuccess { refreshAll() }
                 .onFailure { e ->  sendEffect(FriendsUiEffect.ShowToast("Błąd blokowania $e")) }
         }
@@ -145,7 +145,7 @@ class FriendsViewModel : ViewModel() {
 
     fun loadBlocked() {
         viewModelScope.launch {
-            FriendshipRepository.fetchBlocked()
+            friendshipRepository.fetchBlocked()
                 .onSuccess { list ->
                     _uiState.update { it.copy(blockedUsers = list) }
                 }
@@ -154,7 +154,7 @@ class FriendsViewModel : ViewModel() {
 
     fun onUnblockFriend (friendshipId: String) {
         viewModelScope.launch {
-            FriendshipRepository.unblockFriendship(friendshipId)
+            friendshipRepository.unblockFriendship(friendshipId)
                 .onSuccess {
                     _uiState.update { state ->
                         state.copy(
@@ -167,13 +167,13 @@ class FriendsViewModel : ViewModel() {
 
     fun onAcceptRequest(friendshipId: String) {
         viewModelScope.launch {
-            FriendshipRepository.acceptFriendship(friendshipId).onSuccess { refreshAll() }.onFailure { refreshAll() }
+            friendshipRepository.acceptFriendship(friendshipId).onSuccess { refreshAll() }.onFailure { refreshAll() }
         }
     }
 
     fun onRejectRequest(friendshipId: String) {
         viewModelScope.launch {
-            FriendshipRepository.rejectFriendship(friendshipId).onSuccess { refreshAll() }
+            friendshipRepository.rejectFriendship(friendshipId).onSuccess { refreshAll() }
         }
     }
 

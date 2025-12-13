@@ -4,6 +4,7 @@ import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.R
+import com.example.projektiop.data.repositories.AuthEvent
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.util.DataError
@@ -20,11 +21,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 
-sealed interface AuthEvent {
-    data object Success: AuthEvent
-    data object Logout: AuthEvent
-    data class Error(val message: String) : AuthEvent
-}
+
 
 
 class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
@@ -32,8 +29,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
     private val _loading: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
-    private val _rememberMe: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val rememberMe: StateFlow<Boolean> = _rememberMe.asStateFlow()
+    val rememberMe: StateFlow<Boolean> = authRepository.rememberMe
 
     private val _inputsValid: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val inputsValid: StateFlow<Boolean> = _inputsValid.asStateFlow()
@@ -48,31 +44,15 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
     private val _usernameErrors: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
     val usernameErrors: StateFlow<List<String>> = _usernameErrors.asStateFlow()
 
-    private val _authEvent = MutableSharedFlow<AuthEvent>()
-    val authEvent = _authEvent.asSharedFlow()
+    val authEventFlow = authRepository.authEvent
+
 
     private val KEY_TOKEN = "auth_token"
     private val EMAIL = "my_email"
     private val KEY_REMEMBER = "remember_me"
 
-    private var token: String? = null
-
-    fun init() {
-        _rememberMe.value = SharedPreferencesRepository.get(KEY_REMEMBER, false)
-
-        if (rememberMe.value) {
-            token = SharedPreferencesRepository.get(KEY_TOKEN, null)
-            if (token?.isNotEmpty() == true) {
-                viewModelScope.launch {
-                    _authEvent.emit(AuthEvent.Success)
-                }
-            }
-        }
-    }
-
     fun rememberMe() {
-        _rememberMe.value = !rememberMe.value
-        SharedPreferencesRepository.set(KEY_REMEMBER, rememberMe.value)
+        authRepository.rememberMe()
     }
 
     fun List<ValidationError>.mapToString(): List<String> {
@@ -113,7 +93,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
                 val result = AuthRepository.login(email, password)
                 when(result) {
                     is Result.Error -> {
-                         _errorMessage.value = when(result.error) { // TODO() actual login errors
+                         _errorMessage.value = when (result.error) { // TODO() actual registration errors
                             DataError.Local.DISK_FULL -> "no disk space"
                             DataError.Local.DB_ERROR -> "db failed"
                             DataError.Network.REQUEST_TIMEOUT -> "request timeout"
@@ -124,13 +104,12 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
                             DataError.Network.SERIALIZATION -> "Serialization Error"
                             DataError.Network.UNKNOWN -> "Unknown Error"
                             DataError.Local.NO_DATA -> "no local data"
-                         }
+                            DataError.Authentication.INVALID_EMAIL_PASSWORD -> "Invalid Email or Password"
+                            DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
+                            DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
+                        }
                     }
-                    is Result.Success -> {
-                        val token = result.data
-                        if (!token.isNullOrBlank()) AuthRepository.saveToken(token, remember = rememberMe.value)
-                        _authEvent.emit(AuthEvent.Success)
-                    }
+                    is Result.Success -> {}
                 }
                 _loading.value = false
             }
@@ -159,16 +138,13 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
                             DataError.Network.SERIALIZATION -> "Serialization Error"
                             DataError.Network.UNKNOWN -> "Unknown Error"
                             DataError.Local.NO_DATA -> "no local data"
+                            DataError.Authentication.INVALID_EMAIL_PASSWORD -> "Invalid Email or Password"
+                            DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
+                            DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
                         }
                     }
 
-                    is Result.Success -> {
-                        val token = result.data
-                        if (!token.isNullOrBlank()) {
-                            AuthRepository.saveToken(token, remember = rememberMe.value)
-                        }
-                        _authEvent.emit(AuthEvent.Success)
-                    }
+                    is Result.Success -> {}
                 }
                 _loading.value = false
             }
@@ -177,8 +153,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
 
     fun onLogoutClick() {
         viewModelScope.launch {
-            AuthRepository.clearToken()
-            _authEvent.emit(AuthEvent.Logout)
+            AuthRepository.logout()
         }
     }
 

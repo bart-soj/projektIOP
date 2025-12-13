@@ -11,28 +11,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow // Do ucinania tekstu
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
 import com.example.projektiop.data.repositories.ChatListItem
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.ui.components.UserAvatar
 import com.example.projektiop.ui.viewmodels.ChatsViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatsScreen(navController: NavController, viewModel: ChatsViewModel) {
+fun ChatsScreen(navController: NavController) {
+    val viewModel = koinViewModel<ChatsViewModel>()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -204,18 +197,5 @@ fun ChatItem(
                 ) {}
             }
         }
-    }
-}
-
-
-// --- Podgląd ---
-
-@Preview(showBackground = true, widthDp = 360, heightDp = 640) // Podgląd na typowym rozmiarze telefonu
-@Composable
-fun ChatsScreenPreview() {
-    // Załóżmy, że masz zdefiniowany MaterialTheme w projekcie
-    // Jeśli nie, użyj domyślnego lub zastąp go swoim
-    MaterialTheme {
-        ChatsScreen(navController = rememberNavController(), viewModel = ChatsViewModel() )
     }
 }

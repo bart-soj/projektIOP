@@ -27,10 +27,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.app.ActivityCompat
 import androidx.core.location.LocationManagerCompat
+import androidx.lifecycle.viewModelScope
+import com.example.projektiop.data.repositories.OtherUserRepository
 import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.nio.charset.Charset
 import java.util.UUID
 
@@ -45,8 +49,7 @@ private const val TAG_PERMISSIONS = "BLE_PERMISSIONS"
 private const val ID: String = "_id"
 
 class BluetoothRepository(private val context: Context) {
-
-    private val ownUserId = SharedPreferencesRepository.get(ID, "brak")
+    private val ownUserId = SharedPreferencesRepository.get(ID, "")
     private val bluetoothManager: BluetoothManager by lazy {
         context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     }
@@ -71,11 +74,9 @@ class BluetoothRepository(private val context: Context) {
     private val _foundDeviceIds = MutableStateFlow<List<String>>(emptyList())
     val foundDeviceIds: StateFlow<List<String>> = _foundDeviceIds.asStateFlow()
 
-
     // --- Skanowanie ---
     private var bluetoothLeScanner: BluetoothLeScanner? = null
     private val scanCallback = object : ScanCallback() {
-        @SuppressLint("MissingPermission") // Uprawnienia sprawdzane przed startem
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             super.onScanResult(callbackType, result)
             result?.let { scanResult ->

@@ -17,6 +17,11 @@ sealed interface DataError: RootError {
         DB_ERROR,
         NO_DATA
     }
+    enum class Authentication: DataError {
+        INVALID_EMAIL_PASSWORD,
+        ACCOUNT_BANNED,
+        EMAIL_NOT_VERIFIED
+    }
 }
 
 sealed interface ValidationError: RootError {
