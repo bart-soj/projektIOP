@@ -22,6 +22,6 @@ fun ChatDto.toRealm(): Chat {
         lastMessageId = lastMessageId,
         lastMessageTimestamp = lastMessageTimestamp,
         createdAt = createdAt,
-        updatedAt = RealmInstant.now()
+        //updatedAt = RealmInstant.now()
     )
 }
