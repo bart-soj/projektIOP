@@ -3,7 +3,7 @@ package com.example.projektiop
 import android.app.Application
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.ChatRepository
-import com.example.projektiop.data.repositories.ChatUpdateManager
+import com.example.projektiop.data.repositories.ChatUpdateService
 import com.example.projektiop.data.repositories.DBRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.InterestRepository
@@ -28,7 +28,7 @@ val rootKoinModule = module {
     single { DBRepository }
     single { AuthRepository }
     single { AuthRepository }
-    single { ChatUpdateManager }
+    single { ChatUpdateService }
     single { ChatRepository }
     single { SharedPreferencesRepository }
     single { FriendshipRepository }
@@ -37,5 +37,5 @@ val rootKoinModule = module {
     viewModel { AuthViewModel(get()) }
     viewModel { ScannerViewModel(get<Application>(), get(), get()) }
     viewModel { FriendsViewModel(get()) }
-    viewModel { ChatsViewModel(get(), get(), get()) }
+    viewModel { ChatsViewModel(get(), get()) }
 }

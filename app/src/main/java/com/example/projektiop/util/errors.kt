@@ -33,13 +33,13 @@ sealed interface ValidationError: RootError {
         TOO_SHORT,
         NO_UPPERCASE,
         NO_DIGIT,
-        NO_LOWERCASE,
+        NO_LOWERCASE
     }
+
     enum class EmailError: ValidationError {
-        NOT_EMAIL,
+        NOT_EMAIL
     }
+
     enum class UsernameError: ValidationError {
     }
 }
-
-

@@ -96,9 +96,9 @@ fun LoginScreen(navController: NavController) {
                     password = it
                 },
                 label = stringResource(R.string.password_label),
-                errorList = passwordErrors,
+                //errorList = passwordErrors,
                 modifier = Modifier.fillMaxWidth(),
-                isError = emailErrors.isNotEmpty(),
+                //isError = passwordErrors.isNotEmpty(),
                 visualTransformation = PasswordVisualTransformation(),
             )
 
@@ -161,7 +161,7 @@ fun LoginScreen(navController: NavController) {
                         contentColor = MaterialTheme.colorScheme.onPrimary,
                         disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                     ),
-                    enabled = inputsValid && !isLoading
+                    enabled = !isLoading //inputsValid && !isLoading
                 ) {
                     Text(if (isLoading) stringResource(R.string.logging_in) else stringResource(R.string.login_button_text))
                 }

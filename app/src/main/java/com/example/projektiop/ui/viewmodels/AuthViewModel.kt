@@ -64,6 +64,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
                 PasswordError.NO_UPPERCASE -> "must contain at least one uppercase letter"
                 PasswordError.NO_DIGIT -> "must contain at least one letter"
                 PasswordError.NO_LOWERCASE -> "must contain at least one lowercase letter"
+                else -> "unknown error"
             }
         }
     }
@@ -85,7 +86,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
 
     fun onLoginClick(email: String, password: String) {
         if (loading.value) return
-        if (inputsValid.value) {
+        if (true) { // todo: if (inputsValid.value) {
             _loading.value = true
             _errorMessage.value = null
             viewModelScope.launch {
