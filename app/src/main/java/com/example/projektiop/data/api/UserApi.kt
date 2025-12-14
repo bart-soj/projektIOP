@@ -84,7 +84,7 @@ data class UserInterestDto(
 )
 
 data class InterestDto(
-    val _id: String? = null,                 // MongoDB ObjectId
+    val _id: String? = null,
     val name: String? = null,
     val category: String? = null,
     val description: String? = null,

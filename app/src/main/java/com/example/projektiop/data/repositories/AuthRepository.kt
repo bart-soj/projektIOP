@@ -169,13 +169,16 @@ object AuthRepository {
         SharedPreferencesRepository.remove(KEY_TOKEN)
     }
 
-    fun validateToken(token: String?): Boolean {  // TODO() better token validation
+    fun validateToken(token: String?): Boolean {
 
-        if (token.isNullOrBlank())
-            return false
+        if (token.isNullOrBlank()) return false
 
-        if (token.length < 16) // from server code
-            return false
+        val parts = token.split('.')
+        if (parts.size != 3) return false
+
+        val base64UrlRegex = Regex("^[A-Za-z0-9_-]+$")
+
+        return parts.all { it.isNotEmpty() && base64UrlRegex.matches(it) }
 
         return true
     }
