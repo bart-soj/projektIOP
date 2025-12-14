@@ -3,10 +3,7 @@ package com.example.projektiop.ui.viewmodels
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.projektiop.R
-import com.example.projektiop.data.repositories.AuthEvent
 import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.util.DataError
 import com.example.projektiop.util.Result
 import com.example.projektiop.util.ValidationError
@@ -16,8 +13,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import com.example.projektiop.util.ValidationError.Common
 import com.example.projektiop.util.ValidationError.EmailError
 import com.example.projektiop.util.ValidationError.PasswordError
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 
@@ -90,7 +85,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
             _loading.value = true
             _errorMessage.value = null
             viewModelScope.launch {
-                val result = AuthRepository.login(email, password)
+                val result = authRepository.login(email, password)
                 when(result) {
                     is Result.Error -> {
                          _errorMessage.value = when (result.error) { // TODO() actual registration errors
@@ -123,7 +118,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
             _errorMessage.value = null
 
             viewModelScope.launch {
-                val result = AuthRepository.register(username, email, password)
+                val result = authRepository.register(username, email, password)
 
                 when (result) {
                     is Result.Error -> {
@@ -153,7 +148,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
 
     fun onLogoutClick() {
         viewModelScope.launch {
-            AuthRepository.logout()
+            authRepository.logout()
         }
     }
 

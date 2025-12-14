@@ -11,21 +11,22 @@ import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.projektiop.R
-import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.data.repositories.SharedDataSource
+import org.koin.compose.koinInject
 
 
 private const val BASE_URL_KEY = "BASE_URL"
 
 
-@Composable
+@Composable // TODO() do we need to build url and get token here?
 fun UserAvatar(url: String?, modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val sharedDataSource  = koinInject<SharedDataSource>()
 
     val fullUrl = remember(url) {
         url?.let {
             if (it.startsWith("http")) it
-            else "${SharedPreferencesRepository.get(BASE_URL_KEY, "")}$it"
+            else "${sharedDataSource.get(BASE_URL_KEY, "")}$it"
         }
     }
 
@@ -34,8 +35,8 @@ fun UserAvatar(url: String?, modifier: Modifier = Modifier) {
             .data(fullUrl)
             .crossfade(true)
             .apply {
-                val token = SharedPreferencesRepository.get("auth_token", "")
-                if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token")
+                val token = sharedDataSource.get("auth_token", "")
+                if (token.isNotBlank()) addHeader("Authorization", "Bearer $token")
             }
             .build()
     }

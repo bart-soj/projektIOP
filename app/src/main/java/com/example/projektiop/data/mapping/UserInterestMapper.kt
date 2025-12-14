@@ -2,10 +2,9 @@ package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.db.objects.UserInterest
-import com.example.projektiop.data.repositories.DBRepository
-import io.realm.kotlin.types.RealmInstant
+import com.example.projektiop.data.repositories.RealmDBRepository
 
-fun UserInterestDto.toRealm(userId: String): UserInterest {
+fun UserInterestDto.toRealm(userId: String, dbRepository: RealmDBRepository): UserInterest {
 
     require(!this.userInterestId.isNullOrBlank()) { "Missing user interest id" }
     val id = this.userInterestId
@@ -13,7 +12,7 @@ fun UserInterestDto.toRealm(userId: String): UserInterest {
 
     require(!this.interest._id.isNullOrBlank()) { "Missing interest id" }
     val interestId = this.interest._id
-    val interest = DBRepository.getInterestById(interestId)
+    val interest = dbRepository.getInterestById(interestId)
     require(interest != null) { "No such Interest" }
 
     return UserInterest.create(

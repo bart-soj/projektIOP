@@ -14,12 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.mongodb.kbson.ObjectId
 
-object DBRepository {
-    private lateinit var realm: Realm
-
-    fun init(realmInstance: Realm) {
-        realm = realmInstance
-    }
+class RealmDBRepository(private val realm: Realm) {
 
     // ----------------------
     // Message operations

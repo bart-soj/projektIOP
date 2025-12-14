@@ -2,18 +2,18 @@ package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.InterestDto
 import com.example.projektiop.data.db.objects.Interest
-import com.example.projektiop.data.repositories.DBRepository
+import com.example.projektiop.data.repositories.RealmDBRepository
 import com.example.projektiop.util.mongoTimestampToRealmInstant
 import com.example.projektiop.util.realmInstantToMongoTimestamp
 
-fun InterestDto.toRealm(): Interest {
+fun InterestDto.toRealm(dbRepository: RealmDBRepository): Interest {
     require(!this._id.isNullOrBlank()) {"Missing interest id"}
     val id = this._id
     require(!this.name.isNullOrBlank()) {"Missing interest name"}
     val name = this.name
     require(!this.category.isNullOrBlank()) {"Missing interest category"}
     val categoryId = this.category
-    val interestCategory = DBRepository.getInterestCategoryById(categoryId)
+    val interestCategory = dbRepository.getInterestCategoryById(categoryId)
     require(interestCategory != null) {"No such InterestCategory"}
 
     val createdAt = mongoTimestampToRealmInstant(this.createdAt)

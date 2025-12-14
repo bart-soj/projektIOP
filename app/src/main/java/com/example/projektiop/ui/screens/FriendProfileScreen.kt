@@ -1,9 +1,7 @@
 package com.example.projektiop.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -11,28 +9,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.projektiop.R
 import com.example.projektiop.data.api.UserProfileResponse
-import com.example.projektiop.data.api.RetrofitInstance
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.example.projektiop.data.api.ProfileDto
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.ui.components.UserAvatar
+import com.example.projektiop.ui.viewmodels.FriendProfileViewModel
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -43,53 +36,13 @@ fun FriendProfileScreen(
     displayNamePrefill: String? = null,
     avatarUrlPrefill: String? = null
 ) {
-    val scope = rememberCoroutineScope()
-    var profile by remember { mutableStateOf<UserProfileResponse?>(null) }
-    var loading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
+    val viewModel = koinViewModel<FriendProfileViewModel>(parameters = { parametersOf(userId) })
+    val loading by viewModel.loading.collectAsState()
+    val error by viewModel.errorMessage.collectAsState()
+    val profile by viewModel.user.collectAsState()
 
     LaunchedEffect(userId) {
-        scope.launch {
-            loading = true
-            error = null
-            try {
-                val fullResp = RetrofitInstance.userApi.getUserById(userId)
-                if (fullResp.isSuccessful && fullResp.body() != null) {
-                    profile = fullResp.body()
-                } else {
-                    if (profile == null) {
-                        if (displayNamePrefill != null || usernamePrefill != null) {
-                            profile = UserProfileResponse(
-                                _id = userId,
-                                username = usernamePrefill,
-                                profile = ProfileDto(displayName = displayNamePrefill),
-                                interests = emptyList(),
-                                email = null
-                            )
-                        }
-                        val uname = usernamePrefill ?: displayNamePrefill
-                        if (!uname.isNullOrBlank()) {
-                            val searchResp = RetrofitInstance.userApi.searchUsers(uname)
-                            if (searchResp.isSuccessful) {
-                                val candidate = searchResp.body().orEmpty().firstOrNull { it._id == userId || it.username == uname }
-                                if (candidate != null) {
-                                    profile = UserProfileResponse(
-                                        _id = candidate._id,
-                                        username = candidate.username,
-                                        profile = candidate.profile,
-                                        interests = emptyList(),
-                                        email = null
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                error = e.message
-            }
-            loading = false
-        }
+        viewModel.refresh()
     }
 
     Scaffold(

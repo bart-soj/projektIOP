@@ -3,38 +3,30 @@ package com.example.projektiop.ui.screens
 import com.example.projektiop.R
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.projektiop.data.api.MessageDto
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
-import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.BlockInfo
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
+import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.ui.components.UserAvatar
+import org.koin.compose.koinInject
 import java.time.Duration
 import java.time.Instant
 
@@ -74,26 +66,30 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
     var error by remember { mutableStateOf<String?>(null) }
     var input by remember { mutableStateOf("") }
     var blockInfo by remember { mutableStateOf<BlockInfo?>(null) }
+    val chatRepository = koinInject<ChatRepository>()
+    val friendshipRepository = koinInject<FriendshipRepository>()
+    val sharedDataSource = koinInject<SharedDataSource>()
+    val myId = sharedDataSource.get("_id", "")
 
     LaunchedEffect(friendId, chatId) {
         if (resolvedChatId.isNullOrBlank() && !friendId.isNullOrBlank()) {
-            ChatRepository.ensureChatWithUser(friendId)
+            chatRepository.ensureChatWithUser(friendId)
                 .onSuccess { resolvedChatId = it }
                 .onFailure { error = it.message }
         }
         if (!friendId.isNullOrBlank()) {
-            FriendshipRepository.getBlockInfo(friendId).onSuccess { blockInfo = it }
+            friendshipRepository.getBlockInfo(myId ,friendId).onSuccess { blockInfo = it }
         }
         val id = resolvedChatId
         if (!id.isNullOrBlank()) {
             loading = true
-            ChatRepository.loadMessages(id)
+            chatRepository.loadMessages(id)
                 .onSuccess { messages = it } // już w kolejności rosnącej po dacie
                 .onFailure { error = it.message }
             loading = false
             // Mark read using last message timestamp
             val lastTimestamp = messages.lastOrNull()?.createdAt
-            ChatRepository.markChatRead(id, lastTimestamp)
+            chatRepository.markChatRead(id, lastTimestamp)
         } else {
             loading = false
         }
@@ -217,11 +213,11 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                     val content = input
                     input = ""
                     scope.launch {
-                        ChatRepository.sendMessage(id, content)
+                        chatRepository.sendMessage(id, content)
                             .onSuccess { sent -> messages = messages + sent }
                             .onFailure { error = it.message }
                         val lastTimestamp = messages.lastOrNull()?.createdAt
-                        ChatRepository.markChatRead(id, lastTimestamp)
+                        chatRepository.markChatRead(id, lastTimestamp)
                     }
                 }, enabled = !resolvedChatId.isNullOrBlank() && !isBlocked) { Text(stringResource(R.string.send)) }
             }

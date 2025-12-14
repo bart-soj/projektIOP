@@ -33,13 +33,13 @@ import coil.request.ImageRequest
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.ui.components.UserAvatar
+import org.koin.compose.koinInject
 
 @Composable
 fun EditProfileScreen(
     navController: NavController,
+    context: Context = LocalContext.current
 ) {
-    val context = LocalContext.current
-
     var name by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
     var birthDate by remember { mutableStateOf("") }
@@ -74,10 +74,12 @@ fun EditProfileScreen(
     var uploadError by remember { mutableStateOf<String?>(null) }
     var currentAvatarUrl by remember { mutableStateOf<String?>(null) }
     var avatarVersionTag by remember { mutableStateOf<String?>(null) }
+    val userRepository = koinInject<UserRepository>()
+    val interestRepository = koinInject<InterestRepository>()
 
     LaunchedEffect(Unit) {
         loadingInitial = true
-        UserRepository.fetchMyProfile()
+        userRepository.fetchMyProfile()
             .onSuccess { prof ->
                 name = prof.effectiveDisplayName ?: prof.username ?: prof.email ?: ""
                 description = prof.effectiveDescription ?: ""
@@ -99,7 +101,7 @@ fun EditProfileScreen(
                 selectedDescriptions = descMap
             }
             .onFailure { error = it.message }
-        InterestRepository.fetchPublicInterestsMap()
+        interestRepository.fetchPublicInterestsMap()
             .onSuccess { map ->
                 allInterests = map.keys.sorted()
             }
@@ -148,7 +150,7 @@ fun EditProfileScreen(
                             uploadError = context.getString(R.string.upload_error_file_too_large)
                             return@launch
                         }
-                        val result = UserRepository.uploadAvatar(
+                        val result = userRepository.uploadAvatar(
                             bytes = avatarPreviewBytes!!,
                             originalFileName = name,
                             mimeType = type
@@ -277,7 +279,7 @@ fun EditProfileScreen(
                     coroutineScope.launch {
                         isLoading = true
                         error = null
-                        UserRepository.updateMyProfile(
+                        userRepository.updateMyProfile(
                             displayName = name,
                             gender = gender,
                             location = location,
@@ -290,7 +292,7 @@ fun EditProfileScreen(
                             val desired = selectedInterests.associateWith { nm ->
                                 selectedDescriptions[nm]?.takeIf { it.isNotBlank() }
                             }
-                            val syncRes = UserRepository.syncMyInterestsWithDescriptions(desired)
+                            val syncRes = userRepository.syncMyInterestsWithDescriptions(desired)
                             interestsSaving = false
                             isLoading = false
                             syncRes.onSuccess {

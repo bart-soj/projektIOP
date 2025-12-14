@@ -1,13 +1,12 @@
 package com.example.projektiop.data.repositories
 
 import com.example.projektiop.data.api.MessageDto
-import com.example.projektiop.data.api.RetrofitInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.content.Context
 import android.content.SharedPreferences
+import com.example.projektiop.data.api.ChatApi
 import com.example.projektiop.data.mapping.toUserProfileResponse
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 private const val BASE_URL_KEY: String = "BASE_URL"
@@ -56,7 +55,10 @@ data class ChatListItem(
     val unread: Boolean = false
 )
 
-object ChatRepository {
+class ChatRepository(private val chatApi: ChatApi,
+                     context: Context,
+                     private val sharedDataSource: SharedDataSource,
+                     private val dbRepository: RealmDBRepository) {
 
     lateinit var chats: StateFlow<List<ChatListItem>>
 
@@ -64,11 +66,11 @@ object ChatRepository {
         if (url.isNullOrBlank()) return null
         val trimmed = url.trim()
         if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed
-        val base = SharedPreferencesRepository.get(BASE_URL_KEY,"")
+        val base = sharedDataSource.get(BASE_URL_KEY,"")
         return if (trimmed.startsWith("/")) base + trimmed else "$base/$trimmed"
     }
     // Call once at app start
-    fun init(context: Context) { ChatReadState.ensure(context) }
+    init { ChatReadState.ensure(context) }
     /** Mark a chat read by persisting last seen message timestamp */
     fun markChatRead(chatId: String, lastMessageTime: String?) {
         ChatReadState.markRead(chatId, lastMessageTime)
@@ -76,12 +78,12 @@ object ChatRepository {
 
     suspend fun fetchChats(currentUserId: String? = null, currentUsername: String? = null): Result<List<ChatListItem>> = withContext(Dispatchers.IO) {
         try {
-            val response = RetrofitInstance.chatApi.getChats()
+            val response = chatApi.getChats()
             if (response.isSuccessful) {
                 val body = response.body().orEmpty()
                 val mapped = body.mapNotNull { chat ->
                     val id = chat._id ?: return@mapNotNull null
-                    val participants = chat.participants?.mapNotNull{ DBRepository.getUserById(it)?.toUserProfileResponse() }
+                    val participants = chat.participants?.mapNotNull{ dbRepository.getUserById(it)?.toUserProfileResponse() }
                     val other = participants?.firstOrNull { p ->
                         (!currentUserId.isNullOrBlank()  && !p._id.isNullOrBlank()  && p._id != currentUserId) && // TODO() was some issue with currentUserId never failing this, most likely because of conversion from ObjectId
                                 (currentUsername != null && p.username != null && p.username != currentUsername)
@@ -124,13 +126,13 @@ object ChatRepository {
 
     suspend fun ensureChatWithUser(friendId: String): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val existing = RetrofitInstance.chatApi.getChats()
+            val existing = chatApi.getChats()
             if (existing.isSuccessful) {
                 existing.body().orEmpty().firstOrNull { chat ->
                     chat.participants?.any { it == friendId } == true
                 }?.let { return@withContext Result.success(it._id!!) }
             }
-            val created = RetrofitInstance.chatApi.accessChat(mapOf("userId" to friendId))
+            val created = chatApi.accessChat(mapOf("userId" to friendId))
             if (created.isSuccessful) {
                 Result.success(created.body()?._id ?: return@withContext Result.failure(Exception("Brak ID czatu")))
             } else Result.failure(Exception("Tworzenie czatu nie powiodło się (${created.code()}) ${created.errorBody()?.string()?.take(150)}"))
@@ -139,14 +141,14 @@ object ChatRepository {
 
     suspend fun loadMessages(chatId: String): Result<List<MessageDto>> = withContext(Dispatchers.IO) {
         try {
-            val r = RetrofitInstance.chatApi.getMessages(chatId)
+            val r = chatApi.getMessages(chatId)
             if (r.isSuccessful) Result.success(r.body()?.messages.orEmpty()) else Result.failure(Exception("Błąd pobierania wiadomości (${r.code()})"))
         } catch (e: Exception) { Result.failure(e) }
     }
 
     suspend fun sendMessage(chatId: String, content: String): Result<MessageDto> = withContext(Dispatchers.IO) {
         try {
-            val r = RetrofitInstance.chatApi.sendMessage(mapOf("chatId" to chatId, "content" to content))
+            val r = chatApi.sendMessage(mapOf("chatId" to chatId, "content" to content))
             if (r.isSuccessful) Result.success(r.body()!!) else Result.failure(Exception("Błąd wysyłania (${r.code()})"))
         } catch (e: Exception) { Result.failure(e) }
     }

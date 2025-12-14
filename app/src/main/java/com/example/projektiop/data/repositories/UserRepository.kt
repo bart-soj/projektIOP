@@ -1,24 +1,22 @@
 package com.example.projektiop.data.repositories
 
-import android.content.Context
-import android.content.SharedPreferences
 import android.util.Log
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.api.UpdateProfileRequest
 import com.example.projektiop.data.api.ProfileDto
 import com.example.projektiop.data.api.AddUserInterestRequest
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UpdateUserInterestRequest
+import com.example.projektiop.data.api.UserApi
 import com.example.projektiop.data.api.UserSearchDto
 import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.mapping.toUserProfileResponse
-import com.example.projektiop.util.checkDataFreshness
+import com.google.gson.JsonElement
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +29,10 @@ import java.util.UUID
 private const val ID = "_id"
 
 
-object UserRepository {
+class UserRepository(private val userApi: UserApi,
+                     private val dbRepository: RealmDBRepository,
+                     private val sharedDataSource: SharedDataSource,
+                     private val interestRepository: InterestRepository) {
     private var id: String? = null
     private val _MyUserInterests = MutableStateFlow<List<UserInterestDto>?>(null)
     val MyUserInterests: StateFlow<List<UserInterestDto>?> = _MyUserInterests.asStateFlow()
@@ -41,15 +42,15 @@ object UserRepository {
     val myUserFlow: Flow<User?>
         get() {
             // assert(!id.isNullOrBlank())
-            return DBRepository.getUserFlowById(id!!)
+            return dbRepository.getUserFlowById(id!!)
         }
 
-    fun init() {
+    init {
         updateMyId()
     }
 
     fun updateMyId() {
-        val tmpId = SharedPreferencesRepository.get(ID, "")
+        val tmpId = sharedDataSource.get(ID, "")
         if (tmpId.isNotBlank()) {
             id = tmpId
         }
@@ -60,7 +61,7 @@ object UserRepository {
            return@withContext Result.success(repositoryCache.value[id]!!)
        } else {
            fetchUserById(id).onSuccess {
-               val tmpRep = OtherUserRepository(id)
+               val tmpRep = OtherUserRepository(id, userApi, dbRepository, interestRepository) // TODO() inject with koin
                _repositoryCache.value += Pair(id, tmpRep)
                return@withContext Result.success(repositoryCache.value[id]!!)
            }.onFailure { res -> return@withContext Result.failure(res) }
@@ -71,7 +72,7 @@ object UserRepository {
 
     suspend fun fetchMyProfile(): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
         try {
-            val response = RetrofitInstance.userApi.getMyProfile()
+            val response = userApi.getMyProfile()
 
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
@@ -82,7 +83,7 @@ object UserRepository {
 
                 // Save user in DB, mapper ensures mandatory fields present
                 try {
-                    DBRepository.addUser(body.toRealm())
+                    dbRepository.addUser(body.toRealm())
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving user to database: $e")
@@ -91,7 +92,7 @@ object UserRepository {
 
                 // Save interests in DB
                 try {
-                    InterestRepository.resolveIncomingUserInterests(userInterests, tmpId!!, _MyUserInterests)
+                    interestRepository.resolveIncomingUserInterests(userInterests, tmpId!!, _MyUserInterests)
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving interests to database: $e")
@@ -100,17 +101,17 @@ object UserRepository {
 
                 // Save ID in SharedPreferences
                 if (!tmpId.isNullOrBlank()) {
-                    SharedPreferencesRepository.set(ID, tmpId.toString())
+                    sharedDataSource.set(ID, tmpId.toString())
                 }
 
                 return@withContext Result.success(body)
             } else {
-                val tmpId: String = SharedPreferencesRepository.get(ID, "")
+                val tmpId: String = sharedDataSource.get(ID, "")
                 // API failed → fallback to DB
                 if (tmpId.isBlank()) {
                     return@withContext Result.failure(Exception("API failed and no user ID found in preferences"))
                 }
-                val localUser = DBRepository.getUserById(tmpId)
+                val localUser = dbRepository.getUserById(tmpId)
                 if (localUser != null) {
                     val userProfile = localUser.toUserProfileResponse()
                     return@withContext Result.success(userProfile)
@@ -119,11 +120,11 @@ object UserRepository {
             }
         } catch (e: Exception) {
             // Network call threw exception → fallback to DB
-            val tmpId: String = SharedPreferencesRepository.get(ID, "")
+            val tmpId: String = sharedDataSource.get(ID, "")
             if (tmpId.isBlank()) {
                 return@withContext Result.failure(Exception("API error and no user ID found in preferences: $e"))
             }
-            val localUser = DBRepository.getUserById(tmpId)
+            val localUser = dbRepository.getUserById(tmpId)
             if (localUser != null) {
                 val userProfile = localUser.toUserProfileResponse()
                 return@withContext Result.success(userProfile)
@@ -152,7 +153,7 @@ object UserRepository {
                     broadcastMessage = broadcastMessage?.takeIf { it.isNotBlank() }
                 )
             )
-            val response = RetrofitInstance.userApi.updateMyProfile(body)
+            val response = userApi.updateMyProfile(body)
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
                 val userInterests: List<UserInterestDto> =
@@ -161,7 +162,7 @@ object UserRepository {
 
                 // Save user in DB
                 try {
-                    DBRepository.addUser(body.toRealm())
+                    dbRepository.addUser(body.toRealm())
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving to database: $e")
@@ -170,7 +171,7 @@ object UserRepository {
 
                 // Save interests in DB
                 try {
-                    InterestRepository.resolveIncomingUserInterests(userInterests, tmpId!!, _MyUserInterests)
+                    interestRepository.resolveIncomingUserInterests(userInterests, tmpId!!, _MyUserInterests)
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving interests to database: $e")
@@ -179,7 +180,7 @@ object UserRepository {
 
                 // Save ID in SharedPreferences
                 if (!tmpId.isNullOrBlank()) {
-                    SharedPreferencesRepository.set(ID, tmpId.toString())
+                    sharedDataSource.set(ID, tmpId.toString())
                 }
 
                 Result.success(response.body()!!)
@@ -199,7 +200,7 @@ object UserRepository {
 
     suspend fun fetchUserById(id: String): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
         try {
-            val response = RetrofitInstance.userApi.getUserById(id)
+            val response = userApi.getUserById(id)
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
                 val userInterests: List<UserInterestDto> =
@@ -207,7 +208,7 @@ object UserRepository {
 
                 // Save user in DB
                 try {
-                    DBRepository.addUser(body.toRealm())
+                    dbRepository.addUser(body.toRealm())
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving to database: $e")
@@ -216,7 +217,7 @@ object UserRepository {
 
                 // Save interests in DB
                 try {
-                    InterestRepository.resolveIncomingUserInterests(userInterests, body._id!!, MutableStateFlow(null)) // TODO() placeholder mutable stateflow for now
+                    interestRepository.resolveIncomingUserInterests(userInterests, body._id!!, MutableStateFlow(null)) // TODO() placeholder mutable stateflow for now
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving interests to database: $e")
@@ -226,7 +227,7 @@ object UserRepository {
                 Result.success(response.body()!!)
             } else {
                 // API failed → fallback to DB
-                val localUser = DBRepository.getUserById(id)
+                val localUser = dbRepository.getUserById(id)
                 if (localUser != null) {
                     val userProfile = localUser.toUserProfileResponse()
                     return@withContext Result.success(userProfile)
@@ -241,7 +242,7 @@ object UserRepository {
             }
         } catch (e: Exception) {
             // API failed → fallback to DB
-            val localUser = DBRepository.getUserById(id)
+            val localUser = dbRepository.getUserById(id)
             if (localUser != null) {
                 val userProfile = localUser.toUserProfileResponse()
                 return@withContext Result.success(userProfile)
@@ -253,7 +254,7 @@ object UserRepository {
 
     suspend fun searchUsers(query: String): Result<List<UserSearchDto>> = withContext(Dispatchers.IO) {
         try {
-            val response = RetrofitInstance.userApi.searchUsers(query)
+            val response = userApi.searchUsers(query)
             if (response.isSuccessful) {
                 Result.success(response.body().orEmpty())
             } else {
@@ -278,16 +279,16 @@ object UserRepository {
                 body = requestBody
             )
 
-            val response = RetrofitInstance.userApi.uploadAvatar(part)
+            val response = userApi.uploadAvatar(part)
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
                 val tmpId: String? = try { body._id } catch (_: Throwable) { null }
                 if (!tmpId.isNullOrBlank()) {
-                    SharedPreferencesRepository.set(ID, tmpId.toString())
+                    sharedDataSource.set(ID, tmpId.toString())
                 }
                 // Try to persist locally, but don't fail the whole operation if local save has issues
                 try {
-                    DBRepository.addUser(body.toRealm())
+                    dbRepository.addUser(body.toRealm())
                 } catch (e: Exception) {
                     Log.w("UserRepository", "uploadAvatar: failed to persist locally, will continue. ${e.message}")
                 }
@@ -328,12 +329,12 @@ object UserRepository {
             val toRemove = currentInterests.filter { it.interest.name in toRemoveNames }
 
             // 3) Map names -> ids via public catalog
-            val nameToId = InterestRepository.fetchPublicInterestsMap().getOrElse { return@withContext Result.failure(it) }
+            val nameToId = interestRepository.fetchPublicInterestsMap().getOrElse { return@withContext Result.failure(it) }
 
             // 4) Execute adds
             for (name in toAdd) {
                 val id = nameToId[name] ?: continue
-                val resp = com.example.projektiop.data.api.RetrofitInstance.userApi.addUserInterest(
+                val resp = userApi.addUserInterest(
                     AddUserInterestRequest(interestId = id, customDescription = null)
                 )
                 if (!resp.isSuccessful) {
@@ -343,7 +344,7 @@ object UserRepository {
             }
 
             // 5) Execute removals
-            fun jsonIdToString(el: com.google.gson.JsonElement?): String? = try {
+            fun jsonIdToString(el: JsonElement?): String? = try {
                 when {
                     el == null || el.isJsonNull -> null
                     el.isJsonPrimitive && el.asJsonPrimitive.isString -> el.asString
@@ -354,7 +355,7 @@ object UserRepository {
 
             for (ui in toRemove) {
                 val id = ui.userInterestId ?: continue
-                val resp = com.example.projektiop.data.api.RetrofitInstance.userApi.removeUserInterest(id)
+                val resp = userApi.removeUserInterest(id)
                 if (!resp.isSuccessful) {
                     val err = try { resp.errorBody()?.string() } catch (_: Exception) { null }
                     return@withContext Result.failure(Exception("Usunięcie zainteresowania nie powiodło się (${resp.code()})${if(!err.isNullOrBlank()) ": ${err.take(200)}" else ""}"))
@@ -362,10 +363,10 @@ object UserRepository {
             }
 
             // 6) Refresh and persist
-            val refreshed = RetrofitInstance.userApi.getMyProfile()
+            val refreshed = userApi.getMyProfile()
             if (refreshed.isSuccessful && refreshed.body() != null) {
                 val body = refreshed.body()!!
-                try { DBRepository.addUser(body.toRealm()) } catch (_: Exception) {}
+                try { dbRepository.addUser(body.toRealm()) } catch (_: Exception) {}
                 Result.success(body)
             } else {
                 val err = try { refreshed.errorBody()?.string() } catch (_: Exception) { null }
@@ -390,7 +391,7 @@ object UserRepository {
             val toRemoveNames = currentNames.minus(desiredNames.toSet())
             val toKeepNames = desiredNames.intersect(currentNames)
 
-            fun jsonIdToString(el: com.google.gson.JsonElement?): String? = try {
+            fun jsonIdToString(el: JsonElement?): String? = try {
                 when {
                     el == null || el.isJsonNull -> null
                     el.isJsonPrimitive && el.asJsonPrimitive.isString -> el.asString
@@ -400,13 +401,13 @@ object UserRepository {
             } catch (_: Exception) { null }
 
             // 3) Map names -> ids
-            val nameToId = InterestRepository.fetchPublicInterestsMap().getOrElse { return@withContext Result.failure(it) }
+            val nameToId = interestRepository.fetchPublicInterestsMap().getOrElse { return@withContext Result.failure(it) }
 
             // 4) Adds (pass description if provided)
             for (name in toAdd) {
                 val id = nameToId[name] ?: continue
                 val customDesc = desired[name]?.takeIf { !it.isNullOrBlank() }
-                val resp = RetrofitInstance.userApi.addUserInterest(
+                val resp = userApi.addUserInterest(
                     AddUserInterestRequest(interestId = id, customDescription = customDesc)
                 )
                 if (!resp.isSuccessful) {
@@ -419,7 +420,7 @@ object UserRepository {
             val toRemove = currentInterests.filter { it.interest.name in toRemoveNames }
             for (ui in toRemove) {
                 val id = ui.userInterestId ?: continue
-                val resp = RetrofitInstance.userApi.removeUserInterest(id)
+                val resp = userApi.removeUserInterest(id)
                 if (!resp.isSuccessful) {
                     val err = try { resp.errorBody()?.string() } catch (_: Exception) { null }
                     return@withContext Result.failure(Exception("Usunięcie zainteresowania nie powiodło się (${resp.code()})${if(!err.isNullOrBlank()) ": ${err.take(200)}" else ""}"))
@@ -436,7 +437,7 @@ object UserRepository {
                 if (desiredDesc != currentDesc) {
                     val id = ui.userInterestId ?: continue
                     val toSend = if (desiredDesc.isBlank() && currentDesc.isNotBlank()) "" else desiredDesc.ifBlank { null }
-                    val resp = RetrofitInstance.userApi.updateUserInterest(
+                    val resp = userApi.updateUserInterest(
                         userInterestId = id,
                         body = UpdateUserInterestRequest(customDescription = toSend)
                     )
@@ -448,10 +449,10 @@ object UserRepository {
             }
 
             // 7) Refresh and persist
-            val refreshed = RetrofitInstance.userApi.getMyProfile()
+            val refreshed = userApi.getMyProfile()
             if (refreshed.isSuccessful && refreshed.body() != null) {
                 val body = refreshed.body()!!
-                try { DBRepository.addUser(body.toRealm()) } catch (_: Exception) {}
+                try { dbRepository.addUser(body.toRealm()) } catch (_: Exception) {}
                 Result.success(body)
             } else {
                 val err = try { refreshed.errorBody()?.string() } catch (_: Exception) { null }

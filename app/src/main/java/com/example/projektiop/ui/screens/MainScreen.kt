@@ -1,9 +1,7 @@
 package com.example.projektiop.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.* // Ikony dla dolnego paska
@@ -11,10 +9,7 @@ import androidx.compose.material3.* // Material 3
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,9 +20,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
 import java.time.LocalDate
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import androidx.compose.ui.platform.LocalContext
 import java.time.Period
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -35,8 +27,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import com.example.projektiop.data.db.objects.Gender
 import com.example.projektiop.util.realmInstantToMongoTimestamp
-import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.ui.components.PullToRefresh
 import com.example.projektiop.ui.components.UserAvatar
 import com.example.projektiop.ui.viewmodels.MainViewModel

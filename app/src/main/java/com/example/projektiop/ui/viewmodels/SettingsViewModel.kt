@@ -74,7 +74,7 @@ class SettingsViewModel(private val themePreference: ThemePreference,
     fun onUnblockClick(friendId: String, friendshipId: String) { // TODO() use the one from FriendshipRepository(but it uses uiState so maybe not)
         _processingIds.update { list -> list + friendId }
         viewModelScope.launch {
-            FriendshipRepository.unblockFriendship(friendshipId)
+            friendshipRepository.unblockFriendship(friendshipId)
             _processingIds.update { list -> list - friendId }
         }
     }

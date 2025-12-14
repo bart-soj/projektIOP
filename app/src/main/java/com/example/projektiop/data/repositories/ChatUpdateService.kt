@@ -18,12 +18,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
+import org.koin.android.ext.android.inject
 
-class ChatUpdateService(): Service(), KoinComponent {
+class ChatUpdateService(): Service() {
 
     private val userRepository: UserRepository by inject()
+    private val chatRepository: ChatRepository by inject()
 
     private val binder = LocalBinder()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -60,7 +60,7 @@ class ChatUpdateService(): Service(), KoinComponent {
         startForegroundServiceNotification()
 
         try {
-            myUserFlow = UserRepository.myUserFlow
+            myUserFlow = userRepository.myUserFlow
         } catch (e: Exception) {
             Log.e("ChatUpdateService", "Failed to get myUserFlow", e)
             stopSelf()
@@ -113,7 +113,7 @@ class ChatUpdateService(): Service(), KoinComponent {
                 val user = myUserState.value
                 if (user != null) {
                     try {
-                        ChatRepository.fetchChats(
+                        chatRepository.fetchChats(
                             currentUserId = user._id.toHexString(),
                             currentUsername = user.username
                         ).onSuccess { list ->

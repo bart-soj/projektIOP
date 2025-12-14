@@ -35,7 +35,8 @@ sealed interface FriendsUiEffect {
 
 // --- VIEWMODEL ---
 
-class FriendsViewModel(private val friendshipRepository: FriendshipRepository) : ViewModel() {
+class FriendsViewModel(private val friendshipRepository: FriendshipRepository,
+                       private val userRepository: UserRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FriendsUiState())
     val uiState = _uiState.asStateFlow()
@@ -77,7 +78,7 @@ class FriendsViewModel(private val friendshipRepository: FriendshipRepository) :
         viewModelScope.launch {
             _uiState.update { it.copy(isSearchLoading = true, searchError = null, searchResults = emptyList()) }
 
-            UserRepository.searchUsers(query)
+            userRepository.searchUsers(query)
                 .onSuccess { results ->
                     _uiState.update { it.copy(searchResults = results) }
                 }

@@ -1,6 +1,6 @@
 package com.example.projektiop.data.repositories
 
-import com.example.projektiop.data.api.RetrofitInstance
+import com.example.projektiop.data.api.UserApi
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.db.objects.User
@@ -19,7 +19,10 @@ import java.time.Duration
 
 private val userFreshnessTimeout: Duration = Duration.ofMinutes(5)
 
-class OtherUserRepository(private val id: String) {
+class OtherUserRepository(private val id: String,
+                          private val userApi: UserApi,
+                          private val dbRepository: RealmDBRepository,
+                          private val interestRepository: InterestRepository) {
     lateinit var chatId: String
     lateinit var friendshipId: String
 
@@ -29,7 +32,7 @@ class OtherUserRepository(private val id: String) {
     val UserInterests: StateFlow<List<UserInterestDto>?> = _UserInterests.asStateFlow()
     val userFlow: Flow<User?>
         get() {
-            return DBRepository.getUserFlowById(this.id)
+            return dbRepository.getUserFlowById(this.id)
         }
 
     suspend fun init() {
@@ -37,7 +40,7 @@ class OtherUserRepository(private val id: String) {
     }
 
     suspend fun fetchProfile(): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
-        val localUser = DBRepository.getUserById(id)
+        val localUser = dbRepository.getUserById(id)
         val updatedAt = localUser?.updatedAt
         if (localUser != null && updatedAt != null) {
             if (checkDataFreshness(updatedAt, userFreshnessTimeout)) {
@@ -52,7 +55,7 @@ class OtherUserRepository(private val id: String) {
 
     suspend fun fetchProfileFromApi(): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
         try {
-            val response = RetrofitInstance.userApi.getUserById(id)
+            val response = userApi.getUserById(id)
 
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
@@ -63,7 +66,7 @@ class OtherUserRepository(private val id: String) {
 
                 // Save user in DB, mapper ensures mandatory fields present
                 try {
-                    DBRepository.addUser(body.toRealm())
+                    dbRepository.addUser(body.toRealm())
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving user to database: $e")
@@ -72,7 +75,7 @@ class OtherUserRepository(private val id: String) {
 
                 // Save interests in DB
                 try {
-                    InterestRepository.resolveIncomingUserInterests(userInterests, tmpId!!, _UserInterests)
+                    interestRepository.resolveIncomingUserInterests(userInterests, tmpId!!, _UserInterests)
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving interests to database: $e")
@@ -83,7 +86,7 @@ class OtherUserRepository(private val id: String) {
                 return@withContext Result.success(body)
             } else {
 
-                val localUser = DBRepository.getUserById(id)
+                val localUser = dbRepository.getUserById(id)
                 if (localUser != null) {
                     val userProfile = localUser.toUserProfileResponse()
                     _Profile.value = userProfile
@@ -92,7 +95,7 @@ class OtherUserRepository(private val id: String) {
                 return@withContext Result.failure(Exception("API failed and no local data available"))
             }
         } catch (e: Exception) {
-            val localUser = DBRepository.getUserById(id)
+            val localUser = dbRepository.getUserById(id)
             if (localUser != null) {
                 val userProfile = localUser.toUserProfileResponse()
                 _Profile.value = userProfile

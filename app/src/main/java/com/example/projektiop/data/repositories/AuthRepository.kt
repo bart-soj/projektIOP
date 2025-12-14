@@ -1,17 +1,21 @@
 package com.example.projektiop.data.repositories
 
-import androidx.lifecycle.viewModelScope
-import com.example.projektiop.data.api.RetrofitInstance
+import com.example.projektiop.data.api.AuthApi
 import com.example.projektiop.data.api.RegisterRequest
 import com.example.projektiop.data.api.LoginRequest
+import com.example.projektiop.data.api.TokenProvider
 import com.example.projektiop.util.DataError
 import retrofit2.HttpException
 import com.example.projektiop.util.Result
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
 import java.io.IOException
 import java.net.SocketTimeoutException
@@ -25,24 +29,44 @@ sealed interface AuthEvent {
 }
 
 
-object AuthRepository {
+sealed interface AuthState {
+    object Unauthenticated: AuthState
+    object Loading: AuthState
+    data class Authenticated(
+        val userId: String,
+    ): AuthState
+}
+
+
+class AuthRepository(private val authApi: AuthApi,
+                     private val sharedDataSource: SharedDataSource,
+                     private val userRepository: UserRepository): TokenProvider {
     private val KEY_TOKEN = "auth_token"
-    private val EMAIL = "my_email"
+    private val KEY_EMAIL = "my_email"
     private val KEY_REMEMBER = "remember_me"
+    private val KEY_ID = "_id"
 
     private val _authEvent = MutableSharedFlow<AuthEvent>()
     val authEvent = _authEvent.asSharedFlow()
 
+    val _authState: MutableStateFlow<AuthState> = MutableStateFlow(AuthState.Loading)
+    val authState: StateFlow<AuthState> = _authState.asStateFlow()
+
     private var token: String? = null
 
-    private val _rememberMe: MutableStateFlow<Boolean> = MutableStateFlow(SharedPreferencesRepository.get(KEY_REMEMBER, false))
+    private val _rememberMe: MutableStateFlow<Boolean> = MutableStateFlow(sharedDataSource.get(KEY_REMEMBER, false))
     val rememberMe: StateFlow<Boolean> = _rememberMe.asStateFlow()
 
-    suspend fun init(){
+    init {
         if (rememberMe.value) {
-            val token = SharedPreferencesRepository.get(KEY_TOKEN, "")
-            if (token.isNotEmpty() == true) { // TODO() better token validation
-                _authEvent.emit(AuthEvent.Success)
+            val tmpToken = sharedDataSource.get(KEY_TOKEN, "")
+            val id = sharedDataSource.get(KEY_ID, "")
+            if (validateToken(tmpToken) && id.isNotBlank()) {
+                token = tmpToken
+                _authState.value = AuthState.Authenticated(id)
+                CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
+                    _authEvent.emit(AuthEvent.Success)
+                }
             }
         }
     }
@@ -50,10 +74,15 @@ object AuthRepository {
 
     suspend fun login(email: String, password: String): Result<String?, DataError> {
         return try {
-            val response = RetrofitInstance.authApi.login(LoginRequest(email, password))
-            saveInfo(email, response.body()?._id) // TODO() handle saving errors
-            token = response.body()?.token
-            if (validateToken(token)) saveToken(token, remember = rememberMe.value) else throw Exception("bad token")
+            val response = authApi.login(LoginRequest(email, password))
+            val tmpId = response.body()?._id
+            val tmpToken = response.body()?.token
+            val tmpEmail = response.body()?.email
+            if (validateToken(tmpToken) && !tmpId.isNullOrBlank() && !tmpEmail.isNullOrBlank()) {
+                saveToken(tmpToken, remember = rememberMe.value)
+                saveInfo(email, tmpId) // TODO() handle saving errors
+            } else throw Exception("bad data")
+            _authState.value = AuthState.Authenticated(tmpId)
             _authEvent.emit(AuthEvent.Success)
             Result.Success(token)
         } catch (e: HttpException) {
@@ -87,10 +116,15 @@ object AuthRepository {
 
     suspend fun register(username: String, email: String, password: String): Result<String?, DataError> {
         return try {
-            val response = RetrofitInstance.authApi.register(RegisterRequest(username, email, password))
-            saveInfo(email, response.body()?._id) // TODO() handle saving errors
-            token = response.body()?.token
-            if (validateToken(token)) saveToken(token, remember = rememberMe.value) else throw Exception("bad token")
+            val response = authApi.register(RegisterRequest(username, email, password))
+            val tmpId = response.body()?._id
+            val tmpToken = response.body()?.token
+            val tmpEmail = response.body()?.email
+            if (validateToken(tmpToken) && !tmpId.isNullOrBlank() && !tmpEmail.isNullOrBlank()) {
+                saveToken(tmpToken, remember = rememberMe.value)
+                saveInfo(email, tmpId) // TODO() handle saving errors
+            } else throw Exception("bad data")
+            _authState.value = AuthState.Authenticated(tmpId)
             _authEvent.emit(AuthEvent.Success)
             Result.Success(token)
         } catch (e: HttpException) {
@@ -126,35 +160,38 @@ object AuthRepository {
 
 
     suspend fun logout() {
+        _authState.value = AuthState.Loading
         clearToken()
         _authEvent.emit(AuthEvent.Logout)
+        _authState.value = AuthState.Unauthenticated
     }
 
     fun rememberMe() {
         _rememberMe.value = !rememberMe.value
-        SharedPreferencesRepository.set(KEY_REMEMBER, rememberMe.value)
+        sharedDataSource.set(KEY_REMEMBER, rememberMe.value)
     }
 
 
     fun saveToken(newToken: String?, remember: Boolean) {
         if (!newToken.isNullOrBlank()) {
-            SharedPreferencesRepository.set(KEY_TOKEN, newToken)
-            SharedPreferencesRepository.set(KEY_REMEMBER, remember)
+            token = newToken
+            sharedDataSource.set(KEY_TOKEN, newToken)
+            sharedDataSource.set(KEY_REMEMBER, remember)
         } else {
-            SharedPreferencesRepository.set(KEY_REMEMBER, false)
-            SharedPreferencesRepository.remove(KEY_TOKEN)
+            sharedDataSource.set(KEY_REMEMBER, false)
+            sharedDataSource.remove(KEY_TOKEN)
         }
     }
 
 
     fun saveInfo(newEmail: String?, newId: String?) {
         if (!newEmail.isNullOrBlank()) {
-            SharedPreferencesRepository.set(EMAIL, newEmail)
+            sharedDataSource.set(KEY_EMAIL, newEmail)
         }
         if (!newId.isNullOrBlank()) {
-            SharedPreferencesRepository.set("_id", newId)
+            sharedDataSource.set(KEY_ID, newId)
         }
-        UserRepository.updateMyId()
+        userRepository.updateMyId()
     }
 
     fun onTerminate() {
@@ -165,8 +202,13 @@ object AuthRepository {
 
 
     fun clearToken() {
-        SharedPreferencesRepository.set(KEY_REMEMBER, false)
-        SharedPreferencesRepository.remove(KEY_TOKEN)
+        token = null
+        sharedDataSource.set(KEY_REMEMBER, false)
+        sharedDataSource.remove(KEY_TOKEN)
+    }
+
+    override fun getToken(): String? {
+        return token
     }
 
     fun validateToken(token: String?): Boolean {

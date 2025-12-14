@@ -1,6 +1,7 @@
 package com.example.projektiop.ui.viewmodels
 
 import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.BluetoothLE.BLEActions
@@ -13,7 +14,7 @@ import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.OtherUserRepository
-import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -41,13 +42,14 @@ data class UserWithStatus(val user: User, val status: FriendshipStatus)
 data class UserWithInfo(val user: User, val status: FriendshipStatus, val friendId: String?)
 
 
-class ScannerViewModel(application: Application, private val userRepository: UserRepository, private val friendshipRepository: FriendshipRepository) : ViewModel() {
+class ScannerViewModel(application: Application,
+                       private val userRepository: UserRepository,
+                       private val friendshipRepository: FriendshipRepository,
+                       private val sharedDataSource: SharedDataSource,
+                       private val bleManager: BluetoothRepository) : AndroidViewModel(application) {
 
     // userId z SharedPreferences
-    private val userId: String = SharedPreferencesRepository.get(ID, "brak")
-
-    // Instancja BLE managera z kontekstem aplikacji, aby uniknąć wycieków pamięci
-    private val bleManager: BluetoothRepository = (application as HelloBeaconApp).bluetoothRepository
+    private val userId: String = sharedDataSource.get(ID, "brak")
 
     private val _bleEvents = MutableSharedFlow<BLEActions>()
     val bleEvents = _bleEvents.asSharedFlow<BLEActions>()

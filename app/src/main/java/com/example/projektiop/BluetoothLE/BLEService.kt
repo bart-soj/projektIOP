@@ -10,7 +10,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.projektiop.HelloBeaconApp
 import com.example.projektiop.R
-import com.example.projektiop.data.repositories.SharedPreferencesRepository
+import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.util.NotificationHelper.CHANNEL_BLE
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,18 +27,15 @@ enum class BLEActions {
 
 
 class BLEService : Service() {
-    private val sharedPreferencesRepository by inject<SharedPreferencesRepository>()
-    private lateinit var bleManager: BluetoothRepository
+    private val sharedDataSource by inject<SharedDataSource>()
+    private val bleManager: BluetoothRepository by inject()
     private lateinit var userId: String
     private val notificationId: Int = 1
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            BLEActions.STOP.toString() -> {
-                stop(); return START_NOT_STICKY
-            }
-
+            BLEActions.STOP.toString() -> { stop(); return START_NOT_STICKY }
             BLEActions.START_ADVERTISE.toString() -> startAdvertise()
             BLEActions.START_SCAN.toString() -> startScan()
             BLEActions.STOP_SCAN.toString() -> stopScan()
@@ -50,9 +47,8 @@ class BLEService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        userId = sharedPreferencesRepository.get("_id", "")
+        userId = sharedDataSource.get("_id", "")
         startForeground(notificationId, createNotification("Idle."))
-        bleManager = (application as HelloBeaconApp).bluetoothRepository
         serviceScope.launch {
             combine ( bleManager.isScanning, bleManager.isAdvertising ) { isScanning, isAdvertising ->
                 val text = when {

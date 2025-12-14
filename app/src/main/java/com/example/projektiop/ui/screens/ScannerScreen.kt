@@ -18,23 +18,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.ui.viewmodels.ScannerViewModel
 import com.example.projektiop.ui.viewmodels.UserWithStatus
 import com.example.projektiop.R
 import com.example.projektiop.activeHandshake.NFC.ActiveHandshakeButton
+import com.example.projektiop.data.api.CertificateApi
 import com.example.projektiop.data.api.CertificateRequest
-import com.example.projektiop.data.api.RetrofitInstance
 import com.example.projektiop.util.CertificateUtils
 import com.example.projektiop.data.db.objects.FriendshipStatus
 import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.ui.components.UserAvatar
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 
 private const val ID: String = "_id"
@@ -259,8 +258,8 @@ fun CertificateRequester(
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-
-    val api = RetrofitInstance.certificateApi
+    val certificateApi = koinInject<CertificateApi>()
+    val userRepository = koinInject<UserRepository>()
 
     Column(
         modifier = Modifier
@@ -280,7 +279,7 @@ fun CertificateRequester(
                     result = null
                     try {
                         val profileResult = try {
-                            UserRepository.fetchMyProfile()
+                            userRepository.fetchMyProfile()
                         } catch (e: Exception) {
                             Result.failure(e)
                         }
@@ -294,7 +293,7 @@ fun CertificateRequester(
                                     var csrPem = CertificateUtils.generateCSR(userEmail, keyPair)
                                     println("CSR generated: $csrPem")
                                     val certificateResponse = try {
-                                        api.issueCertificate(
+                                        certificateApi.issueCertificate(
                                             token = "Bearer $authToken",
                                             request = CertificateRequest(csrPem)
                                         )

@@ -23,11 +23,20 @@ import com.example.projektiop.ui.theme.ProjektIOPTheme
 import androidx.compose.runtime.getValue
 import com.example.projektiop.data.repositories.ThemePreference
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.*
+import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.projektiop.BluetoothLE.BLEActions
 import com.example.projektiop.BluetoothLE.BLEService
@@ -48,15 +57,14 @@ import com.example.projektiop.BluetoothLE.BTPermissionsManager
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.ChatUpdateService
 import com.example.projektiop.data.repositories.FriendshipRepository
-import com.example.projektiop.data.repositories.SharedPreferencesRepository
 import com.example.projektiop.ui.screens.ChatDetailScreen
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.viewmodel.koinActivityViewModel
 import com.example.projektiop.data.repositories.AuthEvent
+import com.example.projektiop.data.repositories.AuthState
 import com.example.projektiop.data.repositories.ChatRepository
-import com.example.projektiop.data.repositories.UserRepository
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
@@ -77,11 +85,11 @@ class MainActivity : ComponentActivity() {
 
 
     private val scannerViewModel: ScannerViewModel by viewModel()
-    private val localBTPermissionsManager: BTPermissionsManager by lazy {
-        BTPermissionsManager(this)
-    }
+    private val localBTPermissionsManager: BTPermissionsManager by inject()
 
     private val authRepository: AuthRepository by inject()
+    private val chatRepository: ChatRepository by inject()
+    private val friendshipRepository: FriendshipRepository by inject()
 
     private var chatService: ChatUpdateService? = null
     private var isBound = false
@@ -92,7 +100,7 @@ class MainActivity : ComponentActivity() {
             chatService = binder.getService()
             isBound = true
 
-            ChatRepository.connectToService(chatService!!.chatsFlow)
+            chatRepository.connectToService(chatService!!.chatsFlow)
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
@@ -120,7 +128,7 @@ class MainActivity : ComponentActivity() {
                 authRepository.authEvent.collect { event ->
                     when (event) {
                         is AuthEvent.Success -> {
-                            FriendshipRepository.start()
+                            friendshipRepository.refreshAll()
                             val intent = Intent(this@MainActivity, ChatUpdateService::class.java)
                             startForegroundService(intent)
                             Intent(this@MainActivity, ChatUpdateService::class.java).also { intent ->
@@ -210,54 +218,99 @@ private fun MainActivity.showPermissionDeniedMessage(context: Context, permissio
 fun MyApp() {
     val scannerViewModel: ScannerViewModel = koinActivityViewModel()
     val themePreference: ThemePreference = koinInject<ThemePreference>()
+    val authRepository: AuthRepository = koinInject<AuthRepository>()
 
     val darkMode by themePreference.isDark.collectAsState()
-    val navController = rememberNavController()
-    val startDestination = if (SharedPreferencesRepository.get("auth_token", "").isBlank()) "start" else "main" // TODO() better logged-in status verification
+    val authState by authRepository.authState.collectAsState()
+    val authNavGraph = AuthNavGraph()
+    val mainNavGraph = MainNavGraph(scannerViewModel)
 
-    ProjektIOPTheme(darkTheme = darkMode) {
-        NavHost(navController, startDestination = startDestination) {
-            composable("start") { StartScreen(navController) }
-            composable("login") { LoginScreen(navController) }
-            composable("register") { RegisterScreen(navController) }
-            composable("scanner") {
-                ScannerScreen(
-                    modifier = Modifier.padding(10.dp),
-                    navController = navController,
-                    viewModel = scannerViewModel
-                )
-            }
-            composable("main") { MainScreen(navController) }
-            composable("chats") { ChatsScreen(navController) }
-            composable("chat_detail?chatId={chatId}&friendId={friendId}",
-                arguments = listOf(
-                    navArgument("chatId") { nullable = true; defaultValue = null },
-                    navArgument("friendId") { nullable = true; defaultValue = null }
-                )
-            ) { backStack ->
-                val chatId = backStack.arguments?.getString("chatId")
-                val friendId = backStack.arguments?.getString("friendId")
-                val friendName = backStack.arguments?.getString("friendName")
-                ChatDetailScreen(navController, chatId, friendId)
-            }
-            composable("settings") { SettingsScreen(navController) }
-            composable("edit_profile") { EditProfileScreen(navController) }
-            composable("friends_list") { FriendsListScreen(navController) }
-            composable(
-                route = "friend_profile/{userId}?username={username}&displayName={displayName}&avatarUrl={avatarUrl}",
-                arguments = listOf(
-                    navArgument("userId") { nullable = false },
-                    navArgument("username") { nullable = true; defaultValue = null },
-                    navArgument("displayName") { nullable = true; defaultValue = null },
-                    navArgument("avatarUrl") { nullable = true; defaultValue = null }
-                )
-            ) { backStack ->
-                val uid = backStack.arguments?.getString("userId") ?: ""
-                val uname = backStack.arguments?.getString("username")
-                val dname = backStack.arguments?.getString("displayName")
-                val avatar = backStack.arguments?.getString("avatarUrl")
-                FriendProfileScreen(navController, uid, uname, dname, avatar)
-            }
+    ProjektIOPTheme {
+        when(authState) {
+            is AuthState.Authenticated -> mainNavGraph
+            AuthState.Loading -> LoadingScreen()
+            AuthState.Unauthenticated -> authNavGraph
         }
+    }
+
+}
+
+
+@Composable
+fun AuthNavGraph() {
+    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = "start"
+    ) {
+        composable("start") { StartScreen(navController) }
+        composable("login") { LoginScreen(navController) }
+        composable("register") { RegisterScreen(navController) }
+    }
+}
+
+
+@Composable
+fun MainNavGraph(scannerViewModel: ScannerViewModel) { // TODO() send BLE events from repository
+    val navController = rememberNavController()
+    val startDestination = "main"
+
+    NavHost(navController, startDestination = startDestination) {
+        composable("scanner") {
+            ScannerScreen(
+                modifier = Modifier.padding(10.dp),
+                navController = navController,
+                viewModel = scannerViewModel
+            )
+        }
+        composable("main") { MainScreen(navController) }
+        composable("chats") { ChatsScreen(navController) }
+        composable("chat_detail?chatId={chatId}&friendId={friendId}",
+            arguments = listOf(
+                navArgument("chatId") { nullable = true; defaultValue = null },
+                navArgument("friendId") { nullable = true; defaultValue = null }
+            )
+        ) { backStack ->
+            val chatId = backStack.arguments?.getString("chatId")
+            val friendId = backStack.arguments?.getString("friendId")
+            val friendName = backStack.arguments?.getString("friendName")
+            ChatDetailScreen(navController, chatId, friendId)
+        }
+        composable("settings") { SettingsScreen(navController) }
+        composable("edit_profile") { EditProfileScreen(navController) }
+        composable("friends_list") { FriendsListScreen(navController) }
+        composable(
+            route = "friend_profile/{userId}?username={username}&displayName={displayName}&avatarUrl={avatarUrl}",
+            arguments = listOf(
+                navArgument("userId") { nullable = false },
+                navArgument("username") { nullable = true; defaultValue = null },
+                navArgument("displayName") { nullable = true; defaultValue = null },
+                navArgument("avatarUrl") { nullable = true; defaultValue = null }
+            )
+        ) { backStack ->
+            val uid = backStack.arguments?.getString("userId") ?: ""
+            val uname = backStack.arguments?.getString("username")
+            val dname = backStack.arguments?.getString("displayName")
+            val avatar = backStack.arguments?.getString("avatarUrl")
+            FriendProfileScreen(navController, uid, uname, dname, avatar)
+        }
+    }
+}
+
+
+@Composable
+fun LoadingScreen() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.start_background2),
+            contentDescription = stringResource(R.string.background_image_description),
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
     }
 }
