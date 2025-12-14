@@ -46,15 +46,6 @@ fun LoginScreen(navController: NavController) {
     val isLoading by viewModel.loading.collectAsState()
     val inputsValid by viewModel.inputsValid.collectAsState()
 
-
-    val authEvents = viewModel.authEventFlow
-
-    ObserveAsEvents(authEvents) { event -> when(event) {
-        is AuthEvent.Error -> {}
-        AuthEvent.Logout -> {}
-        AuthEvent.Success -> navController.navigate("main")
-    } }
-
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background

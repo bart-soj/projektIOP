@@ -43,6 +43,12 @@ fun MainScreen(navController: NavController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+
+    LaunchedEffect(Unit) {
+        viewModel.refreshProfile()
+    }
+
+
     Scaffold(
         bottomBar = {
             BottomNavigationBar(navController = navController, currentRoute = currentRoute)
@@ -83,14 +89,6 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
     val interests by viewModel.myInterests.collectAsState()
     val loading by viewModel.loading.collectAsState()
     var error by remember { mutableStateOf<String?>(null) }
-
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    LaunchedEffect(navBackStackEntry?.destination?.route) {
-        if (navBackStackEntry?.destination?.route == "main") {
-            error = null
-        }
-        viewModel.refreshProfile()
-    }
 
     Card(
         modifier = modifier.fillMaxWidth(),

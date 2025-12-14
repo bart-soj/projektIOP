@@ -10,6 +10,7 @@ import com.example.projektiop.util.Result
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,8 +40,7 @@ sealed interface AuthState {
 
 
 class AuthRepository(private val authApi: AuthApi,
-                     private val sharedDataSource: SharedDataSource,
-                     private val userRepository: UserRepository): TokenProvider {
+                     private val sharedDataSource: SharedDataSource): TokenProvider {
     private val KEY_TOKEN = "auth_token"
     private val KEY_EMAIL = "my_email"
     private val KEY_REMEMBER = "remember_me"
@@ -58,15 +58,17 @@ class AuthRepository(private val authApi: AuthApi,
     val rememberMe: StateFlow<Boolean> = _rememberMe.asStateFlow()
 
     init {
-        if (rememberMe.value) {
-            val tmpToken = sharedDataSource.get(KEY_TOKEN, "")
-            val id = sharedDataSource.get(KEY_ID, "")
-            if (validateToken(tmpToken) && id.isNotBlank()) {
-                token = tmpToken
-                _authState.value = AuthState.Authenticated(id)
-                CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
+        CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
+            if (rememberMe.value == true) {
+                val tmpToken = sharedDataSource.get(KEY_TOKEN, "")
+                val id = sharedDataSource.get(KEY_ID, "")
+                if (validateToken(tmpToken) && id.isNotBlank()) {
+                    token = tmpToken
+                    _authState.value = AuthState.Authenticated(id)
                     _authEvent.emit(AuthEvent.Success)
                 }
+            } else {
+                _authState.value = AuthState.Unauthenticated
             }
         }
     }
@@ -191,7 +193,6 @@ class AuthRepository(private val authApi: AuthApi,
         if (!newId.isNullOrBlank()) {
             sharedDataSource.set(KEY_ID, newId)
         }
-        userRepository.updateMyId()
     }
 
     fun onTerminate() {

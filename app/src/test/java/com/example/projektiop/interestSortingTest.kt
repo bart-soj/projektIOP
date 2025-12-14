@@ -20,37 +20,37 @@ class InterestSortingUnitTest {
 
     @Test
     fun `identical set similarity should equal 1`(): Unit {
-        assertEquals(1, cosineSimilarity<String>(
+        assertEquals(1.0, cosineSimilarity<String>(
                 a = setOf("name1", "name2"),
                 b = setOf("name1", "name2"),
-            )
+            ), 0.0
         )
     }
 
     @Test
     fun `empty set similarity should equal 1`(): Unit {
-            assertEquals(1, cosineSimilarity<String>(
+        assertEquals(0.0, cosineSimilarity<String>(
                 a = emptySet(),
                 b = emptySet()
-            )
+            ), 0.0
         )
     }
 
     @Test
     fun `sets without same members similarity should equal 0`(): Unit {
-            assertEquals(0, cosineSimilarity<String>(
+            assertEquals(0.0, cosineSimilarity<String>(
                     a = setOf("name1", "name2"),
                     b = setOf("name3", "name4")
-                )
+                ), 0.0
             )
     }
 
     @Test
     fun `one common member same size similarity test`(): Unit {
         assertEquals(0.5, cosineSimilarity<String>(
-            a = setOf("name1", "name2"),
-            b = setOf("name1", "name3")
-        )
+                a = setOf("name1", "name2"),
+                b = setOf("name1", "name3")
+            ), 0.0
         )
     }
 }

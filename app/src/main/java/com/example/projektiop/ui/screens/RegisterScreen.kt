@@ -50,16 +50,6 @@ fun RegisterScreen(navController: NavController) {
     val passwordErrors by viewModel.passwordErrors.collectAsState()
     val registrationError by viewModel.errorMessage.collectAsState()
 
-
-    val authEvents = viewModel.authEventFlow
-
-    ObserveAsEvents(authEvents) { event -> when(event) {
-        is AuthEvent.Error -> {}
-        AuthEvent.Logout -> {}
-        AuthEvent.Success -> navController.navigate("main")
-    } }
-
-
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = colorScheme.background

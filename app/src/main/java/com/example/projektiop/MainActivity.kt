@@ -65,6 +65,7 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 import com.example.projektiop.data.repositories.AuthEvent
 import com.example.projektiop.data.repositories.AuthState
 import com.example.projektiop.data.repositories.ChatRepository
+import com.example.projektiop.data.repositories.UserRepository
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
@@ -90,6 +91,7 @@ class MainActivity : ComponentActivity() {
     private val authRepository: AuthRepository by inject()
     private val chatRepository: ChatRepository by inject()
     private val friendshipRepository: FriendshipRepository by inject()
+    private val userRepository: UserRepository by inject()
 
     private var chatService: ChatUpdateService? = null
     private var isBound = false
@@ -111,10 +113,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            MyApp()
-        }
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val perm = Manifest.permission.POST_NOTIFICATIONS
@@ -129,6 +128,7 @@ class MainActivity : ComponentActivity() {
                     when (event) {
                         is AuthEvent.Success -> {
                             friendshipRepository.refreshAll()
+                            userRepository.updateMyId()
                             val intent = Intent(this@MainActivity, ChatUpdateService::class.java)
                             startForegroundService(intent)
                             Intent(this@MainActivity, ChatUpdateService::class.java).also { intent ->
@@ -189,6 +189,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        enableEdgeToEdge()
+        setContent {
+            MyApp()
+        }
     }
 
     override fun onStart() {
@@ -216,23 +221,19 @@ private fun MainActivity.showPermissionDeniedMessage(context: Context, permissio
 
 @Composable
 fun MyApp() {
-    val scannerViewModel: ScannerViewModel = koinActivityViewModel()
     val themePreference: ThemePreference = koinInject<ThemePreference>()
     val authRepository: AuthRepository = koinInject<AuthRepository>()
 
     val darkMode by themePreference.isDark.collectAsState()
     val authState by authRepository.authState.collectAsState()
-    val authNavGraph = AuthNavGraph()
-    val mainNavGraph = MainNavGraph(scannerViewModel)
 
-    ProjektIOPTheme {
+    ProjektIOPTheme (darkTheme = darkMode) {
         when(authState) {
-            is AuthState.Authenticated -> mainNavGraph
-            AuthState.Loading -> LoadingScreen()
-            AuthState.Unauthenticated -> authNavGraph
+            is AuthState.Authenticated -> MainNavGraph()
+            is AuthState.Loading -> LoadingScreen()
+            is AuthState.Unauthenticated -> AuthNavGraph()
         }
     }
-
 }
 
 
@@ -252,7 +253,8 @@ fun AuthNavGraph() {
 
 
 @Composable
-fun MainNavGraph(scannerViewModel: ScannerViewModel) { // TODO() send BLE events from repository
+fun MainNavGraph() { // TODO() send BLE events from repository
+    val scannerViewModel: ScannerViewModel = koinActivityViewModel()
     val navController = rememberNavController()
     val startDestination = "main"
 

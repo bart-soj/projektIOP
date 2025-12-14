@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.realm)
 }
 
+apply("realm_task.gradle.kts")
+
 android {
     namespace = "com.example.projektiop"
     compileSdk = 35
@@ -64,6 +66,9 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
     implementation(libs.koin.androidx.compose.navigation)
+    testImplementation(platform(libs.koin.bom))
+    testImplementation(libs.koin.test)
+    testImplementation(libs.koin.test.junit4)
 
     implementation(libs.androidx.material.icons.core)
     implementation(libs.androidx.material.icons.extended)

@@ -1,25 +1,17 @@
 package com.example.projektiop
 
 import android.app.Application
-import android.util.Log
-import com.example.projektiop.BluetoothLE.BluetoothRepository
 import com.example.projektiop.BluetoothLE.bleKoinModule
 import com.example.projektiop.activeHandshake.NFC.nfcKoinModule
 import com.example.projektiop.data.api.apiKoinModule
 import com.example.projektiop.data.db.RealmProvider
 import com.example.projektiop.data.db.realmKoinModule
 import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.data.repositories.FriendshipRepository
-import com.example.projektiop.data.repositories.SharedDataSource
-import com.example.projektiop.data.repositories.UserRepository
-import com.example.projektiop.ui.viewmodels.ScannerViewModel
 import com.example.projektiop.util.NotificationHelper
-import org.koin.android.ext.android.getKoin
 import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
-import org.koin.core.logger.Level
 
 /**
  * Application class for the HelloBeacon Application

@@ -24,7 +24,7 @@ val rootKoinModule = module {
     single { UserRepository( get(), get(), get(), get() ) }
     single { InterestRepository( get(), get() ) }
     single { ThemePreference( get() ) }
-    single { AuthRepository( get(), get(), get() ) }
+    single { AuthRepository( get(), get() ) }
     single { ChatUpdateService }
     single { ChatRepository( get(), androidContext(), get(), get() ) }
     single { FriendshipRepository( get(), get(), get() ) }
@@ -32,7 +32,7 @@ val rootKoinModule = module {
     viewModel { MainViewModel(get()) }
     viewModel { SettingsViewModel(get(), get(), get())}
     viewModel { AuthViewModel(get()) }
-    viewModel { ScannerViewModel( androidContext() as Application, get(), get(), get(), get() ) }
+    viewModel { ScannerViewModel( get(), get(), get(), get(), get() ) }
     viewModel { FriendsViewModel( get(), get() ) }
     viewModel { ChatsViewModel(get(), get()) }
     viewModel { (userId: String) -> FriendProfileViewModel(userId, get()) }
