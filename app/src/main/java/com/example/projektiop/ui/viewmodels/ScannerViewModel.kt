@@ -77,6 +77,7 @@ class ScannerViewModel(application: Application,
         initialValue = Triple(emptyList(), emptyList(), emptyList())
     )
 
+    /*
     private val _userRepositories = MutableStateFlow<List<OtherUserRepository>>(emptyList())
     @OptIn(ExperimentalCoroutinesApi::class)
     private val _userFlows: Flow<List<Pair<User, List<UserInterestDto>?>>> = _userRepositories.flatMapLatest { repositories ->
@@ -98,7 +99,8 @@ class ScannerViewModel(application: Application,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
-
+     */
+    /*
     val usersFromRepo: StateFlow<List<UserWithStatus>> = combine (
         myInterests,
         _userFlows,
@@ -134,6 +136,7 @@ class ScannerViewModel(application: Application,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
+     */
 
     private val _userProfiles = MutableStateFlow<List<UserProfileResponse>>(emptyList())
     val users: StateFlow<List<UserWithStatus>> = combine(
@@ -195,7 +198,7 @@ class ScannerViewModel(application: Application,
                 }
             }
         }
-
+        /*
         viewModelScope.launch {
             foundDeviceIds.collect { currentIds ->
                 val existingProfileIds = _userRepositories.value.map { it.getId() }.toSet()
@@ -215,6 +218,7 @@ class ScannerViewModel(application: Application,
                 }
             }
         }
+         */
     }
 
     fun addFriend(userId: String): Unit {

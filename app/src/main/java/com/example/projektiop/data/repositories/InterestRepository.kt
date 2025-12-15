@@ -45,7 +45,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
 
             } else {
                 val local = dbRepository.getInterestCategories()
-                if (local.orEmpty() != emptyList<InterestCategory>()){
+                if (local != emptyList<InterestCategory>()){
                     return@withContext Result.success(local.map{it.toDto()})
                 } else {
                     return@withContext Result.failure(Exception("API failed and no local data"))
@@ -67,7 +67,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
             val response = publicInterestApi.getPublicInterests()
             if (response.isSuccessful && response.body().orEmpty() != emptyList<InterestDto>()){
                 val body = response.body()!!
-                var returnList = emptyList<InterestDto>()
+                val returnList = emptyList<InterestDto>().toMutableList()
 
                 for (publicInterestDto in body) {
                     val interestDto = InterestDto(
@@ -144,8 +144,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
 
         for (userInterestDto in userInterests) {
             runCatching {
-                val interestRealm = userInterestDto.interest.toRealm(dbRepository)
-                val userInterestRealm = userInterestDto.toRealm(userId, dbRepository)
+                // first add category
                 val interestCategory = userInterestDto.interest.category
                 if (interestCategory !in localInterestCategories ) {
                     getPublicInterests().onSuccess {
@@ -156,7 +155,12 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
                         throw Exception("invalid interest category id $interestCategory")
                     }
                 }
-                dbRepository.addInterestPair(interestRealm, userInterestRealm)
+                // second add interest
+                val interestRealm = userInterestDto.interest.toRealm(dbRepository)
+                dbRepository.addInterest(interestRealm)
+                // only then add userInterest
+                val userInterestRealm = userInterestDto.toRealm(userId, dbRepository)
+                dbRepository.addUserInterest(userInterestRealm)
             }.onFailure { e ->
                 Log.d("INT", "UserInterest resolution failed", e)
             }

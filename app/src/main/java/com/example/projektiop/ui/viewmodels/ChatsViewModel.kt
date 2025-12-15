@@ -46,15 +46,9 @@ class ChatsViewModel(
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
-    private val _myUser = MutableStateFlow<User?>(null)
-    val myUser = _myUser.asStateFlow()
+    val myUser = userRepository.myUser
 
     init {
-        viewModelScope.launch {
-            userRepository.myUserFlow.collect { value ->
-                _myUser.value = value
-            }
-        }
         viewModelScope.launch {
             chatRepository.chats.collect { newList ->
                 _chats.value = newList            }

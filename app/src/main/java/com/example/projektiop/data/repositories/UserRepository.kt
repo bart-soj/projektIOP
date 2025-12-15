@@ -39,11 +39,17 @@ class UserRepository(private val userApi: UserApi,
 
     private val _repositoryCache = MutableStateFlow<Map<String, OtherUserRepository>>(emptyMap())
     val repositoryCache: StateFlow<Map<String, OtherUserRepository>> = _repositoryCache.asStateFlow()
+
+    val _myUser = MutableStateFlow<User?>(null)
+    val myUser = _myUser.asStateFlow()
+    /*
     val myUserFlow: Flow<User?>
         get() {
-            // assert(!id.isNullOrBlank())
+            assert(!id.isNullOrBlank())
             return dbRepository.getUserFlowById(id!!)
         }
+
+     */
 
     init {
         updateMyId()
@@ -77,7 +83,7 @@ class UserRepository(private val userApi: UserApi,
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
                 val userInterests: List<UserInterestDto> =
-                    body.interests.orEmpty().filterNotNull().filter{ it.interest != null }
+                    body.interests.orEmpty().filter{ it.interest != null }
 
                 val tmpId: String? = body._id
 
@@ -100,10 +106,11 @@ class UserRepository(private val userApi: UserApi,
                 }
 
                 // Save ID in SharedPreferences
-                if (!tmpId.isNullOrBlank()) {
+                if (tmpId.isNotBlank()) {
                     sharedDataSource.set(ID, tmpId.toString())
+                    updateMyId()
                 }
-
+                _myUser.value = dbRepository.getUserById(id!!)
                 return@withContext Result.success(body)
             } else {
                 val tmpId: String = sharedDataSource.get(ID, "")
@@ -113,6 +120,7 @@ class UserRepository(private val userApi: UserApi,
                 }
                 val localUser = dbRepository.getUserById(tmpId)
                 if (localUser != null) {
+                    _myUser.value = localUser
                     val userProfile = localUser.toUserProfileResponse()
                     return@withContext Result.success(userProfile)
                 }
@@ -126,6 +134,7 @@ class UserRepository(private val userApi: UserApi,
             }
             val localUser = dbRepository.getUserById(tmpId)
             if (localUser != null) {
+                _myUser.value = localUser
                 val userProfile = localUser.toUserProfileResponse()
                 return@withContext Result.success(userProfile)
             }
@@ -183,6 +192,7 @@ class UserRepository(private val userApi: UserApi,
                     sharedDataSource.set(ID, tmpId.toString())
                 }
 
+                _myUser.value = dbRepository.getUserById(id!!)
                 Result.success(response.body()!!)
             } else {
                 val errBody = try { response.errorBody()?.string() } catch (_: Exception) { null }

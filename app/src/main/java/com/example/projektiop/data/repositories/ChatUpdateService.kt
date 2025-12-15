@@ -5,16 +5,17 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.app.Service.START_STICKY
 import android.content.Context
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.example.projektiop.data.db.objects.User
+import androidx.core.app.ServiceCompat.startForeground
+import androidx.core.content.ContextCompat.getSystemService
 import com.example.projektiop.util.NotificationHelper
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,8 +34,7 @@ class ChatUpdateService(): Service() {
     val chatsFlow: StateFlow<List<ChatListItem>> = _chatsFlow.asStateFlow()
 
     // User data
-    private var myUserFlow: Flow<User?>? = null
-    private val myUserState = MutableStateFlow<User?>(null)
+    private val myUserState = userRepository.myUser
 
     private var pollingJob: Job? = null
 
@@ -59,21 +59,9 @@ class ChatUpdateService(): Service() {
 
         startForegroundServiceNotification()
 
-        try {
-            myUserFlow = userRepository.myUserFlow
-        } catch (e: Exception) {
-            Log.e("ChatUpdateService", "Failed to get myUserFlow", e)
-            stopSelf()
-            return
-        }
-
-
         scope.launch {
-            userRepository.myUserFlow.collect { user ->
-                myUserState.value = user
-                startPolling()
-                Log.d("ChatUpdateService", "Service Started for user: ${user?.username}")
-            }
+            startPolling()
+            Log.d("ChatUpdateService", "Service Started for user: ${myUserState.value?.username}")
         }
     }
 

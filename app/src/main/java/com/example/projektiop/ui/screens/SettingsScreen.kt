@@ -144,7 +144,6 @@ fun SettingsScreen(
                     Button(onClick = {
                         showLogoutDialog = false
                         authViewModel.onLogoutClick()
-                        navController.navigate("start")
                     }) {
                         Text(stringResource(R.string.logout_confirm_yes))
                     }
@@ -158,8 +157,6 @@ fun SettingsScreen(
         }
     }
 }
-
-typealias blockedId = String
 
 @Composable
 private fun BlockedUsersDialog(

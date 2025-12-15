@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.projektiop.data.db.objects.Gender
 import com.example.projektiop.util.realmInstantToMongoTimestamp
 import com.example.projektiop.ui.components.PullToRefresh
@@ -42,12 +43,6 @@ fun MainScreen(navController: NavController) {
     val viewModel = koinViewModel<MainViewModel>()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-
-
-    LaunchedEffect(Unit) {
-        viewModel.refreshProfile()
-    }
-
 
     Scaffold(
         bottomBar = {
@@ -85,10 +80,10 @@ fun MainScreen(navController: NavController) {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifier, viewModel: MainViewModel) {
-    val user by viewModel.user.collectAsState()
+    val user by viewModel.user.collectAsStateWithLifecycle()
     val interests by viewModel.myInterests.collectAsState()
     val loading by viewModel.loading.collectAsState()
-    var error by remember { mutableStateOf<String?>(null) }
+    val error by viewModel.errorMessage.collectAsState()
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -110,7 +105,7 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 Text(
                     text = when {
                         loading -> stringResource(R.string.profile_loading)
-                        error != null -> stringResource(R.string.profile_error)
+                        error != null -> stringResource(R.string.profile_error) + "\n $error"
                         user?.profile?.displayName?.isNotEmpty() == true -> user!!.profile!!.displayName
                         else -> stringResource(R.string.profile_name_placeholder)
                     },

@@ -36,7 +36,7 @@ class SettingsViewModel(private val themePreference: ThemePreference,
 
     init {
         viewModelScope.launch {
-            userRepository.myUserFlow.collect { updatedUser ->
+            userRepository.myUser.collect { updatedUser ->
                 _myUserId.value = updatedUser?._id?.toHexString()
             }
         }

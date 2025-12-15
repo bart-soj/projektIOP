@@ -11,6 +11,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.notifications.SingleQueryChange
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.map
 import org.mongodb.kbson.ObjectId
 
@@ -93,10 +94,10 @@ class RealmDBRepository(private val realm: Realm) {
 
     fun getUserFlowById(_id: String): Flow<User?> {
         return realm.query<User>(User::class, "_id == $0", ObjectId(_id))
-            .first()
             .asFlow()
-            .map { change: SingleQueryChange<User> ->
-                change.obj
+            .cancellable()
+            .map { changeList  ->
+                changeList.list.firstOrNull()
             }
     }
 

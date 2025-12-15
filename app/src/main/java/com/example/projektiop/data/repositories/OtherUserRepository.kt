@@ -30,10 +30,12 @@ class OtherUserRepository(private val id: String,
     val Profile: StateFlow<UserProfileResponse?> = _Profile.asStateFlow()
     private val _UserInterests = MutableStateFlow<List<UserInterestDto>?>(null)
     val UserInterests: StateFlow<List<UserInterestDto>?> = _UserInterests.asStateFlow()
+    /*
     val userFlow: Flow<User?>
         get() {
             return dbRepository.getUserFlowById(this.id)
         }
+     */
 
     suspend fun init() {
         fetchProfile()

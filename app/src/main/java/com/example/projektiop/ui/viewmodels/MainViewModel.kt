@@ -20,25 +20,27 @@ class MainViewModel(private val userRepository: UserRepository) : ViewModel() {
     val myInterests: StateFlow<List<UserInterestDto>?> = userRepository.MyUserInterests
     private val _loading = MutableStateFlow(false)
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
-    private val _user = MutableStateFlow<User?>(null)
-    val user: StateFlow<User?> = _user.asStateFlow()
+    val user = userRepository.myUser
 
     init {
         viewModelScope.launch {
-            userRepository.myUserFlow.collect { updatedUser ->
-                _user.value = updatedUser
-            }
+            refreshProfile()
         }
     }
 
     fun refreshProfile() {
         _loading.value = true
+        _errorMessage.value = null
         viewModelScope.launch{
             try {
                 userRepository.fetchMyProfile()
             } catch (e: Exception) {
+                _errorMessage.value = e.message
                 Log.e("ProfileRefresh", "Error fetching profile", e)
             } finally {
                 _loading.value = false
