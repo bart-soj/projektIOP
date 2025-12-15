@@ -2,13 +2,11 @@ package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.FriendshipDto
 import com.example.projektiop.data.api.UserProfileResponse
-import com.example.projektiop.data.db.objects.Friendship
-import com.example.projektiop.data.db.objects.FriendshipStatus
-import com.example.projektiop.data.db.objects.FriendshipType
-import com.example.projektiop.data.db.objects.User
-import com.example.projektiop.data.repositories.RealmDBRepository
+import com.example.projektiop.data.db.realm.objects.Friendship
+import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.data.repositories.FriendItem
-import com.example.projektiop.data.repositories.SharedDataSource
+import com.example.projektiop.domain.models.FriendshipStatus
+import com.example.projektiop.domain.models.FriendshipType
 import com.example.projektiop.util.mongoTimestampToRealmInstant
 import com.example.projektiop.util.realmInstantToMongoTimestamp
 

@@ -1,6 +1,5 @@
 package com.example.projektiop.data.api
 
-import com.example.projektiop.data.db.objects.User
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.POST

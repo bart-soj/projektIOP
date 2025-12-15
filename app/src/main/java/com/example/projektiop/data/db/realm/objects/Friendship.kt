@@ -1,26 +1,13 @@
-package com.example.projektiop.data.db.objects
+package com.example.projektiop.data.db.realm.objects
 
+import com.example.projektiop.domain.models.FriendshipStatus
+import com.example.projektiop.domain.models.FriendshipType
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.RealmInstant
 import org.mongodb.kbson.ObjectId
-
-
-enum class FriendshipStatus {
-    PENDING,
-    ACCEPTED,
-    REJECTED,
-    BLOCKED,
-    NOT_FRIENDS
-}
-
-
-enum class FriendshipType {
-    UNVERIFIED,
-    VERIFIED
-}
 
 
 class Friendship() : RealmObject {

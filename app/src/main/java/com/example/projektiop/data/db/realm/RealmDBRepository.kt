@@ -1,18 +1,17 @@
-package com.example.projektiop.data.repositories
+package com.example.projektiop.data.db.realm
 
-import com.example.projektiop.data.db.objects.Friendship
-import com.example.projektiop.data.db.objects.FriendshipStatus
-import com.example.projektiop.data.db.objects.Interest
-import com.example.projektiop.data.db.objects.InterestCategory
-import com.example.projektiop.data.db.objects.Message
-import com.example.projektiop.data.db.objects.User
-import com.example.projektiop.data.db.objects.UserInterest
+import com.example.projektiop.data.db.realm.objects.Friendship
+import com.example.projektiop.data.db.realm.objects.Interest
+import com.example.projektiop.data.db.realm.objects.InterestCategory
+import com.example.projektiop.data.db.realm.objects.Message
+import com.example.projektiop.data.db.realm.objects.User
+import com.example.projektiop.data.db.realm.objects.UserInterest
 import io.realm.kotlin.Realm
 import io.realm.kotlin.UpdatePolicy
-import io.realm.kotlin.notifications.SingleQueryChange
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.map
+import com.example.projektiop.domain.models.FriendshipStatus
 import org.mongodb.kbson.ObjectId
 
 class RealmDBRepository(private val realm: Realm) {

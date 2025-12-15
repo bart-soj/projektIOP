@@ -5,7 +5,7 @@ import android.content.Context
 import com.example.projektiop.BluetoothLE.bleKoinModule
 import com.example.projektiop.activeHandshake.NFC.nfcKoinModule
 import com.example.projektiop.data.api.apiKoinModule
-import com.example.projektiop.data.db.realmKoinModule
+import com.example.projektiop.data.db.realm.realmKoinModule
 import org.junit.Test
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.dsl.module

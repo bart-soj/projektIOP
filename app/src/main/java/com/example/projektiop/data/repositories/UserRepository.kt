@@ -13,12 +13,12 @@ import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UpdateUserInterestRequest
 import com.example.projektiop.data.api.UserApi
 import com.example.projektiop.data.api.UserSearchDto
-import com.example.projektiop.data.db.objects.User
+import com.example.projektiop.data.db.realm.RealmDBRepository
+import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.mapping.toUserProfileResponse
 import com.google.gson.JsonElement
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

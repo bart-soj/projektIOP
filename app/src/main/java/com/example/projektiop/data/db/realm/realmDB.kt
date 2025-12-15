@@ -1,15 +1,15 @@
-package com.example.projektiop.data.db
+package com.example.projektiop.data.db.realm
 
 import android.content.Context
+import com.example.projektiop.data.db.realm.objects.Friendship
+import com.example.projektiop.data.db.realm.objects.Interest
+import com.example.projektiop.data.db.realm.objects.InterestCategory
+import com.example.projektiop.data.db.realm.objects.Message
+import com.example.projektiop.data.db.realm.objects.User
+import com.example.projektiop.data.db.realm.objects.UserInterest
+import com.example.projektiop.data.db.realm.objects.UserProfile
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import com.example.projektiop.data.db.objects.User
-import com.example.projektiop.data.db.objects.Friendship
-import com.example.projektiop.data.db.objects.Interest
-import com.example.projektiop.data.db.objects.InterestCategory
-import com.example.projektiop.data.db.objects.UserInterest
-import com.example.projektiop.data.db.objects.Message
-import com.example.projektiop.data.db.objects.UserProfile
 
 // TODO() use RealmSetTypes in RealmObject definition to represent relationships
 
@@ -49,3 +49,4 @@ object RealmProvider {
         }
     }
 }
+

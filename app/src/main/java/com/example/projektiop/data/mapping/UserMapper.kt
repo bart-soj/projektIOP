@@ -2,10 +2,10 @@ package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.ProfileDto
 import com.example.projektiop.data.api.UserProfileResponse
-import com.example.projektiop.data.db.objects.Gender
-import com.example.projektiop.data.db.objects.User
-import com.example.projektiop.data.db.objects.UserProfile
-import com.example.projektiop.data.db.objects.UserRole
+import com.example.projektiop.data.db.realm.objects.User
+import com.example.projektiop.data.db.realm.objects.UserProfile
+import com.example.projektiop.domain.models.Gender
+import com.example.projektiop.domain.models.UserRole
 import com.example.projektiop.util.mongoTimestampToRealmInstant
 import com.example.projektiop.util.realmInstantToMongoTimestamp
 import io.realm.kotlin.ext.realmListOf

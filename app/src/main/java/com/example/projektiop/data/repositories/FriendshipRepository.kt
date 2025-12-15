@@ -3,18 +3,16 @@ package com.example.projektiop.data.repositories
 import android.util.Log
 import com.example.projektiop.data.api.FriendRequest
 import com.example.projektiop.data.api.FriendshipApi
-import com.example.projektiop.data.db.objects.FriendshipStatus
+import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.data.mapping.toFriendItem
 import com.example.projektiop.data.mapping.toRealm
+import com.example.projektiop.domain.models.FriendshipStatus
 import com.example.projektiop.util.DataError
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.Result
 

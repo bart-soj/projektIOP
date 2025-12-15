@@ -4,8 +4,8 @@ import android.app.Application
 import com.example.projektiop.BluetoothLE.bleKoinModule
 import com.example.projektiop.activeHandshake.NFC.nfcKoinModule
 import com.example.projektiop.data.api.apiKoinModule
-import com.example.projektiop.data.db.RealmProvider
-import com.example.projektiop.data.db.realmKoinModule
+import com.example.projektiop.data.db.realm.RealmProvider
+import com.example.projektiop.data.db.realm.realmKoinModule
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.util.NotificationHelper
 import org.koin.android.ext.android.inject

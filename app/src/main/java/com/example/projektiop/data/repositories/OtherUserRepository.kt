@@ -3,12 +3,11 @@ package com.example.projektiop.data.repositories
 import com.example.projektiop.data.api.UserApi
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UserProfileResponse
-import com.example.projektiop.data.db.objects.User
+import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.mapping.toUserProfileResponse
 import com.example.projektiop.util.checkDataFreshness
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +29,7 @@ class OtherUserRepository(private val id: String,
     val Profile: StateFlow<UserProfileResponse?> = _Profile.asStateFlow()
     private val _UserInterests = MutableStateFlow<List<UserInterestDto>?>(null)
     val UserInterests: StateFlow<List<UserInterestDto>?> = _UserInterests.asStateFlow()
+
     /*
     val userFlow: Flow<User?>
         get() {

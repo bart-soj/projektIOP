@@ -1,6 +1,6 @@
-package com.example.projektiop.data.db
+package com.example.projektiop.data.db.realm
 
-import com.example.projektiop.data.repositories.RealmDBRepository
+import com.example.projektiop.data.db.realm.RealmDBRepository
 import io.realm.kotlin.Realm
 import org.koin.dsl.module
 

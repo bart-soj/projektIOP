@@ -1,8 +1,8 @@
 package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.UserInterestDto
-import com.example.projektiop.data.db.objects.UserInterest
-import com.example.projektiop.data.repositories.RealmDBRepository
+import com.example.projektiop.data.db.realm.objects.UserInterest
+import com.example.projektiop.data.db.realm.RealmDBRepository
 
 fun UserInterestDto.toRealm(userId: String, dbRepository: RealmDBRepository): UserInterest {
 

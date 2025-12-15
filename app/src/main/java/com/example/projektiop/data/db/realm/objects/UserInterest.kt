@@ -1,4 +1,4 @@
-package com.example.projektiop.data.db.objects
+package com.example.projektiop.data.db.realm.objects
 
 import io.realm.kotlin.ext.backlinks
 import io.realm.kotlin.query.RealmResults

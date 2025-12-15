@@ -1,7 +1,7 @@
 package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.MessageDto
-import com.example.projektiop.data.db.objects.Message
+import com.example.projektiop.data.db.realm.objects.Message
 import com.example.projektiop.util.mongoTimestampToRealmInstant
 import io.realm.kotlin.ext.realmListOf
 

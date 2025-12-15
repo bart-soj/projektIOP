@@ -1,8 +1,8 @@
 package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.InterestDto
-import com.example.projektiop.data.db.objects.Interest
-import com.example.projektiop.data.repositories.RealmDBRepository
+import com.example.projektiop.data.db.realm.objects.Interest
+import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.util.mongoTimestampToRealmInstant
 import com.example.projektiop.util.realmInstantToMongoTimestamp
 

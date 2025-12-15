@@ -6,6 +6,7 @@ import kotlinx.coroutines.withContext
 import android.content.Context
 import android.content.SharedPreferences
 import com.example.projektiop.data.api.ChatApi
+import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.data.mapping.toUserProfileResponse
 import kotlinx.coroutines.flow.StateFlow
 
@@ -58,7 +59,8 @@ data class ChatListItem(
 class ChatRepository(private val chatApi: ChatApi,
                      context: Context,
                      private val sharedDataSource: SharedDataSource,
-                     private val dbRepository: RealmDBRepository) {
+                     private val dbRepository: RealmDBRepository
+) {
 
     lateinit var chats: StateFlow<List<ChatListItem>>
 

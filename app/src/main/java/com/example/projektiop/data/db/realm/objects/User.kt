@@ -1,5 +1,7 @@
-package com.example.projektiop.data.db.objects
+package com.example.projektiop.data.db.realm.objects
 
+import com.example.projektiop.domain.models.Gender
+import com.example.projektiop.domain.models.UserRole
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
@@ -10,17 +12,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.annotations.Ignore
 import org.mongodb.kbson.ObjectId
 
-enum class UserRole {
-    USER,
-    PREMIUM_USER
-}
 
-enum class Gender {
-    MALE,
-    FEMALE,
-    OTHER,
-    PREFER_NOT_TO_SAY
-}
 
 class UserProfile : EmbeddedRealmObject {
     var displayName: String = ""

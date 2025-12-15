@@ -26,7 +26,7 @@ import java.time.format.DateTimeParseException
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.projektiop.data.db.objects.Gender
+import com.example.projektiop.domain.models.Gender
 import com.example.projektiop.util.realmInstantToMongoTimestamp
 import com.example.projektiop.ui.components.PullToRefresh
 import com.example.projektiop.ui.components.UserAvatar

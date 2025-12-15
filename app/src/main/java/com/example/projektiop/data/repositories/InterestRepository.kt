@@ -5,8 +5,9 @@ import com.example.projektiop.data.api.InterestDto
 import com.example.projektiop.data.api.PublicInterestApi
 import com.example.projektiop.data.api.PublicInterestCategoryDto
 import com.example.projektiop.data.api.UserInterestDto
-import com.example.projektiop.data.db.objects.Interest
-import com.example.projektiop.data.db.objects.InterestCategory
+import com.example.projektiop.data.db.realm.RealmDBRepository
+import com.example.projektiop.data.db.realm.objects.Interest
+import com.example.projektiop.data.db.realm.objects.InterestCategory
 import com.example.projektiop.data.mapping.toDto
 import com.example.projektiop.data.mapping.toRealm
 import kotlinx.coroutines.CoroutineScope
@@ -17,7 +18,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class InterestRepository(private val publicInterestApi: PublicInterestApi,
-                         private val dbRepository: RealmDBRepository) {
+                         private val dbRepository: RealmDBRepository
+) {
 
     fun init() {
         CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {

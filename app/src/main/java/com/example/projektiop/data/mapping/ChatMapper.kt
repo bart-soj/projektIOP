@@ -1,9 +1,8 @@
 package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.ChatDto
-import com.example.projektiop.data.db.objects.Chat
+import com.example.projektiop.data.db.realm.objects.Chat
 import com.example.projektiop.util.mongoTimestampToRealmInstant
-import io.realm.kotlin.types.RealmInstant
 
 fun ChatDto.toRealm(): Chat {
     require(!this._id.isNullOrBlank()) { "Missing chat id" }

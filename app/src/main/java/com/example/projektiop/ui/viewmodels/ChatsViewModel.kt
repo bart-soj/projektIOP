@@ -2,7 +2,6 @@ package com.example.projektiop.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.repositories.ChatListItem
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.UserRepository

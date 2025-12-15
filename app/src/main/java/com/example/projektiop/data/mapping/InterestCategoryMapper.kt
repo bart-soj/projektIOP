@@ -1,9 +1,8 @@
 package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.PublicInterestCategoryDto
-import com.example.projektiop.data.db.objects.InterestCategory
+import com.example.projektiop.data.db.realm.objects.InterestCategory
 import io.realm.kotlin.types.RealmInstant
-import org.mongodb.kbson.ObjectId
 
 fun PublicInterestCategoryDto.toRealm(): InterestCategory {
     require(!this._id.isNullOrBlank()) { "Missing interest category id" }
