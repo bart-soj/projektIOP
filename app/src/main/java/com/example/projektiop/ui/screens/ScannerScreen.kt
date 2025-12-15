@@ -33,6 +33,7 @@ import com.example.projektiop.data.db.objects.User
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.ui.components.UserAvatar
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
 
@@ -42,12 +43,11 @@ private const val BASE_URL_KEY: String = "BASE_URL"
 
 @OptIn(ExperimentalMaterial3Api::class) // Dla Scaffold
 @Composable
-fun ScannerScreen(modifier: Modifier = Modifier, navController: NavController, viewModel: ScannerViewModel) {
-    val context = LocalContext.current
+fun ScannerScreen( navController: NavController) {
 
-    // Pobranie aktualnej ścieżki
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val viewModel = koinViewModel<ScannerViewModel>()
 
     val users by viewModel.users.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()

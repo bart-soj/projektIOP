@@ -54,6 +54,7 @@ import com.example.projektiop.ui.screens.FriendProfileScreen
 
 import com.example.projektiop.ui.viewmodels.ScannerViewModel
 import com.example.projektiop.BluetoothLE.BTPermissionsManager
+import com.example.projektiop.BluetoothLE.BluetoothRepository
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.ChatUpdateService
 import com.example.projektiop.data.repositories.FriendshipRepository
@@ -92,6 +93,7 @@ class MainActivity : ComponentActivity() {
     private val chatRepository: ChatRepository by inject()
     private val friendshipRepository: FriendshipRepository by inject()
     private val userRepository: UserRepository by inject()
+    private val bleManager: BluetoothRepository by inject()
 
     private var chatService: ChatUpdateService? = null
     private var isBound = false
@@ -150,7 +152,7 @@ class MainActivity : ComponentActivity() {
 
 
         lifecycleScope.launch {
-            scannerViewModel.bleEvents.collect { event ->
+            bleManager.bleEvents.collect { event ->
                 when (event) {
                     BLEActions.STOP -> {
                         val intent = Intent(this@MainActivity, BLEService::class.java).apply {
@@ -253,19 +255,12 @@ fun AuthNavGraph() {
 
 
 @Composable
-fun MainNavGraph() { // TODO() send BLE events from repository
-    val scannerViewModel: ScannerViewModel = koinActivityViewModel()
+fun MainNavGraph() {
     val navController = rememberNavController()
     val startDestination = "main"
 
     NavHost(navController, startDestination = startDestination) {
-        composable("scanner") {
-            ScannerScreen(
-                modifier = Modifier.padding(10.dp),
-                navController = navController,
-                viewModel = scannerViewModel
-            )
-        }
+        composable("scanner") { ScannerScreen(navController) }
         composable("main") { MainScreen(navController) }
         composable("chats") { ChatsScreen(navController) }
         composable("chat_detail?chatId={chatId}&friendId={friendId}",

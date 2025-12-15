@@ -17,11 +17,15 @@ import android.content.Context
 import android.location.LocationManager
 import android.os.ParcelUuid
 import android.util.Log
+import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.repositories.OtherUserRepository
 import com.example.projektiop.data.repositories.UserRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.nio.charset.Charset
 import java.util.UUID
 
@@ -60,6 +64,9 @@ class BluetoothRepository(private val context: Context) {
 
     private val _foundDeviceIds = MutableStateFlow<List<String>>(emptyList())
     val foundDeviceIds: StateFlow<List<String>> = _foundDeviceIds.asStateFlow()
+
+    private val _bleEvents = MutableSharedFlow<BLEActions>()
+    val bleEvents = _bleEvents.asSharedFlow<BLEActions>()
 
     // --- Skanowanie ---
     private var bluetoothLeScanner: BluetoothLeScanner? = null
@@ -340,4 +347,18 @@ class BluetoothRepository(private val context: Context) {
             _isAdvertising.value = false
         }
     }
+
+    suspend fun startScanEvent() {
+        _bleEvents.emit(BLEActions.START_SCAN)
+    }
+    suspend fun stopScanEvent() {
+        _bleEvents.emit(BLEActions.STOP_SCAN)
+    }
+    suspend fun startAdvertisingEvent() {
+        _bleEvents.emit(BLEActions.START_ADVERTISE)
+    }
+    suspend fun stopAdvertisingEvent() {
+        _bleEvents.emit(BLEActions.STOP_ADVERTISE)
+    }
+
 }

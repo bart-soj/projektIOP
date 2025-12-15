@@ -51,9 +51,6 @@ class ScannerViewModel(application: Application,
     // userId z SharedPreferences
     private val userId: String = sharedDataSource.get(ID, "brak")
 
-    private val _bleEvents = MutableSharedFlow<BLEActions>()
-    val bleEvents = _bleEvents.asSharedFlow<BLEActions>()
-
     // Publiczne StateFlow do obserwowania w UI
     val isScanning: StateFlow<Boolean> = bleManager.isScanning
     val isAdvertising: StateFlow<Boolean> = bleManager.isAdvertising
@@ -228,22 +225,22 @@ class ScannerViewModel(application: Application,
     // Akcje BLE
     fun startScan() {
         viewModelScope.launch {
-            _bleEvents.emit(BLEActions.START_SCAN)
+            bleManager.startScanEvent()
         }
     }
     fun stopScan() {
         viewModelScope.launch {
-            _bleEvents.emit(BLEActions.STOP_SCAN)
+            bleManager.stopScanEvent()
         }
     }
     fun startAdvertising() {
         viewModelScope.launch {
-            _bleEvents.emit(BLEActions.START_ADVERTISE)
+            bleManager.startAdvertisingEvent()
         }
     }
     fun stopAdvertising() {
         viewModelScope.launch {
-            _bleEvents.emit(BLEActions.STOP_ADVERTISE)
+            bleManager.stopAdvertisingEvent()
         }
     }
 
