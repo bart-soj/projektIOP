@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import com.example.projektiop.data.repositories.InterestRepository
+import com.example.projektiop.ui.components.MultiSelectInterestsDropdown
 import com.example.projektiop.ui.components.UserAvatar
 import org.koin.compose.koinInject
 import kotlin.collections.setValue
@@ -261,8 +262,7 @@ fun EditProfileScreen(
                     }
                 }
             }
-            Spacer(Modifier.height(12.dp))
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(16.dp))
             OutlinedTextField(
                 value = broadcastMessage,
                 onValueChange = { if (it.length <= 280) broadcastMessage = it },
@@ -389,68 +389,7 @@ private fun GenderDropdown(gender: String, onGenderChange: (String) -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MultiSelectInterestsDropdown(
-    all: List<String>,
-    selected: Set<String>,
-    onChange: (Set<String>) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val summary = if (selected.isEmpty()) stringResource(id = R.string.choose_interests_empty)
-    else selected.joinToString(limit = 3, truncated = "…")
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-    ) {
-        OutlinedTextField(
-            value = summary,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(stringResource(id = R.string.interests_label)) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            modifier = Modifier.menuAnchor().fillMaxWidth()
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            val scrollState = rememberScrollState()
-            Column(
-                modifier = Modifier
-                    .heightIn(max = 260.dp)
-                    .verticalScroll(scrollState)
-            ) {
-                all.forEach { item ->
-                    val checked = item in selected
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Checkbox(
-                                    checked = checked,
-                                    onCheckedChange = null
-                                )
-                                Spacer(Modifier.width(4.dp))
-                                Text(item)
-                            }
-                        },
-                        onClick = {
-                            val new = selected.toMutableSet().apply {
-                                if (checked) remove(item) else add(item)
-                            }
-                            onChange(new)
-                        }
-                    )
-                }
-            }
-            Spacer(Modifier.height(4.dp))
-            TextButton(
-                onClick = { expanded = false },
-                modifier = Modifier.fillMaxWidth()
-            ) { Text(stringResource(id = R.string.close)) }
-        }
-    }
-}
+
 
 @Composable
 private fun AvatarPicker(

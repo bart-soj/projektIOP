@@ -4,6 +4,7 @@ import com.example.projektiop.data.db.realm.objects.Friendship
 import com.example.projektiop.data.db.realm.objects.Interest
 import com.example.projektiop.data.db.realm.objects.InterestCategory
 import com.example.projektiop.data.db.realm.objects.Message
+import com.example.projektiop.data.db.realm.objects.SearchProfile
 import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.data.db.realm.objects.UserInterest
 import io.realm.kotlin.Realm
@@ -12,7 +13,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.map
 import com.example.projektiop.domain.models.FriendshipStatus
+import io.realm.kotlin.ext.realmListOf
 import org.mongodb.kbson.ObjectId
+import com.example.projektiop.domain.models.SearchProfile as DomainSearchProfile
 
 class RealmDBRepository(private val realm: Realm) {
 
@@ -240,6 +243,10 @@ class RealmDBRepository(private val realm: Realm) {
         return realm.query<Interest>(Interest::class, "_id == $0", objectId).first().find()
     }
 
+    fun getInterestByName(name: String): Interest? {
+        return realm.query<Interest>(Interest::class, "name == $0", name).first().find()
+    }
+
     fun getInterests(): List<Interest>? {
         return realm.query<Interest>(Interest::class).find()
     }
@@ -300,6 +307,47 @@ class RealmDBRepository(private val realm: Realm) {
     fun deleteInterestCategory(interestCategory: InterestCategory) {
         realm.writeBlocking {
             findLatest(interestCategory)?.let { delete(it) }
+        }
+    }
+
+    // ----------------------
+    // SearchProfile operations
+    // ----------------------
+
+    fun addSearchProfile(searchProfile: DomainSearchProfile) {
+        realm.writeBlocking {
+            val managedProfile = copyToRealm(
+                SearchProfile().apply {
+                    name = searchProfile.name
+                },
+                UpdatePolicy.ALL
+            )
+
+            searchProfile.interests.forEach { interest ->
+                val managedInterest = query<Interest>(Interest::class, "name == $0", interest.name)
+                    .first()
+                    .find()
+
+                if (managedInterest != null) {
+                    managedProfile.interests.add(managedInterest)
+                }
+            }
+        }
+    }
+
+
+    fun getSearchProfiles(): List<SearchProfile> {
+        return realm.query<SearchProfile>(SearchProfile::class).find()
+    }
+
+    fun deleteSearchProfileByName(name: String) {
+        realm.writeBlocking {
+            val results = realm.query<SearchProfile>(SearchProfile::class, "name == $0", name).find().toList()
+            for (profile in results) {
+                findLatest(profile)?.let { liveProfile ->
+                    delete(liveProfile)
+                }
+            }
         }
     }
 }

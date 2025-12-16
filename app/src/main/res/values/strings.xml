@@ -191,5 +191,7 @@
     <string name="accept">Akceptuj</string>
     <string name="already_friends">Już\nznajomi</string>
     <string name="invite_sent">Wysłano\nzaproszenie</string>
+    <string name="no_search_profiles">Brak Profiili Wyszukiwania</string>
+    <string name="name_label">Nazwa</string>
 
 </resources>

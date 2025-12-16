@@ -5,6 +5,7 @@ import com.example.projektiop.data.db.realm.objects.Friendship
 import com.example.projektiop.data.db.realm.objects.Interest
 import com.example.projektiop.data.db.realm.objects.InterestCategory
 import com.example.projektiop.data.db.realm.objects.Message
+import com.example.projektiop.data.db.realm.objects.SearchProfile
 import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.data.db.realm.objects.UserInterest
 import com.example.projektiop.data.db.realm.objects.UserProfile
@@ -28,7 +29,8 @@ object RealmProvider {
                 UserProfile::class,
                 Interest::class,
                 UserInterest::class,
-                InterestCategory::class
+                InterestCategory::class,
+                SearchProfile::class
             )
         )
             .deleteRealmIfMigrationNeeded() // deletes db when it changes, only for development
