@@ -6,6 +6,7 @@ import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.ChatUpdateService
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.InterestRepository
+import com.example.projektiop.data.repositories.SearchProfileRepository
 import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.data.repositories.ThemePreference
 import com.example.projektiop.data.repositories.UserRepository
@@ -29,10 +30,11 @@ val rootKoinModule = module {
     single { ChatRepository( get(), androidContext(), get(), get() ) }
     single { FriendshipRepository( get(), get(), get() ) }
     single { SharedDataSource( androidContext() ) }
+    single { SearchProfileRepository( get(), get() ) }
     viewModel { MainViewModel(get()) }
     viewModel { SettingsViewModel(get(), get(), get())}
     viewModel { AuthViewModel(get()) }
-    viewModel { ScannerViewModel( get(), get(), get(), get(), get() ) }
+    viewModel { ScannerViewModel( get(), get(), get(), get(), get(), get() ) }
     viewModel { FriendsViewModel( get(), get() ) }
     viewModel { ChatsViewModel(get(), get()) }
     viewModel { (userId: String) -> FriendProfileViewModel(userId, get()) }

@@ -9,12 +9,20 @@ import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.repositories.FriendshipRepository
+import com.example.projektiop.data.repositories.InterestRepository
+import com.example.projektiop.data.repositories.SearchProfileRepository
 import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.models.FriendshipStatus
+import com.example.projektiop.domain.models.Interest
+import com.example.projektiop.domain.models.SearchProfile
+import com.example.projektiop.util.DataError
+import com.example.projektiop.util.Result
+import com.example.projektiop.util.cosineSimilarity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -22,7 +30,6 @@ import kotlinx.coroutines.launch
 import kotlin.collections.contains
 import kotlin.collections.mapNotNull
 import kotlin.collections.plus
-import kotlin.math.sqrt
 
 
 private const val ID: String = "_id"
@@ -35,11 +42,9 @@ data class UserWithInfo(val user: User, val status: FriendshipStatus, val friend
 class ScannerViewModel(application: Application,
                        private val userRepository: UserRepository,
                        private val friendshipRepository: FriendshipRepository,
-                       private val sharedDataSource: SharedDataSource,
-                       private val bleManager: BluetoothRepository) : AndroidViewModel(application) {
-
-    // userId z SharedPreferences
-    private val userId: String = sharedDataSource.get(ID, "brak")
+                       private val bleManager: BluetoothRepository,
+                       private val searchProfileRepository: SearchProfileRepository,
+                       private val interestRepository: InterestRepository) : AndroidViewModel(application) {
 
     // Publiczne StateFlow do obserwowania w UI
     val isScanning: StateFlow<Boolean> = bleManager.isScanning
@@ -48,6 +53,7 @@ class ScannerViewModel(application: Application,
     val foundDeviceIds: StateFlow<List<String>> = bleManager.foundDeviceIds
     //private val _user = MutableStateFlow<User?>(null)
     //val user: StateFlow<User?> = _user.asStateFlow()
+    val publicInterests = interestRepository.publicInterests
     val myInterests: StateFlow<List<UserInterestDto>?> = userRepository.MyUserInterests
     val friendsIds: StateFlow<List<String>> = friendshipRepository.friendsIds
     val pendingIds: StateFlow<List<String>> = friendshipRepository.pendingIds
@@ -63,6 +69,39 @@ class ScannerViewModel(application: Application,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = Triple(emptyList(), emptyList(), emptyList())
     )
+
+    private val _searchSearchProfileText = MutableStateFlow("")
+    val searchSearchProfileText: StateFlow<String> = _searchSearchProfileText.asStateFlow()
+
+    private val _searchProfileList = MutableStateFlow<List<SearchProfile>>(emptyList())
+    val searchProfileList = combine(_searchProfileList, searchSearchProfileText) { list, searchText ->
+        if (searchText.isNotBlank()) {
+            list.filter {
+                it.name.contains(searchText, ignoreCase = true)
+            }
+        } else {
+           list
+        }
+    }.stateIn (
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    private val _searchProfileError = MutableStateFlow<String?>(null)
+    val searchProfileError = _searchProfileError.asStateFlow()
+
+    private val _searchProfileLoading = MutableStateFlow<Boolean>(false)
+    val searchProfileLoading = _searchProfileLoading.asStateFlow()
+
+    private val _defaultSearchProfile = MutableStateFlow<SearchProfile>(SearchProfile(name = "Default", interests = emptyList()))
+    private val _chosenSearchProfile = MutableStateFlow<SearchProfile?>(null)
+    val searchProfile: StateFlow<SearchProfile> = combine (
+        _defaultSearchProfile,
+        _chosenSearchProfile
+    ) { default, chosen ->
+        chosen ?: default
+    }.stateIn(viewModelScope,started = SharingStarted.WhileSubscribed(5000), initialValue = _defaultSearchProfile.value)
 
     /*
     private val _userRepositories = MutableStateFlow<List<OtherUserRepository>>(emptyList())
@@ -128,7 +167,7 @@ class ScannerViewModel(application: Application,
     private val _userProfiles = MutableStateFlow<List<UserProfileResponse>>(emptyList())
     val users: StateFlow<List<UserWithStatus>> = combine(
         _userProfiles,
-        myInterests,
+        searchProfile,
         friendsIds,
         pendingIds,
         blockedIds
@@ -137,8 +176,8 @@ class ScannerViewModel(application: Application,
         val pendingSet = pendingIds.value.toSet()
         val blockedSet = blockedIds.value.toSet()
 
-        val myInterestsNames = myInterests.value?.mapNotNull{ userInterest ->
-            userInterest.interest.name
+        val myInterestsNames = searchProfile.value.interests.map { interest ->
+            interest.name
         }
         val sortedProfiles = _userProfiles.value.sortedByDescending { profile ->
             val profileInterests = profile.interests?.mapNotNull { userInterest ->
@@ -159,13 +198,11 @@ class ScannerViewModel(application: Application,
     }.stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = emptyList<UserWithStatus>())
 
     init {
-        /*
         viewModelScope.launch {
-            UserRepository.getMyUserFlow().collect { updatedUser ->
-                _user.value = updatedUser
+            myInterests.collect {
+                _defaultSearchProfile.value = searchProfileRepository.getDefaultSearchProfile()
             }
         }
-        */
         viewModelScope.launch {
             foundDeviceIds.collect { currentIds ->
                 val existingProfileIds = _userProfiles.value.map { it._id }.toSet()
@@ -212,7 +249,9 @@ class ScannerViewModel(application: Application,
         viewModelScope.launch{ friendshipRepository.sendFriendRequest(userId) }
     }
 
-    // Akcje BLE
+    //--------------
+    // BLEActions
+    //--------------
     fun startScan() {
         viewModelScope.launch {
             bleManager.startScanEvent()
@@ -234,13 +273,70 @@ class ScannerViewModel(application: Application,
         }
     }
 
-    fun getUserId(): String = userId
-}
+    //--------------
+    // Search Profile Stuff
+    //--------------
+    fun chooseSearchProfile(searchProfile: SearchProfile) {
+        _chosenSearchProfile.value = searchProfile
+    }
 
+    fun addSearchProfile(name: String, interests: Set<String>) {
+        _searchProfileLoading.value = true
+        viewModelScope.launch {
+            val resolvedInterests = interests.mapNotNull { interestRepository.getInterestByName(it) }
+            val toAdd = SearchProfile(name, resolvedInterests)
+            val result = searchProfileRepository.addSearchProfile(toAdd)
+            when (result) {
+                is Result.Error -> when(result.error) {
+                    DataError.Local.DISK_FULL -> _searchProfileError.value = "no disk space"
+                    DataError.Local.DB_ERROR -> _searchProfileError.value = "db error ${result.error}"
+                    DataError.Local.NO_DATA -> _searchProfileError.value = "No local data"
+                }
+                is Result.Success ->
+                    refreshSearchProfileList()
+            }
+            _searchProfileLoading.value = false
+        }
+    }
 
-fun cosineSimilarity(a: Set<String>, b: Set<String>): Double {
-    if (a.isEmpty() || b.isEmpty()) return 0.0
+    fun refreshSearchProfileList() {
+        _searchProfileLoading.value = true
+        viewModelScope.launch {
+            _searchProfileError.value = null
+            val result = searchProfileRepository.getSearchProfiles()
+            when (result) {
+                is Result.Error -> when(result.error) {
+                    DataError.Local.DISK_FULL -> _searchProfileError.value = "no disk space"
+                    DataError.Local.DB_ERROR -> _searchProfileError.value = "db error"
+                    DataError.Local.NO_DATA -> _searchProfileError.value = "No local data"
+                }
+                is Result.Success ->
+                    _searchProfileList.value = result.data
+            }
+            _searchProfileLoading.value = false
+        }
+    }
 
-    val intersectionSize = a.intersect(b).size
-    return intersectionSize / sqrt(a.size.toDouble() * b.size.toDouble())
+    fun deleteSearchProfile(searchProfile: SearchProfile) {
+        _searchProfileLoading.value = true
+        viewModelScope.launch {
+            if (_chosenSearchProfile.value?.name == searchProfile.name)
+                _chosenSearchProfile.value = null
+            val result = searchProfileRepository.deleteSearchProfile(searchProfile)
+            when (result) {
+                is Result.Error -> when(result.error) {
+                    DataError.Local.DISK_FULL -> _searchProfileError.value = "no disk space"
+                    DataError.Local.DB_ERROR -> _searchProfileError.value = "db error"
+                    DataError.Local.NO_DATA -> _searchProfileError.value = "No local data"
+                }
+                is Result.Success ->
+                    refreshSearchProfileList()
+            }
+            _searchProfileLoading.value = false
+        }
+    }
+
+    fun searchForSearchProfile(string: String) {
+        _searchSearchProfileText.value = string
+    }
 }

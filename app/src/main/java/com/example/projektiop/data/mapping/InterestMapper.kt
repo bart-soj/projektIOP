@@ -3,8 +3,10 @@ package com.example.projektiop.data.mapping
 import com.example.projektiop.data.api.InterestDto
 import com.example.projektiop.data.db.realm.objects.Interest
 import com.example.projektiop.data.db.realm.RealmDBRepository
+import com.example.projektiop.domain.models.InterestCategory as DomainInterestCategory
 import com.example.projektiop.util.mongoTimestampToRealmInstant
 import com.example.projektiop.util.realmInstantToMongoTimestamp
+import com.example.projektiop.domain.models.Interest as DomainInterest
 
 fun InterestDto.toRealm(dbRepository: RealmDBRepository): Interest {
     require(!this._id.isNullOrBlank()) {"Missing interest id"}
@@ -31,6 +33,10 @@ fun InterestDto.toRealm(dbRepository: RealmDBRepository): Interest {
     )
 }
 
+fun InterestDto.toDomain(dbRepository: RealmDBRepository): DomainInterest {
+    return this.toRealm(dbRepository).toDomain()
+}
+
 fun Interest.toDto(): InterestDto {
     return InterestDto(
         _id = this._id.toString(),
@@ -40,5 +46,15 @@ fun Interest.toDto(): InterestDto {
         isArchived = this.isArchived,
         createdAt = realmInstantToMongoTimestamp(this.createdAt),
         updatedAt = realmInstantToMongoTimestamp(this.updatedAt)
+    )
+}
+
+fun Interest.toDomain(): DomainInterest {
+    assert(this.category != null) // a interest in db must have a category
+    return DomainInterest(
+        id = this._id.toHexString(),
+        name = this.name,
+        category = DomainInterestCategory(id = this.category!!._id.toHexString(), name = this.category!!.name ),
+        description = this.description
     )
 }

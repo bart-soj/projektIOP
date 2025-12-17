@@ -8,20 +8,25 @@ import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.data.db.realm.objects.Interest
 import com.example.projektiop.data.db.realm.objects.InterestCategory
+import com.example.projektiop.data.mapping.toDomain
 import com.example.projektiop.data.mapping.toDto
 import com.example.projektiop.data.mapping.toRealm
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.projektiop.domain.models.Interest as DomainInterest
 
 class InterestRepository(private val publicInterestApi: PublicInterestApi,
-                         private val dbRepository: RealmDBRepository
-) {
+                         private val dbRepository: RealmDBRepository) {
 
-    fun init() {
+    private val _publicInterests = MutableStateFlow<List<DomainInterest>>(emptyList())
+    val publicInterests = _publicInterests.asStateFlow()
+
+    init {
         CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
             getPublicInterests()
         }
@@ -69,7 +74,8 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
             val response = publicInterestApi.getPublicInterests()
             if (response.isSuccessful && response.body().orEmpty() != emptyList<InterestDto>()){
                 val body = response.body()!!
-                val returnList = emptyList<InterestDto>().toMutableList()
+                var returnList = emptyList<InterestDto>()
+                var domainList = emptyList<DomainInterest>()
 
                 for (publicInterestDto in body) {
                     val interestDto = InterestDto(
@@ -88,18 +94,22 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
                             dbRepository.addInterestCategory(realmCategory)
                         }
                         val realmInterest = interestDto.toRealm(dbRepository)
+                        val domainInterest = realmInterest.toDomain()
                         dbRepository.addInterest(realmInterest)
                         returnList += interestDto
+                        domainList += domainInterest
                     } catch (e: Exception) {
                         return@withContext Result.failure(Exception("Error saving public interest to database: $e"))
                     }
                 }
 
+                _publicInterests.value = domainList
                 return@withContext Result.success(returnList)
-
             } else {
                 val local = dbRepository.getInterests()
                 if (local.orEmpty() != emptyList<Interest>()){
+                    val localDomain = local!!.map{it.toDomain()}
+                    _publicInterests.value = localDomain
                     return@withContext Result.success(local!!.map{it.toDto()})
                 } else {
                     return@withContext Result.failure(Exception("API failed and no local data"))
@@ -108,6 +118,8 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
         } catch (e: Exception) {
             val local = dbRepository.getInterests()
             if (local.orEmpty() != emptyList<Interest>()){
+                val localDomain = local!!.map{it.toDomain()}
+                _publicInterests.value = localDomain
                 return@withContext Result.success(local!!.map{it.toDto()})
             } else {
                 return@withContext Result.failure(Exception("API error and no local data $e"))
@@ -169,6 +181,11 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
         }
 
         flowToUpdate.value = dbRepository.getUserInterestsByUserId(userId).map{it.toDto()}
+    }
+
+    suspend fun getInterestByName(name: String): DomainInterest? {
+        val result =  dbRepository.getInterestByName(name)
+        return result?.toDomain()
     }
 }
 

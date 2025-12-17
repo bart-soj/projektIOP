@@ -214,4 +214,5 @@
     <string name="accept">Accept</string>
     <string name="already_friends">Already\nfriends</string>
     <string name="invite_sent">Invite\nsent</string>
+    <string name="no_search_profiles">No Search Profiles</string>
 </resources>
