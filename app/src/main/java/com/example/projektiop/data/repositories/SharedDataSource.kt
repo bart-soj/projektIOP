@@ -8,8 +8,8 @@ class SharedDataSource(context: Context) {
     private lateinit var appContext: Context
     private val PREFS_NAME = "HelloBeaconSharedPrefs"
     private val BASE_URL_KEY: String = "BASE_URL"
-    // private const val BASE_URL = "https://hellobeacon.onrender.com" // Ujednolicona baza – auth i user pod jednym URL
-    private val BASE_URL = "http://192.168.1.13:3000" // 10.0.2.2 is bound to lo of local machine
+    private val BASE_URL = "https://hellobeacon.onrender.com" // Ujednolicona baza – auth i user pod jednym URL
+    // private val BASE_URL = "http://192.168.1.13:3000" // 10.0.2.2 is bound to lo of local machine
 
     init {
         appContext = context

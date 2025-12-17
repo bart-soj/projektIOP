@@ -66,6 +66,8 @@ class AuthRepository(private val authApi: AuthApi,
                     token = tmpToken
                     _authState.value = AuthState.Authenticated(id)
                     _authEvent.emit(AuthEvent.Success)
+                } else {
+                    _authState.value = AuthState.Unauthenticated
                 }
             } else {
                 _authState.value = AuthState.Unauthenticated

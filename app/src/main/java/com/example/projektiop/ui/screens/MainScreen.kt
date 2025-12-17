@@ -230,7 +230,7 @@ fun InterestTag(
                 onDismissRequest = { showDialog = false },
                 confirmButton = {
                     TextButton(onClick = { showDialog = false }) {
-                        Text("OK")
+                        Text(text = stringResource(R.string.ok))
                     }
                 },
                 title = {
@@ -264,7 +264,10 @@ fun BottomNavigationBar(navController: NavController, currentRoute: String?) {
         BottomNavItem(R.string.bottom_nav_settings, Icons.Default.Settings, "settings")
     )
 
-    NavigationBar {
+    NavigationBar (
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface
+    ){
         items.forEach { item ->
             val selected = currentRoute == item.route
 
@@ -272,9 +275,9 @@ fun BottomNavigationBar(navController: NavController, currentRoute: String?) {
                 icon = { Icon(item.icon, contentDescription = stringResource(item.labelResId)) },
                 selected = selected,
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                    selectedIconColor = MaterialTheme.colorScheme.primaryContainer,
+                    unselectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    indicatorColor = MaterialTheme.colorScheme.secondaryContainer
                 ),
                 onClick = {
                     if (currentRoute != item.route) {

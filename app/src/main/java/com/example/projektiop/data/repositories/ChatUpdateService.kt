@@ -12,8 +12,7 @@ import android.os.Binder
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.app.ServiceCompat.startForeground
-import androidx.core.content.ContextCompat.getSystemService
+import com.example.projektiop.R
 import com.example.projektiop.util.NotificationHelper
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -82,8 +81,8 @@ class ChatUpdateService(): Service() {
         manager.createNotificationChannel(channel)
 
         val notification: Notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("HelloBeacon Chat Service")
-            .setContentText("Chat Service is working in background")
+            .setContentTitle(getString(R.string.service_notification_title))
+            .setContentText(getString(R.string.service_notification_content))
             .setSmallIcon(android.R.drawable.ic_popup_sync)
             .setOngoing(true)
             .setSilent(true)

@@ -25,13 +25,13 @@
     <string name="app_logo_image_description">Logo</string>
 
     <!-- Main Screen -->
-    <string name="profile_loading_description">Loading description...</string>
+    <string name="profile_loading_description">Loading description…</string>
     <string name="profile_error_description">Loading error</string>
     <string name="profile_description_placeholder">No profile description</string>
     <string name="profile_interests_title">Interests</string>
     <string name="profile_no_interests">None</string>
     <string name="profile_unknown_interest">/?</string>
-    <string name="profile_loading">Loading...</string>
+    <string name="profile_loading">Loading…</string>
     <string name="profile_error">Error</string>
     <string name="profile_name_placeholder">No name</string>
     <string name="edit_profile">Edit profile</string>
@@ -42,6 +42,7 @@
     <string name="profile_photo">Profile photo</string>
     <string name="interests">Interests</string>
     <string name="file_too_large">File is too large (max 5MB).</string>
+    <string name="ok">OK</string>
 
     <!-- Friend List Screen -->
     <string name="friends_list_title">Friends List</string>
@@ -70,7 +71,7 @@
     <string name="interest_art">Art and Culture</string>
     <string name="interest_travel">Travel and Exploration</string>
     <string name="avatar_upload_error">Failed to upload avatar</string>
-    <string name="nickname_label">Nickname (1-50)</string>
+    <string name="nickname_label">Nickname (1–50)</string>
     <string name="location_label">Location (max 100)</string>
     <string name="nickname_count">%1$d/50</string>
     <string name="location_count">%1$d/100</string>
@@ -78,8 +79,8 @@
     <string name="description_label">Description (max 500)</string>
     <string name="description_count">%1$d/500</string>
     <string name="broadcast_message_count">%1$d/280</string>
-    <string name="saving_interests">Saving (interests)...</string>
-    <string name="saving">Saving...</string>
+    <string name="saving_interests">Saving (interests)…</string>
+    <string name="saving">Saving…</string>
     <string name="save_changes">Save changes</string>
     <string name="confirmation">Confirmation</string>
     <string name="confirm_back_message">Are you sure you want to go back? Unsaved changes will be lost.</string>
@@ -92,7 +93,7 @@
     <string name="current_avatar">Current avatar</string>
     <string name="no_avatar">No avatar</string>
     <string name="choose_image">Choose image</string>
-    <string name="uploading">Uploading...</string>
+    <string name="uploading">Uploading…</string>
     <string name="upload">Upload</string>
     <string name="upload_error_file_too_large">File is too large (max 5MB).</string>
     <string name="interest_descriptions_label">Interest descriptions (optional)</string>
@@ -110,7 +111,7 @@
     <string name="profile_interest_1">Sample 1</string>
     <string name="profile_interest_2">Sample 2</string>
     <string name="profile_interest_3">Sample 3</string>
-    <string name="search_label">Search...</string>
+    <string name="search_label">Search…</string>
     <string name="search_icon_desc">Availability</string>
     <string name="profile_picture_desc">Description</string>
     <string name="profile_section_description">Profile description</string>
@@ -127,8 +128,8 @@
     <string name="scanner_stop_advertising">Stop advertising</string>
     <string name="ble_status_label">BLE status: %s</string>
     <string name="ble_status_scanning_and_advertising">Scanning and advertising active</string>
-    <string name="ble_status_scanning">Scanning active</string>
-    <string name="ble_status_advertising">Advertising active</string>
+    <string name="ble_status_scanning">Scanning for nearby users…</string>
+    <string name="ble_status_advertising">Advertising your profile</string>
     <string name="ble_status_inactive">Inactive</string>
     <string name="enable_bluetooth">Enable Bluetooth!</string>
     <string name="enable_location">Enable Location!</string>
@@ -159,24 +160,51 @@
     <string name="error_invalid_password">Password must be at least 8 characters, with uppercase, lowercase letters, and a number.</string>
     <string name="form_fields_invalid">Please correct the form fields</string>
     <string name="register_screen_title">Register</string>
-    <string name="invalid_email_format">Invalid email format</string>
     <string name="password_required">Password is required</string>
     <string name="login_screen_title">Login</string>
     <string name="remember_me">Remember me</string>
     <string name="login_failed">Login failed</string>
     <string name="login_button_text">Login</string>
-    <string name="logging_in">Logging in...</string>
+    <string name="logging_in">Logging in…</string>
 
     <!-- Chat Detail Screen -->
     <string name="blocked_by_me">You have blocked this user. Unlock to send a message.</string>
     <string name="blocked_by_other">You cannot send a message – you have been blocked by this user.</string>
     <string name="sending_unavailable">Sending unavailable</string>
-    <string name="write_message">Write a message...</string>
+    <string name="write_message">Write a message…</string>
     <string name="send">Send</string>
     <string name="chat">Chat</string>
     <string name="no_chats">No chats</string>
+    <string name="chat_empty_state">Your messages will appear here</string>
+
+    <!-- Errors -->
+    <string name="error_field_empty">Must not be empty</string>
+    <string name="invalid_email_format">Must be a valid email</string>
+    <string name="error_password_too_short">Must be longer than 8 characters</string>
+    <string name="error_password_no_uppercase">Must contain at least one uppercase letter</string>
+    <string name="error_password_no_digit">Must contain at least one digit</string>
+    <string name="error_password_no_lowercase">Must contain at least one lowercase letter</string>
+    <string name="error_unknown">Unknown error</string>
 
 
+    <string name="error_disk_full">No disk space</string>
+    <string name="error_db_failed">DB failed</string>
+    <string name="error_no_local_data">No local data</string>
+
+    <string name="error_request_timeout">Request timeout</string>
+    <string name="error_too_many_requests">Server Error</string>
+    <string name="error_no_internet">No internet</string>
+    <string name="error_payload_too_large">Server Error</string>
+    <string name="error_server_error">Server Error</string>
+    <string name="error_serialization">Serialization Error</string>
+
+    <string name="error_invalid_credentials">Invalid Email or Password</string>
+    <string name="error_account_banned">Account banned</string>
+    <string name="error_email_not_verified">Email not verified</string>
+
+
+    <string name="service_notification_title">HelloBeacon Chat Service</string>
+    <string name="service_notification_content">Chat Service is working in background</string>
 
     <string name="clear">Clear</string>
     <string name="options">Options</string>

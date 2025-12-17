@@ -3,15 +3,15 @@
     <string name="return_button_text">Powrót</string>
     <string name="clear_content_description">Wyczyść</string>
     <string name="profile_interests_label">Zainteresowania:</string>
-    <string name="profile_interest_placeholder_1">Sport</string> <!-- Przykładowe zainteresowanie -->
-    <string name="profile_interest_placeholder_2">Muzyka</string> <!-- Przykładowe zainteresowanie -->
-    <string name="profile_interest_placeholder_3">Filmy</string> <!-- Przykładowe zainteresowanie -->
-    <string name="profile_image_content_description">Zdjęcie profilowe</string> <!-- Opis dla czytników ekranu -->
+    <string name="profile_interest_placeholder_1">Sport</string>
+    <string name="profile_interest_placeholder_2">Muzyka</string>
+    <string name="profile_interest_placeholder_3">Filmy</string>
+    <string name="profile_image_content_description">Zdjęcie profilowe</string>
     <string name="broadcast_message_label">Wiadomość rozgłoszeniowa</string>
     <string name="filter_settings_label">Ustawienia filtrów</string>
-    <string name="filter_icon_content_description">Filtry</string> <!-- Opis ikony filtrów -->
+    <string name="filter_icon_content_description">Filtry</string>
     <string name="broadcasting_label">Rozgłaszanie</string>
-    <string name="broadcasting_status_icon_content_description">Status rozgłaszania</string> <!-- Opis ikony statusu -->
+    <string name="broadcasting_status_icon_content_description">Status rozgłaszania</string>
     <string name="error">Błąd</string>
     <string name="servicedesc">Opis usługi NFC</string>
     <string name="aiddescription">Grupa AID dla HelloBeacon</string>
@@ -26,13 +26,13 @@
     <string name="app_logo_image_description">Logo</string>
 
     <!-- Main Screen -->
-    <string name="profile_loading_description">Pobieranie opisu...</string>
+    <string name="profile_loading_description">Pobieranie opisu…</string>
     <string name="profile_error_description">Błąd pobierania</string>
     <string name="profile_description_placeholder">Brak opisu profilu</string>
     <string name="profile_interests_title">Zainteresowania</string>
     <string name="profile_no_interests">Brak</string>
     <string name="profile_unknown_interest">/?</string>
-    <string name="profile_loading">Ładowanie...</string>
+    <string name="profile_loading">Ładowanie…</string>
     <string name="profile_error">Błąd</string>
     <string name="profile_name_placeholder">Brak imienia</string>
     <string name="edit_profile">Edytuj profil</string>
@@ -43,6 +43,7 @@
     <string name="profile_photo">Zdjęcie profilowe</string>
     <string name="interests">Zainteresowania</string>
     <string name="file_too_large">Plik jest zbyt duży (max 5MB).</string>
+    <string name="ok">OK</string>
 
     <!-- Friend List Screen -->
     <string name="friends_list_title">Lista znajomych</string>
@@ -71,7 +72,7 @@
     <string name="interest_art">Sztuka i Kultura</string>
     <string name="interest_travel">Podróże i Odkrywanie</string>
     <string name="avatar_upload_error">Nie udało się wgrać avatara</string>
-    <string name="nickname_label">Nick (1-50)</string>
+    <string name="nickname_label">Nick (1–50)</string>
     <string name="location_label">Miejscowość (max 100)</string>
     <string name="nickname_count">%1$d/50</string>
     <string name="location_count">%1$d/100</string>
@@ -80,7 +81,7 @@
     <string name="description_count">%1$d/500</string>
     <string name="broadcast_message_count">%1$d/280</string>
     <string name="saving_interests">Zapisywanie (zainteresowania)...</string>
-    <string name="saving">Zapisywanie...</string>
+    <string name="saving">Zapisywanie…</string>
     <string name="save_changes">Zapisz zmiany</string>
     <string name="confirmation">Potwierdzenie</string>
     <string name="confirm_back_message">Czy na pewno chcesz wrócić? Niezapisane zmiany zostaną utracone.</string>
@@ -93,7 +94,7 @@
     <string name="current_avatar">Aktualny avatar</string>
     <string name="no_avatar">Brak avatara</string>
     <string name="choose_image">Wybierz zdjęcie</string>
-    <string name="uploading">Wgrywanie...</string>
+    <string name="uploading">Wgrywanie…</string>
     <string name="upload">Wgraj</string>
     <string name="upload_error_file_too_large">Plik jest zbyt duży (max 5MB).</string>
     <string name="interest_descriptions_label">Opisy zainteresowań (opcjonalne)</string>
@@ -112,7 +113,7 @@
     <string name="profile_interest_1">Sample 1</string>
     <string name="profile_interest_2">Sample 2</string>
     <string name="profile_interest_3">Sample 3</string>
-    <string name="search_label">Szukaj...</string>
+    <string name="search_label">Szukaj…</string>
     <string name="search_icon_desc">Dostępność</string>
     <string name="profile_picture_desc">Opis</string>
     <string name="profile_section_description">Opis Profilu</string>
@@ -129,9 +130,9 @@
     <string name="scanner_stop_advertising">Zatrzymaj Rozgłaszanie</string>
     <string name="ble_status_label">Status BLE: %s</string>
     <string name="ble_status_scanning_and_advertising">Skanowanie i Rozgłaszanie aktywne</string>
-    <string name="ble_status_scanning">Skanowanie aktywne</string>
-    <string name="ble_status_advertising">Rozgłaszanie aktywne</string>
-    <string name="ble_status_inactive">Nieaktywne</string>
+    <string name="ble_status_scanning">Skanowanie w poszukiwaniu użytkowników…</string>
+    <string name="ble_status_advertising">Rozgłaszanie profilu aktywne</string>
+    <string name="ble_status_inactive">Bezczynny</string>
     <string name="enable_bluetooth">Włącz Bluetooth!</string>
     <string name="enable_location">Włącz Lokalizację!</string>
     <string name="rejected">Odrzucono</string>
@@ -157,7 +158,6 @@
     <string name="username_label">Nazwa użytkownika</string>
     <string name="register_button_text">Zarejestruj się</string>
     <string name="error_invalid_username">Niepoprawna nazwa użytkownika</string>
-    <string name="error_invalid_email">Niepoprawny format email</string>
     <string name="error_invalid_password">Hasło musi mieć min. 8 znaków, zawierać dużą i małą literę oraz cyfrę.</string>
     <string name="form_fields_invalid">Popraw dane w formularzu</string>
     <string name="register_screen_title">Rejestracja</string>
@@ -167,21 +167,45 @@
     <string name="remember_me">Zapamiętaj mnie</string>
     <string name="login_failed">Nieudane logowanie</string>
     <string name="login_button_text">Zaloguj się</string>
-    <string name="logging_in">Logowanie...</string>
+    <string name="logging_in">Logowanie…</string>
 
 
     <!-- Chat Detail Screen -->
     <string name="blocked_by_me">Zablokowałeś tego użytkownika. Odblokuj go, aby wysłać wiadomość.</string>
     <string name="blocked_by_other">Nie możesz wysłać wiadomości – zostałeś zablokowany przez tego użytkownika.</string>
     <string name="sending_unavailable">Wysyłanie niedostępne</string>
-    <string name="write_message">Napisz wiadomość...</string>
+    <string name="write_message">Napisz wiadomość…</string>
     <string name="send">Wyślij</string>
     <string name="chat">Czat</string>
     <string name="no_chats">Brak czatów</string>
+    <string name="chat_empty_state">Tutaj pojawią się wasze wiadomości</string>
 
+    <!-- Errors -->
+    <string name="error_invalid_email">Niepoprawny format email</string>
+    <string name="error_field_empty">Nie może być puste</string>
+    <string name="error_password_too_short">Musi mieć więcej niż 8 znaków</string>
+    <string name="error_password_no_uppercase">Musi zawierać wielką literę</string>
+    <string name="error_password_no_digit">Musi zawierać cyfrę</string>
+    <string name="error_password_no_lowercase">Musi zawierać małą literę</string>
+    <string name="error_unknown">Nieznany błąd</string>
 
+    <string name="error_disk_full">Brak miejsca na dysku</string>
+    <string name="error_db_failed">Błąd bazy danych</string>
+    <string name="error_no_local_data">Brak danych lokalnych</string>
 
+    <string name="error_request_timeout">Przekroczono limit czasu żądania</string>
+    <string name="error_too_many_requests">Błąd serwera</string>
+    <string name="error_no_internet">Brak internetu</string>
+    <string name="error_payload_too_large">Błąd serwera</string>
+    <string name="error_server_error">Błąd serwera</string>
+    <string name="error_serialization">Błąd przetwarzania danych</string>
 
+    <string name="error_invalid_credentials">Nieprawidłowy email lub hasło</string>
+    <string name="error_account_banned">Konto zablokowane</string>
+    <string name="error_email_not_verified">Email niezweryfikowany</string>
+
+    <string name="service_notification_title">Usługa czatu HelloBeacon</string>
+    <string name="service_notification_content">Usługa czatu działa w tle</string>
 
     <string name="clear">Wyczyść</string>
     <string name="options">Opcje</string>
@@ -191,5 +215,6 @@
     <string name="accept">Akceptuj</string>
     <string name="already_friends">Już\nznajomi</string>
     <string name="invite_sent">Wysłano\nzaproszenie</string>
+    <string name="chats_screen_title">Ekran czatów</string>
 
 </resources>

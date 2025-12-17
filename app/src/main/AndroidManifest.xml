@@ -30,7 +30,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <application
-        android:networkSecurityConfig="@xml/network_security_config"
         android:name=".HelloBeaconApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -43,23 +42,23 @@
         android:configChanges="layoutDirection|locale"
         android:localeConfig="@xml/locale_config">
 
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:theme="@style/Theme.ProjektIOP">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+<activity
+    android:name=".MainActivity"
+    android:exported="true"
+    android:theme="@style/Theme.ProjektIOP">
+    <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity >
-        <activity
-            android:name=".activeHandshake.NFC.ReadNFCActivity"
-            android:exported="true"
-            android:label="readNFCActivity"
-            android:theme="@style/Theme.ProjektIOP">
-            <intent-filter>
-                <!-- NFC intents here -->
+        <category android:name="android.intent.category.LAUNCHER" />
+    </intent-filter>
+</activity >
+<activity
+    android:name=".activeHandshake.NFC.ReadNFCActivity"
+    android:exported="true"
+    android:label="readNFCActivity"
+    android:theme="@style/Theme.ProjektIOP">
+    <intent-filter>
+        <!-- NFC intents here -->
                 <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="text/plain" />

@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.ButtonDefaults.buttonColors
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import androidx.compose.runtime.*
@@ -84,7 +85,7 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
         if (!id.isNullOrBlank()) {
             loading = true
             chatRepository.loadMessages(id)
-                .onSuccess { messages = it } // już w kolejności rosnącej po dacie
+                .onSuccess { messages = it }
                 .onFailure { error = it.message }
             loading = false
             // Mark read using last message timestamp
@@ -101,7 +102,7 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                 title = { Text(stringResource(R.string.chat)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Wstecz")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -118,13 +119,13 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                 when {
                     loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                     error != null -> Text(
-                        error ?: "Błąd",
+                        error ?: stringResource(R.string.error),
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.align(Alignment.Center)
                     )
 
                     messages.isEmpty() -> Text(
-                        "Tutaj pojawi się nowa historia",
+                        text = stringResource(R.string.chat_empty_state),
                         modifier = Modifier.align(Alignment.Center)
                     )
 
@@ -207,7 +208,8 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                     enabled = !isBlocked
                 )
                 Spacer(Modifier.width(8.dp))
-                Button(onClick = {
+                Button(
+                    onClick = {
                     val id = resolvedChatId
                     if (input.isBlank() || id.isNullOrBlank() || isBlocked) return@Button
                     val content = input
@@ -219,7 +221,12 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                         val lastTimestamp = messages.lastOrNull()?.createdAt
                         chatRepository.markChatRead(id, lastTimestamp)
                     }
-                }, enabled = !resolvedChatId.isNullOrBlank() && !isBlocked) { Text(stringResource(R.string.send)) }
+                }, enabled = !resolvedChatId.isNullOrBlank() && !isBlocked,
+                    colors = buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ))
+                { Text(stringResource(R.string.send)) }
             }
         }
     }
@@ -234,8 +241,8 @@ private fun MessageBubble(
     avatarUrl: String?,
     timestampIso: String?
 ) {
-    val bg = if (incoming) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primary
-    val contentColor = if (incoming) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onPrimary
+    val bg = if (incoming) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.tertiary
+    val contentColor = if (incoming) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onTertiary
     val shape = if (incoming) {
         RoundedCornerShape(
             topStart = if (groupedWithPrev) 0.dp else 18.dp,

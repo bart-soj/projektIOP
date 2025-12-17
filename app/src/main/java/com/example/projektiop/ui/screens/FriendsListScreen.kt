@@ -96,7 +96,7 @@ fun FriendsListScreen(
                         modifier = Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(uiState.error ?: "Błąd", color = MaterialTheme.colorScheme.error)
+                        Text(uiState.error ?: stringResource(R.string.error), color = MaterialTheme.colorScheme.error)
                         Spacer(Modifier.height(8.dp))
                         Button(onClick = { viewModel.refreshAll() }) {
                             Text(stringResource(R.string.retry))
@@ -198,7 +198,7 @@ private fun UserSearchDialog(onClose: () -> Unit, viewModel: FriendsViewModel) {
                         LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                     }
                     uiState.searchError != null -> {
-                        Text(uiState.searchError ?: "Błąd", color = MaterialTheme.colorScheme.error)
+                        Text(uiState.searchError ?: stringResource(R.string.error), color = MaterialTheme.colorScheme.error)
                     }
                     uiState.searchResults.isEmpty() -> {
                         Text(stringResource(R.string.no_results), style = MaterialTheme.typography.bodySmall)

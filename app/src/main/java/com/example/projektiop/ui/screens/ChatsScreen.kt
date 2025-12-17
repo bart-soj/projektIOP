@@ -47,21 +47,18 @@ fun ChatsScreen(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues) // Zastosuj padding od Scaffold
-            // Nie dodajemy .verticalScroll(), bo użyjemy LazyColumn
+                .padding(paddingValues)
         ) {
-            // 1 & 2. Pole wyszukiwania i przycisk (w jednym komponencie TextField)
             SearchBar(
                 searchText = searchText,
                 onSearchTextChanged = { viewModel.searchFor(it) },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
             // Spacer między wyszukiwaniem a listą
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 3, 4, 5. Lista znajomych/czatów (używamy LazyColumn dla wydajności)
-            // 6. Pasek przewijania jest automatycznie obsługiwany przez LazyColumn
             when {
                 loading -> {
                     Box(Modifier.fillMaxSize()) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
@@ -73,7 +70,7 @@ fun ChatsScreen(navController: NavController) {
                             Spacer(Modifier.height(8.dp))
                             Button(onClick = {
                                 viewModel.refreshAll()
-                            }) { Text("Spróbuj ponownie") }
+                            }) { Text(text = stringResource(R.string.retry)) }
                         }
                     }
                 }
@@ -125,15 +122,16 @@ fun SearchBar(
     OutlinedTextField(
         value = searchText,
         onValueChange = onSearchTextChanged,
-        modifier = modifier.fillMaxWidth(),
-        label = { Text(stringResource(R.string.search_label)) }, // Dodaj zasób string dla "Szukaj..."
-        leadingIcon = { // Ikona wewnątrz pola tekstowego
+        modifier = modifier
+            .fillMaxWidth(),
+        label = { Text(stringResource(R.string.search_label)) },
+        leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = stringResource(R.string.search_icon_desc) // Dodaj opis dla dostępności
+                contentDescription = stringResource(R.string.search_icon_desc)
             )
         },
-        singleLine = true // Zapobiega wieloliniowości
+        singleLine = true
     )
 }
 
@@ -166,16 +164,15 @@ fun ChatItem(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Kolumna na nazwę i ostatnią wiadomość
             Column(
-                modifier = Modifier.weight(1f) // Zajmij dostępną przestrzeń, aby tekst się zawijał/ucinał
+                modifier = Modifier.weight(1f)
             ) {
                 // 4. Nazwa znajomego
                 Text(
                     text = chatData.title,
                     style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1, // Maksymalnie jedna linia
-                    overflow = TextOverflow.Ellipsis // Utnij, jeśli za długie
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 // 5. Ostatnia wiadomość z czatu

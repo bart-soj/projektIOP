@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.*
+import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -114,8 +115,14 @@ fun SettingsScreen(
                 Button(
                     onClick = { showBlockedDialog = true },
                     modifier = Modifier.fillMaxWidth(),
+                    colors = buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
 
-                ) { Text(text = stringResource(id = R.string.blocked_users)) }
+                ) {
+                    Text(text = stringResource(id = R.string.blocked_users))
+                }
 
                 Spacer(modifier = Modifier.weight(1f))
                 Button(
@@ -173,7 +180,10 @@ private fun BlockedUsersDialog(
     AlertDialog(
         onDismissRequest = onClose,
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onClose) { Text(text = stringResource(id = R.string.close)) } },
+        dismissButton = {
+            TextButton(onClick = onClose) {
+                Text(text = stringResource(id = R.string.close))
+            } },
         title = { Text(text = stringResource(id = R.string.blocked_users)) },
         text = {
             when {

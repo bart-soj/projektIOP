@@ -16,6 +16,10 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
+    background = BackgroundDark,
+    onBackground = OnBackgroundDark,
+    surface = SurfaceDark,
+
     primary = PrimaryDark,
     onPrimary = OnPrimaryDark,
     primaryContainer = PrimaryContainerDark,
@@ -26,16 +30,20 @@ private val DarkColorScheme = darkColorScheme(
     secondaryContainer = SecondaryContainerDark,
     onSecondaryContainer = OnSecondaryContainerDark,
 
-    tertiary = TertiaryDark,
-    onTertiary = OnTertiaryDark,
-    tertiaryContainer = TertiaryContainerDark,
-    onTertiaryContainer = OnTertiaryContainerDark,
+    tertiary = OutgoingDark,
+    onTertiary = OnOutgoingDark,
+    tertiaryContainer = IncomingDark,
+    onTertiaryContainer = OnIncomingDark,
 
     error = ErrorDark,
     onError = OnErrorDark
 )
 
 private val LightColorScheme = lightColorScheme(
+    background = BackgroundLight,
+    onBackground = OnBackgroundLight,
+    surface = SurfaceLight,
+
     primary = PrimaryLight,
     onPrimary = OnPrimaryLight,
     primaryContainer = PrimaryContainerLight,
@@ -46,10 +54,10 @@ private val LightColorScheme = lightColorScheme(
     secondaryContainer = SecondaryContainerLight,
     onSecondaryContainer = OnSecondaryContainerLight,
 
-    tertiary = TertiaryLight,
-    onTertiary = OnTertiaryLight,
-    tertiaryContainer = TertiaryContainerLight,
-    onTertiaryContainer = OnTertiaryContainerLight,
+    tertiary = OutgoingLight,
+    onTertiary = OnOutgoingLight,
+    tertiaryContainer = IncomingLight,
+    onTertiaryContainer = OnIncomingLight,
 
     error = ErrorLight,
     onError = OnErrorLight

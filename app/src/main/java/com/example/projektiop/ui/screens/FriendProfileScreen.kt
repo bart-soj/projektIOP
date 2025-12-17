@@ -48,7 +48,9 @@ fun FriendProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(profile?.effectiveDisplayName ?: "Profil") },
+                title = {
+                    Text(text = profile?.effectiveDisplayName ?: stringResource(R.string.profile))
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.ArrowBack, contentDescription = "Wstecz") }
                 }
@@ -76,7 +78,7 @@ fun FriendProfileScreen(
                     UserAvatar(rawUrl, modifier = Modifier.size(90.dp))
                     Spacer(Modifier.width(16.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(p.effectiveDisplayName ?: p.username ?: "(bez nazwy)", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Text(text = p.effectiveDisplayName ?: p.username ?: stringResource(R.string.no_name), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                         val age = p.profile?.birthDate?.let { bd ->
                             val datePart = bd.take(10)
                             try { val ld = LocalDate.parse(datePart, DateTimeFormatter.ISO_DATE); Period.between(ld, LocalDate.now()).years.takeIf { it in 0..150 } } catch (_: Exception) { null }
@@ -98,7 +100,7 @@ fun FriendProfileScreen(
                 }
                 if (!p.interests.isNullOrEmpty()) {
                     Column {
-                        Text("Zainteresowania", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(text = stringResource(R.string.interests), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(4.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             p.interests!!.forEach { ui ->

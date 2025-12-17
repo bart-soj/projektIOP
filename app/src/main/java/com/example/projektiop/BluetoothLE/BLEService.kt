@@ -48,14 +48,15 @@ class BLEService : Service() {
     override fun onCreate() {
         super.onCreate()
         userId = sharedDataSource.get("_id", "")
-        startForeground(notificationId, createNotification("Idle."))
+        startForeground(notificationId, createNotification(getString(R.string.ble_status_inactive)))
+
         serviceScope.launch {
             combine ( bleManager.isScanning, bleManager.isAdvertising ) { isScanning, isAdvertising ->
                 val text = when {
-                    isScanning && isAdvertising -> "Scanning and advertising."
-                    isScanning -> "Scanning for nearby users..."
-                    isAdvertising -> "Advertising your profile."
-                    else -> "Idle. "
+                    isScanning && isAdvertising -> getString(R.string.ble_status_scanning_and_advertising)
+                    isScanning -> getString(R.string.ble_status_scanning)
+                    isAdvertising -> getString(R.string.ble_status_advertising)
+                    else -> getString(R.string.ble_status_inactive)
                 }
                 val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 notificationManager.notify(notificationId, createNotification(text))
