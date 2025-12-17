@@ -260,8 +260,12 @@ private fun MessageBubble(
     }
     val timeText = remember(timestampIso) { parseTimeShort(timestampIso) }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (incoming) Arrangement.Start else Arrangement.End) {
-        if (incoming) {
-            UserAvatar(avatarUrl, modifier = Modifier.size(36.dp))
+        if (incoming && !groupedWithPrev) {
+            UserAvatar(
+                avatarUrl,
+                modifier = Modifier.size(28.dp)
+            )
+            Spacer(Modifier.width(6.dp))
         }
         Column(horizontalAlignment = if (incoming) Alignment.Start else Alignment.End) {
             Surface(
@@ -270,6 +274,10 @@ private fun MessageBubble(
                 shape = shape,
                 tonalElevation = if (incoming) 0.dp else 2.dp,
                 shadowElevation = 0.dp,
+                modifier = if (groupedWithPrev) Modifier
+                    .padding(start = 34.dp)
+                else Modifier
+                    .padding(0.dp)
             ) {
                 Column(Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
                     Text(text = text, style = MaterialTheme.typography.bodyMedium)
@@ -280,7 +288,11 @@ private fun MessageBubble(
                 Text(
                     timeText,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = if (groupedWithPrev) Modifier
+                        .padding(start = 34.dp)
+                    else Modifier
+                        .padding(0.dp)
                 )
                 Spacer(Modifier.height(12.dp))
             }
