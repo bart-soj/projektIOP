@@ -132,7 +132,7 @@ fun LoginScreen(navController: NavController) {
                         .padding(end = 8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.error
+                        contentColor = MaterialTheme.colorScheme.onError
                     ),
                     enabled = !isLoading
                 ) {

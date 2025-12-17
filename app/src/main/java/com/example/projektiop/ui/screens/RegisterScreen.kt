@@ -124,7 +124,7 @@ fun RegisterScreen(navController: NavController) {
                     modifier = Modifier.weight(1f).padding(end = 8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorScheme.errorContainer,
-                        contentColor = colorScheme.error
+                        contentColor = colorScheme.onError
                     )
                 ) {
                     Text(stringResource(R.string.return_button_text))
