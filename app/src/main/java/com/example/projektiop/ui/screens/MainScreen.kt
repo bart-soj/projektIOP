@@ -85,6 +85,7 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.errorMessage.collectAsState()
 
+    
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
