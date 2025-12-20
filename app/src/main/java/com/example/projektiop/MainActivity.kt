@@ -67,6 +67,8 @@ import com.example.projektiop.data.repositories.AuthEvent
 import com.example.projektiop.data.repositories.AuthState
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.UserRepository
+import com.example.projektiop.domain.AppState
+import com.example.projektiop.domain.AppStateRepository
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
@@ -86,10 +88,10 @@ class MainActivity : ComponentActivity() {
         }
 
 
-    private val scannerViewModel: ScannerViewModel by viewModel()
     private val localBTPermissionsManager: BTPermissionsManager by inject()
 
     private val authRepository: AuthRepository by inject()
+    private val appStateRepository: AppStateRepository by inject()
     private val chatRepository: ChatRepository by inject()
     private val friendshipRepository: FriendshipRepository by inject()
     private val userRepository: UserRepository by inject()
@@ -224,16 +226,16 @@ private fun MainActivity.showPermissionDeniedMessage(context: Context, permissio
 @Composable
 fun MyApp() {
     val themePreference: ThemePreference = koinInject<ThemePreference>()
-    val authRepository: AuthRepository = koinInject<AuthRepository>()
+    val appStateRepository = koinInject<AppStateRepository>()
 
     val darkMode by themePreference.isDark.collectAsState()
-    val authState by authRepository.authState.collectAsState()
+    val appState by appStateRepository.appState.collectAsState()
 
     ProjektIOPTheme (darkTheme = darkMode) {
-        when(authState) {
-            is AuthState.Authenticated -> MainNavGraph()
-            is AuthState.Loading -> LoadingScreen()
-            is AuthState.Unauthenticated -> AuthNavGraph()
+        when(appState) {
+            is AppState.GotKeys -> MainNavGraph()
+            is AppState.Authenticated -> LoadingScreen()
+            is AppState.Unauthenticated -> AuthNavGraph()
         }
     }
 }
@@ -250,6 +252,7 @@ fun AuthNavGraph() {
         composable("start") { StartScreen(navController) }
         composable("login") { LoginScreen(navController) }
         composable("register") { RegisterScreen(navController) }
+        // TODO() verification email screen with resend option
     }
 }
 

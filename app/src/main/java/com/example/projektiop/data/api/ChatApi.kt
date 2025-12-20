@@ -1,10 +1,12 @@
 package com.example.projektiop.data.api
 
+import com.example.projektiop.domain.models.base64
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Body
+
 
 // Endpoint bazuje na server.js: app.use('/api/chats', chatRoutes)
 // Zakładamy GET /api/chats zwraca listę czatów bieżącego użytkownika.
@@ -49,12 +51,13 @@ data class ChatDto(
 data class MessageDto(
     val _id: String? = null,
     val chatId: String? = null,
-    val content: String? = null,
+    val content: base64? = null,
     val senderId: String? = null,
     val readBy: List<String>? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null
 )
+
 
 data class MessagesPageDto(
     val messages: List<MessageDto>? = null,

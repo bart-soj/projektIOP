@@ -16,6 +16,6 @@ class Message(
     val chatId: String,
     val content: String,
     val readBy: List<String>,
-    val sender: String,
+    val senderId: String,
     val createdAt: Instant
 ) {}

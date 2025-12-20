@@ -10,6 +10,7 @@ import com.example.projektiop.data.repositories.SearchProfileRepository
 import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.data.repositories.ThemePreference
 import com.example.projektiop.data.repositories.UserRepository
+import com.example.projektiop.domain.AppStateRepository
 import com.example.projektiop.screens.friends.FriendsViewModel
 import com.example.projektiop.ui.viewmodels.AuthViewModel
 import com.example.projektiop.ui.viewmodels.ChatsViewModel
@@ -17,6 +18,7 @@ import com.example.projektiop.ui.viewmodels.FriendProfileViewModel
 import com.example.projektiop.ui.viewmodels.MainViewModel
 import com.example.projektiop.ui.viewmodels.ScannerViewModel
 import com.example.projektiop.ui.viewmodels.SettingsViewModel
+import com.example.projektiop.util.CertificateUtils
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -31,6 +33,8 @@ val rootKoinModule = module {
     single { FriendshipRepository( get(), get(), get() ) }
     single { SharedDataSource( androidContext() ) }
     single { SearchProfileRepository( get(), get() ) }
+    single { CertificateUtils( get(), get() ) }
+    single { AppStateRepository() }
     viewModel { MainViewModel(get()) }
     viewModel { SettingsViewModel(get(), get(), get())}
     viewModel { AuthViewModel(get()) }

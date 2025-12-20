@@ -2,17 +2,33 @@ package com.example.projektiop.data.repositories
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import androidx.core.content.edit
+import com.example.projektiop.domain.models.base64
+import java.security.KeyStore
+import java.util.Base64
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
 
 class SharedDataSource(context: Context) {
-    private lateinit var appContext: Context
+    private var appContext: Context = context.applicationContext
     private val PREFS_NAME = "HelloBeaconSharedPrefs"
+    private val prefs = getPreferences(appContext)
+
     private val BASE_URL_KEY: String = "BASE_URL"
     private val BASE_URL = "https://hellobeacon.onrender.com" // Ujednolicona baza – auth i user pod jednym URL
     // private val BASE_URL = "http://192.168.1.13:3000" // 10.0.2.2 is bound to lo of local machine
 
+    private val AES_KEY_ALIAS = "hellobeacon_encryption_key"
+    private val AES_KEY_SIZE = 256
+    private val ANDROID_KEYSTORE = "AndroidKeyStore"
+    private val AES_TRANSFORMATION = "AES/GCM/NoPadding"
+    private val GCM_IV_SIZE = 12
+
     init {
-        appContext = context
         this.set(BASE_URL_KEY, BASE_URL)
     }
 
@@ -25,7 +41,7 @@ class SharedDataSource(context: Context) {
     }
 
     fun <T> set(key: String, value: T, context: Context  = this.getAppContext()) {
-        with(getPreferences(context).edit()) {
+        with(prefs.edit()) {
             when (value) {
                 is String -> putString(key, value)
                 is Int -> putInt(key, value)
@@ -38,7 +54,6 @@ class SharedDataSource(context: Context) {
         }
     }
 
-    // @Suppress("UNCHECKED_CAST")
     inline fun <reified T> get(key: String, defaultValue: T, context: Context = this.getAppContext()): T {
         val prefs = getPreferences(context)
         return when (T::class) {
@@ -53,6 +68,70 @@ class SharedDataSource(context: Context) {
 
     fun remove(key: String, context: Context = this.getAppContext()) {
         getPreferences(context).edit() { remove(key) }
+    }
+
+    private fun getOrCreateAESKey(): SecretKey {
+        val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
+        if (keyStore.containsAlias(AES_KEY_ALIAS)) {
+            return keyStore.getKey(AES_KEY_ALIAS, null) as SecretKey
+        }
+
+        val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
+        val spec = KeyGenParameterSpec.Builder(
+            AES_KEY_ALIAS,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        )
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            .setKeySize(AES_KEY_SIZE)
+            .setUserAuthenticationRequired(false)
+            .build()
+
+        keyGenerator.init(spec)
+        return keyGenerator.generateKey()
+    }
+
+    private fun encrypt(valueBase64: base64): base64 {
+        val secretKey = getOrCreateAESKey()
+        val cipher = Cipher.getInstance(AES_TRANSFORMATION)
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+        val iv = cipher.iv
+        val encrypted = cipher.doFinal(valueBase64.toByteArray(Charsets.UTF_8))
+
+        // Prepend IV to ciphertext for storage
+        val combined = ByteArray(iv.size + encrypted.size)
+        System.arraycopy(iv, 0, combined, 0, iv.size)
+        System.arraycopy(encrypted, 0, combined, iv.size, encrypted.size)
+
+        return Base64.getEncoder().encodeToString(combined)
+    }
+
+    private fun decrypt(encryptedBase64: base64): base64? {
+        return try {
+            val combined = Base64.getDecoder().decode(encryptedBase64)
+            val iv = combined.copyOfRange(0, GCM_IV_SIZE)
+            val ciphertext = combined.copyOfRange(GCM_IV_SIZE, combined.size)
+
+            val secretKey = getOrCreateAESKey()
+            val cipher = Cipher.getInstance(AES_TRANSFORMATION)
+            val spec = GCMParameterSpec(128, iv)
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, spec)
+            val decrypted = cipher.doFinal(ciphertext)
+            String(decrypted, Charsets.UTF_8)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun setEncryptedBase64(key: String, valueBase64: base64) {
+        val encrypted = encrypt(valueBase64)
+        prefs.edit() { putString(key, encrypted) }
+    }
+
+    fun getEncryptedBase64(key: String): String? {
+        val encrypted = prefs.getString(key, null) ?: return null
+        return decrypt(encrypted)
     }
 }
 

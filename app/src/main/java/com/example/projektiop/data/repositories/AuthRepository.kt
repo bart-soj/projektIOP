@@ -4,9 +4,11 @@ import com.example.projektiop.data.api.AuthApi
 import com.example.projektiop.data.api.RegisterRequest
 import com.example.projektiop.data.api.LoginRequest
 import com.example.projektiop.data.api.TokenProvider
+import com.example.projektiop.domain.AppStateRepository
 import com.example.projektiop.util.DataError
 import retrofit2.HttpException
 import com.example.projektiop.util.Result
+import com.example.projektiop.util.exceptionToDataError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -40,7 +42,8 @@ sealed interface AuthState {
 
 
 class AuthRepository(private val authApi: AuthApi,
-                     private val sharedDataSource: SharedDataSource): TokenProvider {
+                     private val sharedDataSource: SharedDataSource,
+                     private val appStateRepository: AppStateRepository): TokenProvider {
     private val KEY_TOKEN = "auth_token"
     private val KEY_EMAIL = "my_email"
     private val KEY_REMEMBER = "remember_me"
@@ -66,6 +69,7 @@ class AuthRepository(private val authApi: AuthApi,
                     token = tmpToken
                     _authState.value = AuthState.Authenticated(id)
                     _authEvent.emit(AuthEvent.Success)
+                    appStateRepository.login()
                 } else {
                     _authState.value = AuthState.Unauthenticated
                 }
@@ -88,77 +92,20 @@ class AuthRepository(private val authApi: AuthApi,
             } else throw Exception("bad data")
             _authState.value = AuthState.Authenticated(tmpId)
             _authEvent.emit(AuthEvent.Success)
+            appStateRepository.login()
             Result.Success(token)
-        } catch (e: HttpException) {
-            when(e.code()) {
-                401 -> Result.Error(DataError.Authentication.INVALID_EMAIL_PASSWORD)
-                403 -> if (e.message?.contains("Please verify your email address before logging in.") == true) {
-                    Result.Error(DataError.Authentication.EMAIL_NOT_VERIFIED)
-                } else if (e.message?.contains("Your account has been banned.") == true) {
-                    Result.Error(DataError.Authentication.ACCOUNT_BANNED)
-                } else
-                    Result.Error(DataError.Network.UNKNOWN)
-                408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
-                413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
-                429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
-                in 500..599 -> Result.Error(DataError.Network.SERVER_ERROR)
-                else -> Result.Error(DataError.Network.UNKNOWN)
-            }
-        } catch (e: SocketTimeoutException) {
-            Result.Error(DataError.Network.REQUEST_TIMEOUT)
-        } catch (e: UnknownHostException) {
-            Result.Error(DataError.Network.SERVER_ERROR)
-        } catch (e: IOException) {
-            Result.Error(DataError.Network.NO_INTERNET)
-        } catch (e: SerializationException) {
-            Result.Error(DataError.Network.SERIALIZATION)
         } catch (e: Exception) {
-            Result.Error(DataError.Network.UNKNOWN)
+            exceptionToDataError<String?>(e)
         }
     }
 
 
-    suspend fun register(username: String, email: String, password: String): Result<String?, DataError> {
+    suspend fun register(username: String, email: String, password: String): Result<Unit, DataError> {
         return try {
             val response = authApi.register(RegisterRequest(username, email, password))
-            val tmpId = response.body()?._id
-            val tmpToken = response.body()?.token
-            val tmpEmail = response.body()?.email
-            if (validateToken(tmpToken) && !tmpId.isNullOrBlank() && !tmpEmail.isNullOrBlank()) {
-                saveToken(tmpToken, remember = rememberMe.value)
-                saveInfo(email, tmpId) // TODO() handle saving errors
-            } else throw Exception("bad data")
-            _authState.value = AuthState.Authenticated(tmpId)
-            _authEvent.emit(AuthEvent.Success)
-            Result.Success(token)
-        } catch (e: HttpException) {
-            when(e.code()) {
-                401 -> Result.Error(DataError.Authentication.INVALID_EMAIL_PASSWORD)
-                403 -> if (e.message?.contains("Please verify your email address before logging in.") == true) {
-                    Result.Error(DataError.Authentication.EMAIL_NOT_VERIFIED)
-                } else if (e.message?.contains("Your account has been banned.") == true) {
-                    Result.Error(DataError.Authentication.ACCOUNT_BANNED)
-                } else
-                    Result.Error(DataError.Network.UNKNOWN)
-                408 -> Result.Error(DataError.Network.REQUEST_TIMEOUT)
-                413 -> Result.Error(DataError.Network.PAYLOAD_TOO_LARGE)
-                429 -> Result.Error(DataError.Network.TOO_MANY_REQUESTS)
-                in 500..599 -> Result.Error(DataError.Network.SERVER_ERROR)
-                else -> Result.Error(DataError.Network.UNKNOWN)
-            }
-        } catch (e: SocketTimeoutException) {
-            Result.Error(DataError.Network.REQUEST_TIMEOUT)
-
-        } catch (e: UnknownHostException) {
-            Result.Error(DataError.Network.SERVER_ERROR)
-        } catch (e: IOException) {
-            Result.Error(DataError.Network.NO_INTERNET)
-
-        } catch (e: SerializationException) {
-            Result.Error(DataError.Network.SERIALIZATION)
-
-        } catch (e: Exception) {
-            Result.Error(DataError.Network.UNKNOWN)
+            Result.Success(Unit)
+        }  catch (e: Exception) {
+            exceptionToDataError<Unit>(e)
         }
     }
 
@@ -168,6 +115,7 @@ class AuthRepository(private val authApi: AuthApi,
         clearToken()
         _authEvent.emit(AuthEvent.Logout)
         _authState.value = AuthState.Unauthenticated
+        appStateRepository.logout()
     }
 
     fun rememberMe() {

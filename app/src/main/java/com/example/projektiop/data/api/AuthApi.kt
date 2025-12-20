@@ -1,5 +1,6 @@
 package com.example.projektiop.data.api
 
+import android.health.connect.datatypes.units.Length
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import retrofit2.HttpException
@@ -8,6 +9,7 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 
 // Data classes for requests and responses
+
 
 data class RegisterRequest(
     val username: String,

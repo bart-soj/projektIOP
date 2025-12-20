@@ -1,5 +1,6 @@
 package com.example.projektiop.data.db.realm.objects
 
+import com.example.projektiop.domain.models.base64
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
@@ -16,6 +17,8 @@ class Chat : RealmObject {
     var lastMessageId: String? = null // Reference to Message
 
     var lastMessageTimestamp: RealmInstant? = null
+
+    var chatKey: base64? = null
 
     var createdAt: RealmInstant? = null
     var updatedAt: RealmInstant? = null

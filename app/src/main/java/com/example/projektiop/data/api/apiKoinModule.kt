@@ -77,5 +77,13 @@ val apiKoinModule = module {
         get<retrofit2.Retrofit>().create(PublicInterestApi::class.java)
     }
 
+    single<BackupApi> {
+        get<retrofit2.Retrofit>().create(BackupApi::class.java)
+    }
+
+    single<PublicKeyApi> {
+        get<retrofit2.Retrofit>().create(PublicKeyApi::class.java)
+    }
+
     single { ErrorConverter(get()) }
 }

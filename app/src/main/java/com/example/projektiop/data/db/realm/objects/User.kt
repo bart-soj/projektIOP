@@ -2,6 +2,7 @@ package com.example.projektiop.data.db.realm.objects
 
 import com.example.projektiop.domain.models.Gender
 import com.example.projektiop.domain.models.UserRole
+import com.example.projektiop.domain.models.base64
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
@@ -52,6 +53,8 @@ class User : RealmObject {
 
     var interestIds: RealmList<ObjectId> = realmListOf() // list of ids of user interests
     var interests: RealmList<UserInterest> = realmListOf()
+
+    var publicKey: base64? = null
 
     var isBanned: Boolean = false
     var banReason: String? = null
