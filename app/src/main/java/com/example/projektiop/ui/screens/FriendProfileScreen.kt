@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import com.example.projektiop.data.api.ProfileDto
 import com.example.projektiop.ui.components.GlassPanel
 import com.example.projektiop.ui.components.UserAvatar
+import com.example.projektiop.util.translateInterestName
 import com.example.projektiop.ui.viewmodels.FriendProfileViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -135,13 +136,12 @@ fun FriendProfileScreen(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    p.interests!!.forEach { ui ->
+                                    p.interests.forEach { ui ->
                                         assert(ui.interest.name != null)
-                                        val base =
-                                            ui.interest.name!!.ifBlank { stringResource(R.string.profile_unknown_interest) }
-                                        val label =
-                                            ui.customDescription?.takeIf { it.isNotBlank() } ?: ""
-                                        InterestTag(base = base, label = label)
+                                        val rawBase = ui.interest.name!!.ifBlank { stringResource(R.string.profile_unknown_interest) }
+                                        val translatedBase = translateInterestName(rawBase)
+                                        val label = if (!ui.customDescription.isNullOrBlank()) ui.customDescription else ""
+                                        InterestTag(base = translatedBase, label = label)
                                     }
                                 }
                             }

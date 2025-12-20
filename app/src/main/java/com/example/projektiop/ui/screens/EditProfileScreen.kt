@@ -44,16 +44,20 @@ fun EditProfileScreen(
     var gender by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var interests by remember { mutableStateOf("") }
-    var allInterests by remember {
+    var allInterests by remember { //todo: check
         mutableStateOf(
             listOf(
-                context.getString(R.string.interest_programming),
-                context.getString(R.string.interest_gaming),
                 context.getString(R.string.interest_cybersecurity),
-                context.getString(R.string.interest_technology),
-                context.getString(R.string.interest_sport),
-                context.getString(R.string.interest_art),
-                context.getString(R.string.interest_travel)
+                context.getString(R.string.interest_reading),
+                context.getString(R.string.interest_gaming),
+                context.getString(R.string.interest_mountain_hiking),
+                context.getString(R.string.interest_indie_cinema),
+                context.getString(R.string.interest_cycling),
+                context.getString(R.string.interest_electronic_music),
+                context.getString(R.string.interest_football),
+                context.getString(R.string.interest_backpacking),
+                context.getString(R.string.interest_programming),
+                context.getString(R.string.interest_gym_fitness)
             )
         )
     }
@@ -103,7 +107,7 @@ fun EditProfileScreen(
             .onSuccess { map ->
                 allInterests = map.keys.sorted()
             }
-            .onFailure { /* keep defaults if API fails */ }
+            .onFailure {  }
         loadingInitial = false
     }
 
