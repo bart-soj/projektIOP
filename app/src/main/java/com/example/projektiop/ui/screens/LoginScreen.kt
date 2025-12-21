@@ -72,7 +72,7 @@ fun LoginScreen(navController: NavController) {
                     email = it
                 },
                 label = stringResource(R.string.email_label),
-                errorList = emailErrors,
+                errorList = emailErrors.map { stringResource(it) },
                 modifier = Modifier.fillMaxWidth(),
                 isError = emailErrors.isNotEmpty(),
             )
