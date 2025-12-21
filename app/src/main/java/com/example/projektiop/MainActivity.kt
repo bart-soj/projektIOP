@@ -15,23 +15,12 @@ import androidx.core.content.ContextCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.example.projektiop.ui.theme.ProjektIOPTheme
 import androidx.compose.runtime.getValue
 import com.example.projektiop.data.repositories.ThemePreference
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -52,7 +41,6 @@ import com.example.projektiop.ui.screens.EditProfileScreen
 import com.example.projektiop.ui.screens.FriendsListScreen
 import com.example.projektiop.ui.screens.FriendProfileScreen
 
-import com.example.projektiop.ui.viewmodels.ScannerViewModel
 import com.example.projektiop.BluetoothLE.BTPermissionsManager
 import com.example.projektiop.BluetoothLE.BluetoothRepository
 import com.example.projektiop.data.repositories.AuthRepository
@@ -61,14 +49,12 @@ import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.ui.screens.ChatDetailScreen
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.compose.viewmodel.koinActivityViewModel
-import com.example.projektiop.data.repositories.AuthEvent
-import com.example.projektiop.data.repositories.AuthState
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.AppState
+import com.example.projektiop.domain.AppStateEvent
 import com.example.projektiop.domain.AppStateRepository
+import com.example.projektiop.ui.screens.KeyLoadingScreen
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
@@ -128,9 +114,9 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                authRepository.authEvent.collect { event ->
+                appStateRepository.appStateEventFlow.collect { event ->
                     when (event) {
-                        is AuthEvent.Success -> {
+                        is AppStateEvent.OnGotKeys -> {
                             friendshipRepository.refreshAll()
                             userRepository.updateMyId()
                             val intent = Intent(this@MainActivity, ChatUpdateService::class.java)
@@ -139,14 +125,14 @@ class MainActivity : ComponentActivity() {
                                 bindService(intent, serviceConnection, Context.BIND_ADJUST_WITH_ACTIVITY)
                             }
                         }
-                        is AuthEvent.Logout -> {
+                        is AppStateEvent.OnLogout -> {
                             if (isBound) {
                                 unbindService(serviceConnection)
                                 isBound = false
                             }
                             stopService(Intent(Intent(this@MainActivity, ChatUpdateService::class.java)))
                         }
-                        else -> {}
+                        is AppStateEvent.OnAuthorization -> {}
                     }
                 }
             }
@@ -234,7 +220,7 @@ fun MyApp() {
     ProjektIOPTheme (darkTheme = darkMode) {
         when(appState) {
             is AppState.GotKeys -> MainNavGraph()
-            is AppState.Authenticated -> LoadingScreen()
+            is AppState.Authenticated -> KeyLoadingScreen()
             is AppState.Unauthenticated -> AuthNavGraph()
         }
     }
@@ -298,19 +284,3 @@ fun MainNavGraph() {
     }
 }
 
-
-@Composable
-fun LoadingScreen() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.start_background2),
-            contentDescription = stringResource(R.string.background_image_description),
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-    }
-}

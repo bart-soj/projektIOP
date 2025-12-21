@@ -4,11 +4,15 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Log
+import androidx.activity.compose.BackHandler
+import com.example.projektiop.data.api.BackupApi
 import com.example.projektiop.data.api.PublicKeyApi
 import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.domain.models.AlgorithmParams
 import com.example.projektiop.domain.models.AlgorithmParams.EncryptionParams
 import com.example.projektiop.domain.models.AlgorithmParams.PasswordDerivationParams
+import com.example.projektiop.domain.models.BackupInfo
+import com.example.projektiop.domain.models.KB
 import com.example.projektiop.domain.models.base64
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
@@ -32,6 +36,7 @@ import java.io.StringWriter
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.KeyStore
+import java.security.MessageDigest
 import java.security.SecureRandom
 import java.security.Security
 import java.security.cert.CertificateFactory
@@ -43,8 +48,10 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 class CertificateUtils(private val pubKeyApi: PublicKeyApi,
+                       private val backupApi: BackupApi,
                        private val sharedDataSource: SharedDataSource)
 {
+
     val provider = BouncyCastleProvider()
     init {
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
@@ -56,13 +63,13 @@ class CertificateUtils(private val pubKeyApi: PublicKeyApi,
         }
     }
 
-
+    /*
     fun generateKeyPair(): KeyPair {
         val generator = KeyPairGenerator.getInstance("RSA", "BC")
         generator.initialize(RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
         return generator.generateKeyPair()
     }
-
+    */
 
     fun generateCSR(email: String, keyPair: KeyPair): String {
 
@@ -112,17 +119,36 @@ class CertificateUtils(private val pubKeyApi: PublicKeyApi,
         return Base64.getEncoder().encodeToString(keyBytes)
     }
 
-    fun createKeyFromPassword(password: String): Pair<base64, PasswordDerivationParams> {
-        val secureRandom = SecureRandom()
+    fun createKeyFromPassword(
+        password: String,
+        params: PasswordDerivationParams? = null
+    ): Result<Pair<base64, PasswordDerivationParams>, BackupError>  {
 
-        val saltBytes = ByteArray(16).also { secureRandom.nextBytes(it) }
-        val saltBase64 = Base64.getEncoder().encodeToString(saltBytes)
+        val saltBytes: ByteArray
+        val opsLimit: Int
+        val memLimit: Int
+        val parallelism: Int
+        val hashLength: Int
+        val verificator: base64?
 
-        val opsLimit = 3
-        val memLimit = 65536
-        val parallelism = 1
-        val hashLength = 32
+        if (params != null) {
+            saltBytes = Base64.getDecoder().decode(params.salt)
+            opsLimit = params.opsLimit
+            memLimit = params.memLimit
+            parallelism = params.parallelism
+            hashLength = params.hashLength
+            verificator = params.verificator
+        } else {
+            val secureRandom = SecureRandom()
+            saltBytes = ByteArray(16).also { secureRandom.nextBytes(it) }
+            opsLimit = 3
+            memLimit = 65_536
+            parallelism = 1
+            hashLength = 32
+            verificator = null
+        }
 
+        // ---- Argon2id ----
         val argonParams = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
             .withSalt(saltBytes)
             .withIterations(opsLimit)
@@ -130,24 +156,53 @@ class CertificateUtils(private val pubKeyApi: PublicKeyApi,
             .withParallelism(parallelism)
             .build()
 
-        val keyBytes = ByteArray(hashLength)
+        val masterKey = ByteArray(hashLength)
         val generator = Argon2BytesGenerator()
         generator.init(argonParams)
-        generator.generateBytes(password.toByteArray(Charsets.UTF_8), keyBytes, 0, keyBytes.size)
+        generator.generateBytes(password.toByteArray(Charsets.UTF_8), masterKey)
 
-        val keyBase64 = Base64.getEncoder().encodeToString(keyBytes)
+        val hkdf = HKDFBytesGenerator(SHA256Digest())
+        hkdf.init(
+            HKDFParameters(
+                masterKey,
+                null, // no salt; Argon2 already salted
+                null
+            )
+        )
 
-        val params = PasswordDerivationParams(
+        val encryptionKey = ByteArray(32)
+        val verificationKey = ByteArray(32)
+
+        hkdf.generateBytes(encryptionKey, 0, encryptionKey.size)
+        hkdf.generateBytes(verificationKey, 0, verificationKey.size)
+
+        val digest = MessageDigest.getInstance("SHA-256")
+        val verificatorBytes = digest.digest(verificationKey)
+
+        val verificatorBase64 =
+            Base64.getEncoder().encodeToString(verificatorBytes)
+
+        // wrong password, failed verification
+        if (verificatorBase64 != verificator) {
+            return Result.Error(BackupError.WRONG_PASSWORD)
+        }
+
+        val encryptionKeyBase64 =
+            Base64.getEncoder().encodeToString(encryptionKey)
+
+        val paramsOut = PasswordDerivationParams(
             algorithm = "Argon2id",
-            salt = saltBase64,
+            salt = Base64.getEncoder().encodeToString(saltBytes),
             opsLimit = opsLimit,
             memLimit = memLimit,
             parallelism = parallelism,
-            hashLength = hashLength
+            hashLength = hashLength,
+            verificator = verificatorBase64
         )
 
-        return Pair(keyBase64, params)
+        return Result.Success(Pair(encryptionKeyBase64, paramsOut))
     }
+
 
     fun encryptKeyAES256GCM(
         encryptingKey: base64,
@@ -199,9 +254,9 @@ class CertificateUtils(private val pubKeyApi: PublicKeyApi,
     }
 
 
-    suspend fun ensureKeyPair(
+    suspend fun getLocalKeyPair(
         userId: String,
-    ): Result<Pair<String, String>, DataError> {
+    ): Result<Pair<base64, base64>, DataError.Local> {
 
         val privKeyStorageKey = "x25519_private_$userId"
         val pubKeyStorageKey = "x25519_public_$userId"
@@ -211,7 +266,51 @@ class CertificateUtils(private val pubKeyApi: PublicKeyApi,
 
         if (storedPrivBase64 != null && storedPubBase64 != null) {
             return Result.Success(storedPubBase64 to storedPrivBase64)
+        } else {
+            return Result.Error(DataError.Local.NO_DATA)
         }
+    }
+
+    suspend fun getBackupInfo(): Result<BackupInfo, DataError> {
+        // get backup from server
+        var backupInfo: BackupInfo
+        try {
+            val result = backupApi.getBackup()
+            if (result.body() == null) return Result.Error(DataError.Network.UNKNOWN)
+            backupInfo = result.body()!!
+            return Result.Success(backupInfo)
+        } catch (e: Exception) {
+            return apiExceptionToDataError<BackupInfo>(e)
+        }
+    }
+
+    suspend fun getDecryptedKeyPairFromBackup(password: String, backupInfo: BackupInfo, userId: String): Result<Pair<base64, base64>, BackupError> {
+        val keyFromPasswordResult = createKeyFromPassword(password, backupInfo.passwordDerivationParams)
+        when (keyFromPasswordResult) {
+            is Result.Error -> return Result.Error(BackupError.WRONG_PASSWORD)
+            is Result.Success ->  {
+                val keyFromPassword = keyFromPasswordResult.data.first
+                val decryptedBackupKey = decryptKeyAES256GCM(keyFromPassword, backupInfo.encryptedBackupKey, backupInfo.backupEncryptionParams)
+
+                val decryptedPrivateKey = decryptKeyAES256GCM(decryptedBackupKey, backupInfo.encryptedPrivateKey, backupInfo.privateEncryptionParams)
+
+                val publicKey = backupInfo.publicKey
+
+                val privKeyStorageKey = "x25519_private_$userId"
+                val pubKeyStorageKey = "x25519_public_$userId"
+
+                sharedDataSource.setEncryptedBase64(privKeyStorageKey, decryptedPrivateKey)
+                sharedDataSource.setEncryptedBase64(pubKeyStorageKey, publicKey)
+
+                return Result.Success(publicKey to decryptedPrivateKey)
+            }
+        }
+    }
+
+    suspend fun createKeyPair(userId: String): Result<Pair<base64, base64>, DataError> {
+
+        val privKeyStorageKey = "x25519_private_$userId"
+        val pubKeyStorageKey = "x25519_public_$userId"
 
         val keyGen = X25519KeyPairGenerator()
         keyGen.init(KeyGenerationParameters(SecureRandom(), 256))
@@ -229,7 +328,7 @@ class CertificateUtils(private val pubKeyApi: PublicKeyApi,
         try {
             pubKeyApi.publishPublicKey(pubBase64)
         } catch (e: Exception) {
-            return exceptionToDataError(e)
+            return apiExceptionToDataError(e)
         }
 
         return Result.Success(pubBase64 to privBase64)

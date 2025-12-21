@@ -8,7 +8,7 @@ import com.example.projektiop.domain.AppStateRepository
 import com.example.projektiop.util.DataError
 import retrofit2.HttpException
 import com.example.projektiop.util.Result
-import com.example.projektiop.util.exceptionToDataError
+import com.example.projektiop.util.apiExceptionToDataError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,11 +25,7 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 
-sealed interface AuthEvent {
-    data object Success: AuthEvent
-    data object Logout: AuthEvent
-    data class Error(val message: String) : AuthEvent
-}
+
 
 
 sealed interface AuthState {
@@ -37,6 +33,7 @@ sealed interface AuthState {
     object Loading: AuthState
     data class Authenticated(
         val userId: String,
+        val isBackedUp: Boolean
     ): AuthState
 }
 
@@ -48,9 +45,7 @@ class AuthRepository(private val authApi: AuthApi,
     private val KEY_EMAIL = "my_email"
     private val KEY_REMEMBER = "remember_me"
     private val KEY_ID = "_id"
-
-    private val _authEvent = MutableSharedFlow<AuthEvent>()
-    val authEvent = _authEvent.asSharedFlow()
+    private val KEY_BACKUP = "backup"
 
     val _authState: MutableStateFlow<AuthState> = MutableStateFlow(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
@@ -65,10 +60,10 @@ class AuthRepository(private val authApi: AuthApi,
             if (rememberMe.value == true) {
                 val tmpToken = sharedDataSource.get(KEY_TOKEN, "")
                 val id = sharedDataSource.get(KEY_ID, "")
+                val isBackedUp = sharedDataSource.get(KEY_BACKUP, false)
                 if (validateToken(tmpToken) && id.isNotBlank()) {
                     token = tmpToken
-                    _authState.value = AuthState.Authenticated(id)
-                    _authEvent.emit(AuthEvent.Success)
+                    _authState.value = AuthState.Authenticated(id, isBackedUp)
                     appStateRepository.login()
                 } else {
                     _authState.value = AuthState.Unauthenticated
@@ -86,16 +81,17 @@ class AuthRepository(private val authApi: AuthApi,
             val tmpId = response.body()?._id
             val tmpToken = response.body()?.token
             val tmpEmail = response.body()?.email
-            if (validateToken(tmpToken) && !tmpId.isNullOrBlank() && !tmpEmail.isNullOrBlank()) {
+            val isBackedUp = response.body()?.isBackedUp
+            if (validateToken(tmpToken) && !tmpId.isNullOrBlank()
+                && !tmpEmail.isNullOrBlank() && isBackedUp != null) {
                 saveToken(tmpToken, remember = rememberMe.value)
-                saveInfo(email, tmpId) // TODO() handle saving errors
+                saveInfo(email, tmpId, isBackedUp) // TODO() handle saving errors
             } else throw Exception("bad data")
-            _authState.value = AuthState.Authenticated(tmpId)
-            _authEvent.emit(AuthEvent.Success)
+            _authState.value = AuthState.Authenticated(tmpId, isBackedUp!!)
             appStateRepository.login()
             Result.Success(token)
         } catch (e: Exception) {
-            exceptionToDataError<String?>(e)
+            return apiExceptionToDataError<String?>(e)
         }
     }
 
@@ -105,7 +101,7 @@ class AuthRepository(private val authApi: AuthApi,
             val response = authApi.register(RegisterRequest(username, email, password))
             Result.Success(Unit)
         }  catch (e: Exception) {
-            exceptionToDataError<Unit>(e)
+            return apiExceptionToDataError<Unit>(e)
         }
     }
 
@@ -113,7 +109,6 @@ class AuthRepository(private val authApi: AuthApi,
     suspend fun logout() {
         _authState.value = AuthState.Loading
         clearToken()
-        _authEvent.emit(AuthEvent.Logout)
         _authState.value = AuthState.Unauthenticated
         appStateRepository.logout()
     }
@@ -136,13 +131,14 @@ class AuthRepository(private val authApi: AuthApi,
     }
 
 
-    fun saveInfo(newEmail: String?, newId: String?) {
-        if (!newEmail.isNullOrBlank()) {
+    fun saveInfo(newEmail: String, newId: String, isBackedUp: Boolean) {
+        if (newEmail.isNotBlank()) {
             sharedDataSource.set(KEY_EMAIL, newEmail)
         }
-        if (!newId.isNullOrBlank()) {
+        if (newId.isNotBlank()) {
             sharedDataSource.set(KEY_ID, newId)
         }
+        sharedDataSource.set(KEY_BACKUP, isBackedUp)
     }
 
     fun onTerminate() {

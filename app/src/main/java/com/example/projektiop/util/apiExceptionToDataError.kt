@@ -7,7 +7,7 @@ import java.io.IOException
 import retrofit2.HttpException
 import kotlinx.serialization.SerializationException
 
-fun <T> exceptionToDataError(e: Exception): Result.Error<T, DataError> {
+fun <T> apiExceptionToDataError(e: Exception): Result.Error<T, DataError> {
     return when (e) {
         is HttpException -> when (e.code()) {
             401 -> Result.Error(DataError.Authentication.INVALID_EMAIL_PASSWORD)

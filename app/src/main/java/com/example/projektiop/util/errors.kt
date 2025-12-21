@@ -1,5 +1,7 @@
 package com.example.projektiop.util
 
+import android.provider.DocumentsContract
+
 sealed interface RootError
 
 sealed interface DataError: RootError {
@@ -23,6 +25,12 @@ sealed interface DataError: RootError {
         EMAIL_NOT_VERIFIED
     }
 }
+
+
+enum class BackupError: RootError {
+    WRONG_PASSWORD
+}
+
 
 sealed interface ValidationError: RootError {
     enum class Common: ValidationError {

@@ -17,12 +17,13 @@ private const val ID: String = "_id"
 class MainViewModel(private val userRepository: UserRepository) : ViewModel() {
 
     val myInterests: StateFlow<List<UserInterestDto>?> = userRepository.MyUserInterests
+
     private val _loading = MutableStateFlow(false)
+    val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
     val user = userRepository.myUser
 

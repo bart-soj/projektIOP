@@ -215,4 +215,7 @@
     <string name="already_friends">Already\nfriends</string>
     <string name="invite_sent">Invite\nsent</string>
     <string name="no_search_profiles">No Search Profiles</string>
+    <string name="getting_backup">Getting backup...</string>
+    <string name="get_backup">Get backup</string>
+    <string name="backup_dialog_title">Restore Backup</string>
 </resources>

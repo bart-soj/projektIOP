@@ -29,7 +29,8 @@ data class AuthResponse(
     val profile: ProfileDto?,
     val role: String?,
     val isTestAccount: String?,
-    val token: String?
+    val token: String?,
+    val isBackedUp: Boolean?
 )
 
 data class AuthFailedDto(

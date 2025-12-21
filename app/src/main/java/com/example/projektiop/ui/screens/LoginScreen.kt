@@ -15,27 +15,20 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.projektiop.R
-import com.example.projektiop.data.repositories.AuthEvent
 import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
 import com.example.projektiop.ui.components.SwitchWithText
-import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.ui.components.ObserveAsEvents
 import com.example.projektiop.ui.viewmodels.AuthViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun LoginScreen(navController: NavController) {
     val viewModel = koinViewModel<AuthViewModel>()
-    val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -53,8 +46,7 @@ fun LoginScreen(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 32.dp)
-            ,
+                .padding(horizontal = 16.dp, vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -87,9 +79,9 @@ fun LoginScreen(navController: NavController) {
                     password = it
                 },
                 label = stringResource(R.string.password_label),
-                //errorList = passwordErrors,
+                errorList = passwordErrors,
                 modifier = Modifier.fillMaxWidth(),
-                //isError = passwordErrors.isNotEmpty(),
+                isError = passwordErrors.isNotEmpty(),
                 visualTransformation = PasswordVisualTransformation(),
             )
 
@@ -152,7 +144,7 @@ fun LoginScreen(navController: NavController) {
                         contentColor = MaterialTheme.colorScheme.onPrimary,
                         disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                     ),
-                    enabled = !isLoading //inputsValid && !isLoading
+                    enabled = inputsValid && !isLoading
                 ) {
                     Text(if (isLoading) stringResource(R.string.logging_in) else stringResource(R.string.login_button_text))
                 }

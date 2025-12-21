@@ -6,11 +6,12 @@ typealias KB = Int
 
 
 data class BackupInfo (
+    val publicKey: base64,
     val encryptedPrivateKey: base64,
     val encryptedBackupKey: base64,
     val passwordDerivationParams: AlgorithmParams.PasswordDerivationParams,
     val backupEncryptionParams: AlgorithmParams.EncryptionParams,
-    val privateEncryptionParams: AlgorithmParams.EncryptionParams
+    val privateEncryptionParams: AlgorithmParams.EncryptionParams,
 )
 
 
@@ -21,7 +22,8 @@ sealed class AlgorithmParams {
         val opsLimit: Int,
         val memLimit: KB,
         val parallelism: Int,
-        val hashLength: Int
+        val hashLength: Int,
+        val verificator: base64
     )
 
     data class EncryptionParams( // for AES-256-GCM

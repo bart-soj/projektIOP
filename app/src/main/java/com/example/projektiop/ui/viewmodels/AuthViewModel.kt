@@ -39,9 +39,6 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
     private val _usernameErrors: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
     val usernameErrors: StateFlow<List<String>> = _usernameErrors.asStateFlow()
 
-    val authEventFlow = authRepository.authEvent
-
-
     private val KEY_TOKEN = "auth_token"
     private val EMAIL = "my_email"
     private val KEY_REMEMBER = "remember_me"
@@ -55,7 +52,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
             when (item) {
                 Common.BLANK -> "mustn't be empty"
                 EmailError.NOT_EMAIL -> "must be an email"
-                PasswordError.TOO_SHORT -> "must be longer than 8 character"
+                PasswordError.TOO_SHORT -> "must be longer than 7 character"
                 PasswordError.NO_UPPERCASE -> "must contain at least one uppercase letter"
                 PasswordError.NO_DIGIT -> "must contain at least one letter"
                 PasswordError.NO_LOWERCASE -> "must contain at least one lowercase letter"
