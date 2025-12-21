@@ -37,8 +37,8 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
     private val _gettingBackup = MutableStateFlow<Boolean>(false)
     val gettingBackup: StateFlow<Boolean> = _gettingBackup.asStateFlow()
 
-    private val _passwordErrors: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
-    val passwordErrors: StateFlow<List<String>> = _passwordErrors.asStateFlow()
+    private val _passwordErrors: MutableStateFlow<List<Int>> = MutableStateFlow(emptyList())
+    val passwordErrors: StateFlow<List<Int>> = _passwordErrors.asStateFlow()
 
     private var userId: String
         get() = sharedDataSource.get("_id", "")
@@ -106,7 +106,7 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
     }
 
     fun onPasswordChange(password: String) {
-        _passwordErrors.value = passwordValidator(password).mapToString()
+        _passwordErrors.value = passwordValidator(password).mapToResource()
     }
 
     fun passwordValidator(password: String): List<ValidationError> {
@@ -124,16 +124,17 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
         return out
     }
 
-    fun List<ValidationError>.mapToString(): List<String> {
+    fun List<ValidationError>.mapToResource(): List<Int> {
         return this.map { item ->
             when (item) {
-                Common.BLANK -> "mustn't be empty"
-                EmailError.NOT_EMAIL -> "must be an email"
-                PasswordError.TOO_SHORT -> "must be longer than 11 character"
-                PasswordError.NO_UPPERCASE -> "must contain at least one uppercase letter"
-                PasswordError.NO_DIGIT -> "must contain at least one letter"
-                PasswordError.NO_LOWERCASE -> "must contain at least one lowercase letter"
-                else -> "unknown error"
+                Common.BLANK ->  com.example.projektiop.R.string.error_field_empty
+                EmailError.NOT_EMAIL -> com.example.projektiop.R.string.error_invalid_email
+                PasswordError.TOO_SHORT -> com.example.projektiop.R.string.error_backup_password_too_short
+                PasswordError.NO_UPPERCASE -> com.example.projektiop.R.string.error_password_no_uppercase
+                PasswordError.NO_DIGIT -> com.example.projektiop.R.string.error_password_no_digit
+                PasswordError.NO_LOWERCASE -> com.example.projektiop.R.string.error_password_no_lowercase
+
+                else -> com.example.projektiop.R.string.error_unknown
             }
         }
     }

@@ -64,7 +64,7 @@ fun LoginScreen(navController: NavController) {
                     email = it
                 },
                 label = stringResource(R.string.email_label),
-                errorList = emailErrors,
+                errorList = emailErrors.map{ stringResource(it) },
                 modifier = Modifier.fillMaxWidth(),
                 isError = emailErrors.isNotEmpty(),
             )
@@ -79,7 +79,7 @@ fun LoginScreen(navController: NavController) {
                     password = it
                 },
                 label = stringResource(R.string.password_label),
-                errorList = passwordErrors,
+                errorList = passwordErrors.map{ stringResource(it) },
                 modifier = Modifier.fillMaxWidth(),
                 isError = passwordErrors.isNotEmpty(),
                 visualTransformation = PasswordVisualTransformation(),

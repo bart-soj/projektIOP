@@ -27,7 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.projektiop.R
-
+import com.example.projektiop.util.translateInterestName
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,8 +37,14 @@ fun MultiSelectInterestsDropdown(
     onChange: (Set<String>) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val summary = if (selected.isEmpty()) stringResource(id = R.string.choose_interests_empty)
-    else selected.joinToString(limit = 3, truncated = "…")
+    val summary = if (selected.isEmpty()) {
+        stringResource(id = R.string.choose_interests_empty)
+    }
+    else {
+        selected
+            .map { translateInterestName(it) }
+            .joinToString(limit = 3, truncated = "…")
+    }
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded }
@@ -49,7 +55,9 @@ fun MultiSelectInterestsDropdown(
             readOnly = true,
             label = { Text(stringResource(id = R.string.interests_label)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            modifier = Modifier.menuAnchor().fillMaxWidth()
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
         )
         ExposedDropdownMenu(
             expanded = expanded,
@@ -71,7 +79,7 @@ fun MultiSelectInterestsDropdown(
                                     onCheckedChange = null
                                 )
                                 Spacer(Modifier.width(4.dp))
-                                Text(item)
+                                Text(translateInterestName(item))
                             }
                         },
                         onClick = {

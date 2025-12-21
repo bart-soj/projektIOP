@@ -31,7 +31,7 @@ import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.ui.components.MultiSelectInterestsDropdown
 import com.example.projektiop.ui.components.UserAvatar
 import org.koin.compose.koinInject
-import kotlin.collections.setValue
+import com.example.projektiop.util.translateInterestName
 
 @Composable
 fun EditProfileScreen(
@@ -44,16 +44,20 @@ fun EditProfileScreen(
     var gender by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var interests by remember { mutableStateOf("") }
-    var allInterests by remember {
+    var allInterests by remember { //todo: check
         mutableStateOf(
             listOf(
-                context.getString(R.string.interest_programming),
-                context.getString(R.string.interest_gaming),
-                context.getString(R.string.interest_cybersecurity),
-                context.getString(R.string.interest_technology),
-                context.getString(R.string.interest_sport),
-                context.getString(R.string.interest_art),
-                context.getString(R.string.interest_travel)
+                "Cyberbezpieczeństwo",
+                "Czytanie Książek",
+                "Gry Komputerowe",
+                "Górskie Wędrówki",
+                "Kino Niezależne",
+                "Kolarstwo",
+                "Muzyka Elektroniczna",
+                "Piłka Nożna",
+                "Podróże z Plecakiem",
+                "Programowanie",
+                "Siłownia i Fitness"
             )
         )
     }
@@ -103,7 +107,7 @@ fun EditProfileScreen(
             .onSuccess { map ->
                 allInterests = map.keys.sorted()
             }
-            .onFailure { /* keep defaults if API fails */ }
+            .onFailure {  }
         loadingInitial = false
     }
 
@@ -246,7 +250,11 @@ fun EditProfileScreen(
                                     selectedDescriptions = selectedDescriptions.toMutableMap().apply { put(nameKey, newVal) }
                                 }
                             },
-                            label = { Text(stringResource(id = R.string.interest_description_label, nameKey)) },
+                            label = {
+                                Text(
+                                    stringResource(id = R.string.interest_description_label,
+                                    translateInterestName(nameKey))
+                                ) },
                             supportingText = { Text("${value.length}/200") },
                             trailingIcon = {
                                 if (value.isNotBlank()) {
@@ -351,7 +359,6 @@ fun EditProfileScreen(
 @Composable
 private fun GenderDropdown(gender: String, onGenderChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    // Map backend values to Polish labels
     val options = listOf(
         "" to stringResource(id = R.string.gender_none),
         "male" to stringResource(id = R.string.gender_male),

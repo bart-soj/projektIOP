@@ -40,7 +40,6 @@ fun ChatsScreen(navController: NavController) {
 
     Scaffold(
         bottomBar = {
-            // Użyj tego samego komponentu paska nawigacji co w MainScreen
             BottomNavigationBar(navController = navController, currentRoute = currentRoute)
         }
     ) { paddingValues ->
@@ -56,7 +55,6 @@ fun ChatsScreen(navController: NavController) {
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            // Spacer między wyszukiwaniem a listą
             Spacer(modifier = Modifier.height(8.dp))
 
             when {
@@ -158,7 +156,6 @@ fun ChatItem(
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 3. Zdjęcie profilowe znajomego
             val avatarUrl = chatData.avatarUrl
             UserAvatar(avatarUrl, modifier = Modifier.size(56.dp))
 
@@ -167,7 +164,7 @@ fun ChatItem(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                // 4. Nazwa znajomego
+
                 Text(
                     text = chatData.title,
                     style = MaterialTheme.typography.titleMedium,
@@ -175,13 +172,13 @@ fun ChatItem(
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                // 5. Ostatnia wiadomość z czatu
+
                 Text(
                     text = chatData.lastMessage,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, // Stonowany kolor
-                    maxLines = 1, // Maksymalnie jedna linia
-                    overflow = TextOverflow.Ellipsis // Utnij, jeśli za długie
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             if (chatData.unread) {
@@ -191,7 +188,9 @@ fun ChatItem(
                     shape = CircleShape,
                     tonalElevation = 0.dp,
                     modifier = Modifier.size(12.dp)
-                ) {}
+                ) {
+
+                }
             }
         }
     }

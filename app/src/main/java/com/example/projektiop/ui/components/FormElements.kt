@@ -33,7 +33,7 @@ fun ValidationErrorList(items: List<String>, modifier: Modifier = Modifier) {
     ) {
         items.forEach { item ->
             Text(
-                text = item,
+                text = item ,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)

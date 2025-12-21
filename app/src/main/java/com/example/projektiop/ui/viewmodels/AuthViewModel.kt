@@ -13,11 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import com.example.projektiop.util.ValidationError.Common
 import com.example.projektiop.util.ValidationError.EmailError
 import com.example.projektiop.util.ValidationError.PasswordError
+import com.google.android.gms.common.internal.StringResourceValueReader
 import kotlinx.coroutines.launch
-
-
-
-
 
 class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
 
@@ -32,12 +29,14 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
     private val _errorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    private val _passwordErrors: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
-    val passwordErrors: StateFlow<List<String>> = _passwordErrors.asStateFlow()
-    private val _emailErrors: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
-    val emailErrors: StateFlow<List<String>> = _emailErrors.asStateFlow()
-    private val _usernameErrors: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
-    val usernameErrors: StateFlow<List<String>> = _usernameErrors.asStateFlow()
+    private val _passwordErrors: MutableStateFlow<List<Int>> = MutableStateFlow(emptyList())
+    val passwordErrors: StateFlow<List<Int>> = _passwordErrors.asStateFlow()
+
+    private val _emailErrors: MutableStateFlow<List<Int>> = MutableStateFlow(emptyList())
+    val emailErrors: StateFlow<List<Int>> = _emailErrors.asStateFlow()
+
+    private val _usernameErrors: MutableStateFlow<List<Int>> = MutableStateFlow(emptyList())
+    val usernameErrors: StateFlow<List<Int>> = _usernameErrors.asStateFlow()
 
     private val KEY_TOKEN = "auth_token"
     private val EMAIL = "my_email"
@@ -47,32 +46,18 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
         authRepository.rememberMe()
     }
 
-    fun List<ValidationError>.mapToString(): List<String> {
-        return this.map { item ->
-            when (item) {
-                Common.BLANK -> "mustn't be empty"
-                EmailError.NOT_EMAIL -> "must be an email"
-                PasswordError.TOO_SHORT -> "must be longer than 7 character"
-                PasswordError.NO_UPPERCASE -> "must contain at least one uppercase letter"
-                PasswordError.NO_DIGIT -> "must contain at least one letter"
-                PasswordError.NO_LOWERCASE -> "must contain at least one lowercase letter"
-                else -> "unknown error"
-            }
-        }
-    }
-
     fun onPasswordChange(password: String) {
-        _passwordErrors.value = passwordValidator(password).mapToString()
+        _passwordErrors.value = passwordValidator(password).mapToResource()
         _inputsValid.value = validateInputs()
     }
 
     fun onEmailChange(email: String) {
-        _emailErrors.value = emailValidator(email).mapToString()
+        _emailErrors.value = emailValidator(email).mapToResource()
         _inputsValid.value = validateInputs()
     }
 
     fun onUsernameChange(username: String) {
-        _usernameErrors.value = usernameValidator(username).mapToString()
+        _usernameErrors.value = usernameValidator(username).mapToResource()
         _inputsValid.value = validateInputs()
     }
 
@@ -185,5 +170,21 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
         return passwordErrors.value == emptyList<ValidationError>()
                 && emailErrors.value == emptyList<ValidationError>()
                 && usernameErrors.value == emptyList<ValidationError>()
+    }
+
+
+    fun List<ValidationError>.mapToResource(): List<Int> {
+        return this.map { item ->
+            when (item) {
+                Common.BLANK ->  com.example.projektiop.R.string.error_field_empty
+                EmailError.NOT_EMAIL -> com.example.projektiop.R.string.error_invalid_email
+                PasswordError.TOO_SHORT -> com.example.projektiop.R.string.error_password_too_short
+                PasswordError.NO_UPPERCASE -> com.example.projektiop.R.string.error_password_no_uppercase
+                PasswordError.NO_DIGIT -> com.example.projektiop.R.string.error_password_no_digit
+                PasswordError.NO_LOWERCASE -> com.example.projektiop.R.string.error_password_no_lowercase
+
+                else -> com.example.projektiop.R.string.error_unknown
+            }
+        }
     }
 }

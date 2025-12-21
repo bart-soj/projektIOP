@@ -76,7 +76,7 @@ fun RegisterScreen(navController: NavController) {
                     username = it
                 },
                 label = stringResource(R.string.username_label),
-                errorList = usernameErrors,
+                errorList = usernameErrors.map { stringResource(it) },
                 isError = emailErrors.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -91,7 +91,7 @@ fun RegisterScreen(navController: NavController) {
                     email = it
                 },
                 label = stringResource(R.string.email_label),
-                errorList = emailErrors,
+                errorList = emailErrors.map { stringResource(it) },
                 isError = emailErrors.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -106,7 +106,7 @@ fun RegisterScreen(navController: NavController) {
                     password = it
                 },
                 label = stringResource(R.string.password_label),
-                errorList = passwordErrors,
+                errorList = passwordErrors.map { stringResource(it) },
                 isError = passwordErrors.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation()

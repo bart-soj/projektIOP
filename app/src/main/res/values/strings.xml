@@ -64,13 +64,18 @@
     <string name="no_data">Brak danych</string>
 
     <!-- Edit Profile Screen -->
-    <string name="interest_programming">Programowanie</string>
-    <string name="interest_gaming">Gry Komputerowe</string>
     <string name="interest_cybersecurity">Cyberbezpieczeństwo</string>
-    <string name="interest_technology">Technologia i IT</string>
-    <string name="interest_sport">Sport i Aktywność Fizyczna</string>
-    <string name="interest_art">Sztuka i Kultura</string>
-    <string name="interest_travel">Podróże i Odkrywanie</string>
+    <string name="interest_reading">Czytanie Książek</string>
+    <string name="interest_gaming">Gry Komputerowe</string>
+    <string name="interest_mountain_hiking">Górskie Wędrówki</string>
+    <string name="interest_indie_cinema">Kino Niezależne</string>
+    <string name="interest_cycling">Kolarstwo</string>
+    <string name="interest_electronic_music">Muzyka Elektroniczna</string>
+    <string name="interest_football">Piłka Nożna</string>
+    <string name="interest_backpacking">Podróże z Plecakiem</string>
+    <string name="interest_programming">Programowanie</string>
+    <string name="interest_gym_fitness">Siłownia i Fitness</string>
+
     <string name="avatar_upload_error">Nie udało się wgrać avatara</string>
     <string name="nickname_label">Nick (1–50)</string>
     <string name="location_label">Miejscowość (max 100)</string>
@@ -206,6 +211,10 @@
 
     <string name="service_notification_title">Usługa czatu HelloBeacon</string>
     <string name="service_notification_content">Usługa czatu działa w tle</string>
+    <string name="channel_friend_name">Zaproszenia</string>
+    <string name="channel_ble_name">Foreground Service</string>
+    <string name="channel_messages_name">Wiadomości</string>
+    <string name="notification_new_message">Nowa wiadomość od %1$s</string>
 
     <string name="clear">Wyczyść</string>
     <string name="options">Opcje</string>
@@ -218,5 +227,10 @@
     <string name="no_search_profiles">Brak Profiili Wyszukiwania</string>
     <string name="name_label">Nazwa</string>
     <string name="chats_screen_title">Ekran czatów</string>
+    <string name="new_friend_request">Nowe zaproszenie do znajomych</string>
+    <string name="error_backup_password_too_short">musi zawierać conajmniej 12 znaków</string>
+    <string name="getting_backup">Pobieranie backupu...</string>
+    <string name="get_backup">Pobierz backup</string>
+    <string name="backup_dialog_title">Przywróć Dane z backupu</string>
 
 </resources>

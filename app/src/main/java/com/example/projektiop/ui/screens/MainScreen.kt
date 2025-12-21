@@ -32,7 +32,7 @@ import com.example.projektiop.ui.components.PullToRefresh
 import com.example.projektiop.ui.components.UserAvatar
 import com.example.projektiop.ui.viewmodels.MainViewModel
 import org.koin.androidx.compose.koinViewModel
-
+import com.example.projektiop.util.translateInterestName
 
 private const val BASE_URL_KEY: String = "BASE_URL"
 
@@ -187,9 +187,10 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 } else {
                     interests!!.forEach { ui ->
                         assert(ui.interest.name != null)
-                        val base = ui.interest.name!!.ifBlank { stringResource(R.string.profile_unknown_interest) }
+                        val rawBase = ui.interest.name!!.ifBlank { stringResource(R.string.profile_unknown_interest) }
+                        val translatedBase = translateInterestName(rawBase)
                         val label = if (!ui.customDescription.isNullOrBlank()) ui.customDescription else ""
-                        InterestTag(base = base, label = label)
+                        InterestTag(base = translatedBase, label = label)
                     }
                 }
             }

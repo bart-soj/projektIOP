@@ -15,6 +15,8 @@
     <string name="broadcasting_label">Broadcasting</string>
     <string name="broadcasting_status_icon_content_description">Broadcasting status</string> <!-- Description of status icon -->
     <string name="error">Error</string>
+    <string name="servicedesc">NFC service description</string>
+    <string name="aiddescription">AID group for HelloBeacon</string>
 
     <!-- Start Screen -->
     <string name="start_screen_welcome">Welcome!</string>
@@ -63,13 +65,19 @@
     <string name="no_data">No data</string>
 
     <!-- Edit Profile Screen -->
-    <string name="interest_programming">Programming</string>
-    <string name="interest_gaming">Computer Games</string>
     <string name="interest_cybersecurity">Cybersecurity</string>
-    <string name="interest_technology">Technology and IT</string>
-    <string name="interest_sport">Sports and Physical Activity</string>
-    <string name="interest_art">Art and Culture</string>
-    <string name="interest_travel">Travel and Exploration</string>
+    <string name="interest_reading">Reading Books</string>
+    <string name="interest_gaming">Video Games</string>
+    <string name="interest_mountain_hiking">Mountain Hiking</string>
+    <string name="interest_indie_cinema">Indie Cinema</string>
+    <string name="interest_cycling">Cycling</string>
+    <string name="interest_electronic_music">Electronic Music</string>
+    <string name="interest_football">Football</string>
+    <string name="interest_backpacking">Backpacking</string>
+    <string name="interest_programming">Programming</string>
+    <string name="interest_gym_fitness">Gym &amp; Fitness</string>
+
+
     <string name="avatar_upload_error">Failed to upload avatar</string>
     <string name="nickname_label">Nickname (1–50)</string>
     <string name="location_label">Location (max 100)</string>
@@ -205,6 +213,10 @@
 
     <string name="service_notification_title">HelloBeacon Chat Service</string>
     <string name="service_notification_content">Chat Service is working in background</string>
+    <string name="channel_friend_name">Friend Requests</string>
+    <string name="channel_ble_name">Foreground Service</string>
+    <string name="channel_messages_name">Messages</string>
+    <string name="notification_new_message">New message from %1$s</string>
 
     <string name="clear">Clear</string>
     <string name="options">Options</string>
@@ -217,5 +229,10 @@
     <string name="no_search_profiles">No Search Profiles</string>
     <string name="getting_backup">Getting backup...</string>
     <string name="get_backup">Get backup</string>
-    <string name="backup_dialog_title">Restore Backup</string>
+    <string name="backup_dialog_title">Restore Data from backup</string>
+    <string name="name_label">Name</string>
+    <string name="chats_screen_title">Chats</string>
+    <string name="new_friend_request">New friend request</string>
+    <string name="error_backup_password_too_short">must be at 12 characters long</string>
+
 </resources>

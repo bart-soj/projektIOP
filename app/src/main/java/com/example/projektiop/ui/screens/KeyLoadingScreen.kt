@@ -38,7 +38,7 @@ import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
 
 
 @Composable
-fun KeyLoadingScreen(navController: NavController) {
+fun KeyLoadingScreen() {
     val viewModel = koinViewModel<KeyLoadingViewModel>()
     val gettingBackup by viewModel.gettingBackup.collectAsState()
 
@@ -95,7 +95,7 @@ fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifie
                     password = it
                 },
                 label = stringResource(R.string.password_label),
-                errorList = passwordErrors,
+                errorList = passwordErrors.map{ stringResource(it) },
                 modifier = Modifier.fillMaxWidth(),
                 isError = passwordErrors.isNotEmpty(),
                 visualTransformation = PasswordVisualTransformation(),

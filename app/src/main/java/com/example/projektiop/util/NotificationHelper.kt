@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat.getString
 import com.example.projektiop.R
 
 object NotificationHelper {
@@ -18,9 +19,9 @@ object NotificationHelper {
     fun initChannels(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val friend = NotificationChannel(CHANNEL_FRIEND, "Zaproszenia", NotificationManager.IMPORTANCE_DEFAULT)
-            val bleservice = NotificationChannel(CHANNEL_BLE, "Foreground Service", NotificationManager.IMPORTANCE_DEFAULT)
-            val messages = NotificationChannel(CHANNEL_MESSAGES, "Wiadomości", NotificationManager.IMPORTANCE_HIGH)
+            val friend = NotificationChannel(CHANNEL_FRIEND, context.getString(R.string.channel_friend_name), NotificationManager.IMPORTANCE_DEFAULT)
+            val bleservice = NotificationChannel(CHANNEL_BLE, context.getString(R.string.channel_ble_name), NotificationManager.IMPORTANCE_DEFAULT)
+            val messages = NotificationChannel(CHANNEL_MESSAGES, context.getString(R.string.channel_messages_name), NotificationManager.IMPORTANCE_HIGH)
             nm.createNotificationChannel(friend)
             nm.createNotificationChannel(messages)
             nm.createNotificationChannel(bleservice)
@@ -31,7 +32,7 @@ object NotificationHelper {
     fun notifyFriendRequest(context: Context, fromUser: String) {
         val notif = NotificationCompat.Builder(context, CHANNEL_FRIEND)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Nowe zaproszenie do znajomych")
+            .setContentTitle(context.getString(R.string.new_friend_request))
             .setContentText(fromUser)
             .setAutoCancel(true)
             .build()
@@ -42,7 +43,7 @@ object NotificationHelper {
     fun notifyMessage(context: Context, fromUser: String, preview: String) {
         val notif = NotificationCompat.Builder(context, CHANNEL_MESSAGES)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Nowa wiadomość od $fromUser")
+            .setContentTitle(context.getString(R.string.notification_new_message, fromUser))
             .setContentText(preview)
             .setStyle(NotificationCompat.BigTextStyle().bigText(preview))
             .setAutoCancel(true)
