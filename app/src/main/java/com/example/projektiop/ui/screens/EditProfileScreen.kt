@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import com.example.projektiop.data.repositories.InterestRepository
+import com.example.projektiop.domain.models.Gender
 import com.example.projektiop.ui.components.MultiSelectInterestsDropdown
 import com.example.projektiop.ui.components.UserAvatar
 import org.koin.compose.koinInject

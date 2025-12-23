@@ -1,7 +1,5 @@
 package com.example.projektiop.util
 
-import android.provider.DocumentsContract
-
 sealed interface RootError
 
 sealed interface DataError: RootError {

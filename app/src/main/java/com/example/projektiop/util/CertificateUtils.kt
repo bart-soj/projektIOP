@@ -7,6 +7,8 @@ import android.util.Log
 import androidx.activity.compose.BackHandler
 import com.example.projektiop.data.api.BackupApi
 import com.example.projektiop.data.api.PublicKeyApi
+import com.example.projektiop.data.api.PublishPublicKeyRequest
+import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.domain.models.AlgorithmParams
 import com.example.projektiop.domain.models.AlgorithmParams.EncryptionParams
@@ -20,11 +22,15 @@ import org.bouncycastle.crypto.AsymmetricCipherKeyPair
 import org.bouncycastle.crypto.KeyGenerationParameters
 import org.bouncycastle.crypto.agreement.X25519Agreement
 import org.bouncycastle.crypto.digests.SHA256Digest
+import org.bouncycastle.crypto.engines.AESFastEngine
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.generators.HKDFBytesGenerator
 import org.bouncycastle.crypto.generators.X25519KeyPairGenerator
+import org.bouncycastle.crypto.modes.GCMBlockCipher
+import org.bouncycastle.crypto.params.AEADParameters
 import org.bouncycastle.crypto.params.Argon2Parameters
 import org.bouncycastle.crypto.params.HKDFParameters
+import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.X25519PrivateKeyParameters
 import org.bouncycastle.crypto.params.X25519PublicKeyParameters
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -49,7 +55,8 @@ import javax.crypto.spec.SecretKeySpec
 
 class CertificateUtils(private val pubKeyApi: PublicKeyApi,
                        private val backupApi: BackupApi,
-                       private val sharedDataSource: SharedDataSource)
+                       private val sharedDataSource: SharedDataSource,
+                       private val dbRepository: RealmDBRepository)
 {
 
     val provider = BouncyCastleProvider()
@@ -234,7 +241,7 @@ class CertificateUtils(private val pubKeyApi: PublicKeyApi,
         return ciphertext to encryptionParams
     }
 
-    fun decryptKeyAES256GCM(key: base64, keyToDecrypt: base64, encryptionParams: AlgorithmParams.EncryptionParams): base64 {
+    fun decryptKeyAES256GCM(key: base64, keyToDecrypt: base64, encryptionParams: EncryptionParams): base64 {
         require(encryptionParams.algorithm == "AES-256-GCM")
 
         val iv = Base64.getDecoder().decode(encryptionParams.iv)
@@ -326,15 +333,19 @@ class CertificateUtils(private val pubKeyApi: PublicKeyApi,
         sharedDataSource.setEncryptedBase64(pubKeyStorageKey, pubBase64)
 
         try {
-            pubKeyApi.publishPublicKey(pubBase64)
+            pubKeyApi.publishPublicKey(PublishPublicKeyRequest(pubBase64))
         } catch (e: Exception) {
-            return apiExceptionToDataError(e)
+            return apiExceptionToDataError<Pair<base64, base64>>(e)
         }
 
         return Result.Success(pubBase64 to privBase64)
     }
 
-    fun calculateChatKey(ourPrivBase64: String, theirPubBase64: String): String {
+    fun calculateChatKey(myUserId: String, theirPubBase64: String): String {
+
+        val privKeyStorageKey = "x25519_private_$myUserId"
+        val ourPrivBase64 = sharedDataSource.getEncryptedBase64(privKeyStorageKey)
+
         // Decode Base64 keys
         val ourPrivBytes = Base64.getDecoder().decode(ourPrivBase64)
         val theirPubBytes = Base64.getDecoder().decode(theirPubBase64)
@@ -358,5 +369,75 @@ class CertificateUtils(private val pubKeyApi: PublicKeyApi,
         hkdf.generateBytes(chatKey, 0, chatKey.size)
 
         return Base64.getEncoder().encodeToString(chatKey)
+    }
+
+    suspend fun encryptMessage(
+        content: String,
+        chatKey: base64
+    ): base64 {
+
+        val key = Base64.getDecoder().decode(chatKey)
+        require(key.size == 32)
+
+        val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
+        val plaintext = content.toByteArray(Charsets.UTF_8)
+
+        val cipher = GCMBlockCipher(AESFastEngine())
+        cipher.init(
+            true,
+            AEADParameters(KeyParameter(key), 128, iv)
+        )
+
+        val out = ByteArray(cipher.getOutputSize(plaintext.size))
+        var len = cipher.processBytes(plaintext, 0, plaintext.size, out, 0)
+        len += cipher.doFinal(out, len)
+
+        val result = ByteArray(iv.size + out.size)
+        System.arraycopy(iv, 0, result, 0, iv.size)
+        System.arraycopy(out, 0, result, iv.size, out.size)
+
+        return Base64.getEncoder().encodeToString(result)
+    }
+
+
+    suspend fun decryptMessage(
+        content: base64,
+        chatKey: base64
+    ): String {
+
+        val key = Base64.getDecoder().decode(chatKey)
+        require(key.size == 32)
+
+        val data = Base64.getDecoder().decode(content)
+        require(data.size >= 12 + 16)
+
+        val iv = data.copyOfRange(0, 12)
+        val ciphertext = data.copyOfRange(12, data.size)
+
+        val cipher = GCMBlockCipher(AESFastEngine())
+        cipher.init(
+            false,
+            AEADParameters(KeyParameter(key), 128, iv)
+        )
+
+        val out = ByteArray(cipher.getOutputSize(ciphertext.size))
+        var len = cipher.processBytes(ciphertext, 0, ciphertext.size, out, 0)
+        len += cipher.doFinal(out, len)
+
+        return String(out, 0, len, Charsets.UTF_8)
+    }
+
+    suspend fun getPubKey(userId: String): Result<base64, DataError> {
+        val localData = dbRepository.getUserById(userId)?.publicKey
+        if (localData != null) return Result.Success(localData)
+        try {
+            val result = pubKeyApi.getPublicKey(userId)
+            val body = result.body()
+            val key = body?.publicKey
+            require(key != null)
+            return Result.Success(key)
+        } catch(e: Exception) {
+            return apiExceptionToDataError<base64>(e)
+        }
     }
 }

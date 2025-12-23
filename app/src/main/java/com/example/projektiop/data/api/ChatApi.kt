@@ -17,7 +17,7 @@ interface ChatApi {
 
     // accessChat controller: POST /chats { userId }
     @POST("chats")
-    suspend fun accessChat(@Body body: Map<String, @JvmSuppressWildcards Any>): Response<AccessChatDto>
+    suspend fun accessChat(@Body body: Map<String, @JvmSuppressWildcards Any>): Response<ChatDto>
 
     // allMessages controller: GET /messages/:chatId
     @GET("messages/{chatId}")
@@ -27,15 +27,6 @@ interface ChatApi {
     @POST("messages")
     suspend fun sendMessage(@Body body: Map<String, @JvmSuppressWildcards Any>): Response<MessageDto>
 }
-
-
-data class AccessChatDto(
-    val _id: String? = null,
-    val participants: List<UserProfileResponse>? = null,
-    val lastMessage: MessageDto? = null,
-    val createdAt: String? = null,
-    val updatedAt: String? = null
-)
 
 
 data class ChatDto(

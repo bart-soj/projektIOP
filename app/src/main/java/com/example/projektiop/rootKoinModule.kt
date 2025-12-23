@@ -13,8 +13,10 @@ import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.AppStateRepository
 import com.example.projektiop.screens.friends.FriendsViewModel
 import com.example.projektiop.ui.viewmodels.AuthViewModel
+import com.example.projektiop.ui.viewmodels.ChatDetailViewModel
 import com.example.projektiop.ui.viewmodels.ChatsViewModel
 import com.example.projektiop.ui.viewmodels.FriendProfileViewModel
+import com.example.projektiop.ui.viewmodels.KeyLoadingViewModel
 import com.example.projektiop.ui.viewmodels.MainViewModel
 import com.example.projektiop.ui.viewmodels.ScannerViewModel
 import com.example.projektiop.ui.viewmodels.SettingsViewModel
@@ -27,13 +29,13 @@ val rootKoinModule = module {
     single { UserRepository( get(), get(), get(), get() ) }
     single { InterestRepository( get(), get() ) }
     single { ThemePreference( get() ) }
-    single { AuthRepository( get(), get() ) }
+    single { AuthRepository( get(), get(), get() ) }
     single { ChatUpdateService }
-    single { ChatRepository( get(), androidContext(), get(), get() ) }
+    single { ChatRepository( get(), androidContext(), get(), get(), get() ) }
     single { FriendshipRepository( get(), get(), get() ) }
     single { SharedDataSource( androidContext() ) }
     single { SearchProfileRepository( get(), get() ) }
-    single { CertificateUtils( get(), get() ) }
+    single { CertificateUtils( get(), get(), get(), get() ) }
     single { AppStateRepository() }
     viewModel { MainViewModel(get()) }
     viewModel { SettingsViewModel(get(), get(), get())}
@@ -42,4 +44,6 @@ val rootKoinModule = module {
     viewModel { FriendsViewModel( get(), get() ) }
     viewModel { ChatsViewModel(get(), get()) }
     viewModel { (userId: String) -> FriendProfileViewModel(userId, get()) }
+    viewModel { (friendId: String) -> ChatDetailViewModel(friendId, get(), get(), get()) }
+    viewModel { KeyLoadingViewModel( get(), get(), get(), get() ) }
 }

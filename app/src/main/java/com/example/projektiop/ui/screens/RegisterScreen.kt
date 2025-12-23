@@ -1,8 +1,5 @@
 package com.example.projektiop.ui.screens
 
-import android.content.Context
-import android.util.Log
-import android.util.Patterns
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,23 +15,18 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.projektiop.R
-import com.example.projektiop.data.repositories.AuthEvent
-import com.example.projektiop.ui.components.ObserveAsEvents
 import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
 import com.example.projektiop.ui.viewmodels.AuthViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -49,6 +41,8 @@ fun RegisterScreen(navController: NavController) {
     val emailErrors by viewModel.emailErrors.collectAsState()
     val passwordErrors by viewModel.passwordErrors.collectAsState()
     val registrationError by viewModel.errorMessage.collectAsState()
+
+    // TODO() add uiEffect and show a toast on successful register, or even navigate to resend email screen
 
     Surface(
         modifier = Modifier.fillMaxSize(),

@@ -3,9 +3,11 @@ package com.example.projektiop.data.mapping
 import com.example.projektiop.data.api.MessageDto
 import com.example.projektiop.data.db.realm.objects.Message
 import com.example.projektiop.util.mongoTimestampToRealmInstant
+import com.example.projektiop.util.toJavaInstant
 import io.realm.kotlin.ext.realmListOf
+import com.example.projektiop.domain.models.Message as DomainMessage
 
-fun MessageDto.toRealm(): Message {
+fun MessageDto.toRealm(decryptedContent: String): Message {
     require(!this._id.isNullOrBlank()) { "Missing message id" }
     val id = this._id
     val chatId = this.chatId
@@ -23,8 +25,25 @@ fun MessageDto.toRealm(): Message {
         id = id,
         chatId = chatId,
         senderId = senderId,
-        content = this.content ?: "",
+        content = decryptedContent,
         readBy = readByList,
         createdAt = createdAt,
     )
+}
+
+
+fun Message.toDomain(): DomainMessage {
+    return DomainMessage(
+        id = this._id.toHexString(),
+        chatId = this.chatId.toHexString(),
+        content = this.content,
+        readBy = this.readBy.map { it.toHexString() },
+        senderId = this.senderId.toHexString(),
+        createdAt = this.createdAt!!.toJavaInstant()
+    )
+}
+
+
+fun MessageDto.toDomain(decryptedContent: String): DomainMessage {
+    return this.toRealm(decryptedContent).toDomain()
 }

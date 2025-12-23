@@ -76,7 +76,6 @@ class MainActivity : ComponentActivity() {
 
     private val localBTPermissionsManager: BTPermissionsManager by inject()
 
-    private val authRepository: AuthRepository by inject()
     private val appStateRepository: AppStateRepository by inject()
     private val chatRepository: ChatRepository by inject()
     private val friendshipRepository: FriendshipRepository by inject()

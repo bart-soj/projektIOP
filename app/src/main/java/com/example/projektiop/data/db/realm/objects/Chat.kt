@@ -27,8 +27,9 @@ class Chat : RealmObject {
         fun create(
             id: String,
             participants: List<String>,
-            lastMessageId: String,
-            lastMessageTimestamp: RealmInstant? = RealmInstant.now(),
+            chatKey: base64,
+            lastMessageId: String?,
+            lastMessageTimestamp: RealmInstant? = null,
             createdAt: RealmInstant? = null,
         ): Chat {
             require(participants.isNotEmpty()) {
@@ -39,6 +40,7 @@ class Chat : RealmObject {
                 this._id = ObjectId(id)
                 this.participants = realmListOf(*participants.toTypedArray())
                 this.lastMessageId = lastMessageId
+                this.chatKey = chatKey
                 this.lastMessageTimestamp = lastMessageTimestamp
                 this.createdAt = createdAt
                 this.updatedAt = RealmInstant.now()

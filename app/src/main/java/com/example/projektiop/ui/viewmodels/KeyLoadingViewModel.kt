@@ -1,5 +1,6 @@
 package com.example.projektiop.ui.viewmodels
 
+import android.util.Log
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -51,22 +52,37 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
     fun ensureKeys() {
         _gettingBackup.value = false
         _errorMessage.value = null
+        _gotKeys.value = false
         viewModelScope.launch {
+            Log.d("KYS", "getting local")
             val localResult = certificateUtils.getLocalKeyPair(userId)
             when(localResult) {
                 is Result.Error -> {}
-                is Result.Success -> {appStateRepository.gotKeys()}
-            }
-
-            if (isBackedUp == false) {
-                val createResult = certificateUtils.createKeyPair(userId)
-                when (createResult) {
-                    is Result.Error -> {appStateRepository.logout()} // unlikely, force user to log-in again
-                    is Result.Success -> {appStateRepository.gotKeys()}
+                is Result.Success -> {
+                    _gotKeys.value = true
+                    Log.d("KYS", "got em!")
+                    appStateRepository.gotKeys()
                 }
             }
 
-            _gettingBackup.value = true
+            Log.d("KYS","checking for backup")
+            if (isBackedUp == false && gotKeys.value == false) {
+                Log.d("KYS","creating keys")
+                val createResult = certificateUtils.createKeyPair(userId)
+                when (createResult) {
+                    is Result.Error -> {
+                        Log.d("KYS","logging-out cuz failed")
+                        appStateRepository.logout()} // unlikely, force user to log-in again
+                    is Result.Success -> {
+                        Log.d("KYS", "got em!")
+                        _gotKeys.value = true
+                        appStateRepository.gotKeys()
+                    }
+                }
+            } else if(gotKeys.value == false) {
+                Log.d("KYS", "getting backup")
+                _gettingBackup.value = true
+            }
         }
     }
 
@@ -98,7 +114,10 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
                         is Result.Error -> _errorMessage.value = when (decryptionResult.error) {
                             BackupError.WRONG_PASSWORD -> "Wrong password!"
                         }
-                        is Result.Success -> {appStateRepository.gotKeys()}
+                        is Result.Success -> {
+                            _gotKeys.value = true
+                            Log.d("KYS", "got em!")
+                            appStateRepository.gotKeys()}
                     }
                 }
             }

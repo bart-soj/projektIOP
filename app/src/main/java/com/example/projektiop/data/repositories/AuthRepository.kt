@@ -1,5 +1,6 @@
 package com.example.projektiop.data.repositories
 
+import android.util.Log
 import com.example.projektiop.data.api.AuthApi
 import com.example.projektiop.data.api.RegisterRequest
 import com.example.projektiop.data.api.LoginRequest
@@ -74,7 +75,6 @@ class AuthRepository(private val authApi: AuthApi,
         }
     }
 
-
     suspend fun login(email: String, password: String): Result<String?, DataError> {
         return try {
             val response = authApi.login(LoginRequest(email, password))
@@ -87,14 +87,13 @@ class AuthRepository(private val authApi: AuthApi,
                 saveToken(tmpToken, remember = rememberMe.value)
                 saveInfo(email, tmpId, isBackedUp) // TODO() handle saving errors
             } else throw Exception("bad data")
-            _authState.value = AuthState.Authenticated(tmpId, isBackedUp!!)
+            _authState.value = AuthState.Authenticated(tmpId, isBackedUp)
             appStateRepository.login()
             Result.Success(token)
         } catch (e: Exception) {
             return apiExceptionToDataError<String?>(e)
         }
     }
-
 
     suspend fun register(username: String, email: String, password: String): Result<Unit, DataError> {
         return try {
@@ -105,10 +104,9 @@ class AuthRepository(private val authApi: AuthApi,
         }
     }
 
-
     suspend fun logout() {
         _authState.value = AuthState.Loading
-        clearToken()
+        onLogoutCleanup()
         _authState.value = AuthState.Unauthenticated
         appStateRepository.logout()
     }
@@ -143,15 +141,17 @@ class AuthRepository(private val authApi: AuthApi,
 
     fun onTerminate() {
         if (!rememberMe.value) {
-            clearToken()
+            onLogoutCleanup()
         }
     }
 
-
-    fun clearToken() {
+    fun onLogoutCleanup() {
         token = null
         sharedDataSource.set(KEY_REMEMBER, false)
         sharedDataSource.remove(KEY_TOKEN)
+        sharedDataSource.remove(KEY_ID)
+        sharedDataSource.remove(KEY_BACKUP)
+        sharedDataSource.remove(KEY_EMAIL)
     }
 
     override fun getToken(): String? {

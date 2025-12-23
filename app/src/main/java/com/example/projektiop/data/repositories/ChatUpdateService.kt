@@ -5,7 +5,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.app.Service.START_STICKY
 import android.content.Context
 import android.content.Intent
 import android.os.Binder
@@ -14,11 +13,14 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.projektiop.R
 import com.example.projektiop.util.NotificationHelper
+import com.example.projektiop.util.Result
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.koin.android.ext.android.inject
+import java.time.Instant
+import com.example.projektiop.domain.models.Chat as DomainChat
 
 class ChatUpdateService(): Service() {
 
@@ -29,15 +31,15 @@ class ChatUpdateService(): Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // Lista czatów
-    private val _chatsFlow = MutableStateFlow<List<ChatListItem>>(emptyList())
-    val chatsFlow: StateFlow<List<ChatListItem>> = _chatsFlow.asStateFlow()
+    private val _chatsFlow = MutableStateFlow<List<DomainChat>>(emptyList())
+    val chatsFlow: StateFlow<List<DomainChat>> = _chatsFlow.asStateFlow()
 
     // User data
     private val myUserState = userRepository.myUser
 
     private var pollingJob: Job? = null
 
-    private val lastMessageTimes: MutableMap<String, String?> = mutableMapOf()
+    private val lastMessageTimes: MutableMap<String, Instant?> = mutableMapOf()
 
     companion object {
         private const val POLL_INTERVAL_MS = 5000L
@@ -100,14 +102,18 @@ class ChatUpdateService(): Service() {
                 val user = myUserState.value
                 if (user != null) {
                     try {
-                        chatRepository.fetchChats(
-                            currentUserId = user._id.toHexString(),
-                            currentUsername = user.username
-                        ).onSuccess { list ->
-                            detectNotifications(list)
-                            _chatsFlow.value = list
-                        }.onFailure { e ->
-                            Log.e("ChatUpdateService", "Error fetching chats", e)
+                        val result = chatRepository.fetchChats(
+                             user._id.toHexString(),
+                        )
+
+                        when (result) {
+                            is Result.Error ->
+                                Log.e("ChatUpdateService", "Error fetching chats")
+                            is Result.Success -> {
+                                val list = result.data
+                                detectNotifications(list)
+                                _chatsFlow.value = list
+                            }
                         }
                     } catch (e: Exception) {
                         Log.e("ChatUpdateService", "Exception in polling", e)
@@ -119,18 +125,20 @@ class ChatUpdateService(): Service() {
     }
 
     @SuppressLint("MissingPermission") // todo: handle permissions properly
-    private fun detectNotifications(newList: List<ChatListItem>) {
+    private fun detectNotifications(newList: List<DomainChat>) {
         newList.forEach { item ->
             val prevTime = lastMessageTimes[item.id]
-            val currentTime = item.lastMessageTime
+            val currentTime = item.lastMessage?.createdAt
 
             // Powiadomienia
-            if (prevTime != null && currentTime != null && currentTime > prevTime && item.unread) {
-                NotificationHelper.notifyMessage(
-                    this, // Context serwisu
-                    fromUser = item.title,
-                    preview = item.lastMessage.take(100)
-                )
+            if (prevTime != null && currentTime != null) {
+                if (currentTime > prevTime && item.unread) {
+                    NotificationHelper.notifyMessage(
+                        this, // Context serwisu
+                        fromUser = item.title,
+                        preview = item.lastMessage.content.take(100)
+                    )
+                }
             }
             if (currentTime != null) {
                 lastMessageTimes[item.id] = currentTime
@@ -144,62 +152,3 @@ class ChatUpdateService(): Service() {
         scope.cancel() // Anuluj wszystkie korutyny
     }
 }
-
-
-/*
-object ChatUpdateManager {
-    private const val POLL_INTERVAL_MS = 15000L
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val _chatsFlow = MutableStateFlow<List<ChatListItem>>(emptyList())
-    val chatsFlow: StateFlow<List<ChatListItem>> = _chatsFlow
-    val MyUserStateFlow = MutableStateFlow<User?>(null)
-
-    @Volatile private var started = false
-    private val lastMessageTimes: MutableMap<String, String?> = mutableMapOf()
-
-    fun start(context: Context) {
-        if (started) return
-        started = true
-        scope.launch {
-            UserRepository.myUserFlow.collect { value -> MyUserStateFlow.value = value }
-        }
-
-        if (MyUserStateFlow.value != null ) {
-            scope.launch {
-                while (started) {
-                    try {
-                        ChatRepository.fetchChats(
-                            currentUserId = MyUserStateFlow.value?._id?.toHexString(),
-                            currentUsername = MyUserStateFlow.value?.username
-                        )
-                            .onSuccess { list ->
-                                detectNotifications(context, list)
-                                _chatsFlow.value = list
-                            }
-                    } catch (e: Exception) {
-                        Log.d("CU", "chat update failed", e)
-                    }
-                    delay(POLL_INTERVAL_MS)
-                }
-            }
-        }
-    }
-
-    private fun detectNotifications(context: Context, newList: List<ChatListItem>) {
-        newList.forEach { item ->
-            val prevTime = lastMessageTimes[item.id]
-            val currentTime = item.lastMessageTime
-            if (prevTime != null && currentTime != null && currentTime > prevTime && item.unread) {
-                NotificationHelper.notifyMessage(
-                    context,
-                    fromUser = item.title,
-                    preview = item.lastMessage.take(100)
-                )
-            }
-            if (currentTime != null) {
-                lastMessageTimes[item.id] = currentTime
-            }
-        }
-    }
-}
-*/

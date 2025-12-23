@@ -1,5 +1,6 @@
 package com.example.projektiop.data.db.realm
 
+import com.example.projektiop.data.db.realm.objects.Chat
 import com.example.projektiop.data.db.realm.objects.Friendship
 import com.example.projektiop.data.db.realm.objects.Interest
 import com.example.projektiop.data.db.realm.objects.InterestCategory
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.map
 import com.example.projektiop.domain.models.FriendshipStatus
 import io.realm.kotlin.ext.realmListOf
+import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.ObjectId
 import com.example.projektiop.domain.models.SearchProfile as DomainSearchProfile
 
@@ -31,9 +33,14 @@ class RealmDBRepository(private val realm: Realm) {
         return realm.query<Message>(Message::class, "chatId == $0", objectId).find()
     }
 
+    fun getMessageById(messageId: String): Message? {
+        val objectId = ObjectId(messageId)
+        return realm.query<Message>(Message::class, "_id = $0", objectId).first().find()
+    }
+
     fun addMessage(message: Message) {
         realm.writeBlocking {
-            copyToRealm(message)
+            copyToRealm(message, updatePolicy = UpdatePolicy.ALL)
         }
     }
 
@@ -53,6 +60,30 @@ class RealmDBRepository(private val realm: Realm) {
         }
     }
 
+    // ----------------------
+    // CHat operations
+    // ----------------------
+
+    fun addChat(toAdd: Chat) {
+        realm.writeBlocking {
+            copyToRealm(toAdd, updatePolicy = UpdatePolicy.ALL )
+        }
+    }
+
+    fun getChatByFriendId(friendId: String): Chat? {
+        return realm.query<Chat>(Chat::class, "participants = $0", friendId).first().find()
+    }
+
+    fun getChatById(chatId: String): Chat? {
+        val objectId = ObjectId(chatId)
+        return realm.query<Chat>(Chat::class, "_id = $0", objectId).first().find()
+    }
+
+    fun deleteChat(toDelete: Chat) {
+        realm.writeBlocking {
+            findLatest(toDelete)?.let { delete(it) }
+        }
+    }
     // ----------------------
     // User operations
     // ----------------------

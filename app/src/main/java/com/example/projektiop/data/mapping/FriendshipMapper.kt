@@ -9,6 +9,9 @@ import com.example.projektiop.domain.models.FriendshipStatus
 import com.example.projektiop.domain.models.FriendshipType
 import com.example.projektiop.util.mongoTimestampToRealmInstant
 import com.example.projektiop.util.realmInstantToMongoTimestamp
+import com.example.projektiop.util.toJavaInstant
+import com.example.projektiop.domain.models.Friendship as DomainFriendship
+import com.example.projektiop.domain.models.User as DomainUser
 
 
 private const val ID: String = "_id"
@@ -88,5 +91,18 @@ fun Friendship.toFriendItem(user: User?): FriendItem {
         avatarUrl = user?.profile?.avatarUrl,
         friendshipId = this._id.toHexString(),
         blockedBy = this.blockedBy
+    )
+}
+
+fun Friendship.toDomain(user: DomainUser): DomainFriendship {
+    return DomainFriendship(
+        id = this._id.toHexString(),
+        friend = user,
+        status = this.status,
+        type = this.friendshipType,
+        requestedBy = this.requestedBy,
+        blockedBy = this.blockedBy,
+        isBlocked = this.isBlocked,
+        createdAt = this.createdAt!!.toJavaInstant()
     )
 }

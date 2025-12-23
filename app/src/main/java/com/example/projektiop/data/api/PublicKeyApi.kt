@@ -11,7 +11,7 @@ interface PublicKeyApi {
 
     @POST("/api/keys/publish")
     suspend fun publishPublicKey(
-        @Body request: base64
+        @Body request: PublishPublicKeyRequest
     ): Response<PublishPublicKeyResponse>
 
     @GET("/api/keys/{userId}")

@@ -5,9 +5,12 @@ import java.time.Instant
 
 class Chat(
     val id: String,
+    val title: String,
     val participants: List<User>,
-    val lastMessage: Message,
-    val createdAt: Instant
+    val otherUserId: String,
+    val lastMessage: Message?,
+    val unread: Boolean,
+    val createdAt: Instant,
 ) {}
 
 

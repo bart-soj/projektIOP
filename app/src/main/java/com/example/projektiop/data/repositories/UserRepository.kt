@@ -40,16 +40,8 @@ class UserRepository(private val userApi: UserApi,
     private val _repositoryCache = MutableStateFlow<Map<String, OtherUserRepository>>(emptyMap())
     val repositoryCache: StateFlow<Map<String, OtherUserRepository>> = _repositoryCache.asStateFlow()
 
-    val _myUser = MutableStateFlow<User?>(null)
+    private val _myUser = MutableStateFlow<User?>(null)
     val myUser = _myUser.asStateFlow()
-    /*
-    val myUserFlow: Flow<User?>
-        get() {
-            assert(!id.isNullOrBlank())
-            return dbRepository.getUserFlowById(id!!)
-        }
-
-     */
 
     init {
         updateMyId()

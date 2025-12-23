@@ -24,10 +24,12 @@ import com.example.projektiop.util.CertificateUtils
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
+/*
 @Composable
 fun CertificateRequester(
     authToken: String,
 ) {
+    val certificateUtils = koinInject<CertificateUtils>()
     var result by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -63,8 +65,8 @@ fun CertificateRequester(
                                 val userEmail: String = profileData.email.toString()
                                 println("User email: $userEmail")
                                 try {
-                                    val keyPair = CertificateUtils.generateKeyPair()
-                                    var csrPem = CertificateUtils.generateCSR(userEmail, keyPair)
+                                    val keyPair = certificateUtils.generateKeyPair()
+                                    var csrPem = certificateUtils.generateCSR(userEmail, keyPair)
                                     println("CSR generated: $csrPem")
                                     val certificateResponse = try {
                                         certificateApi.issueCertificate(
@@ -109,3 +111,4 @@ fun CertificateRequester(
         }
     }
 }
+*/

@@ -19,82 +19,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.example.projektiop.data.api.MessageDto
-import kotlinx.coroutines.launch
 import androidx.navigation.NavController
-import com.example.projektiop.data.repositories.BlockInfo
-import com.example.projektiop.data.repositories.ChatRepository
-import com.example.projektiop.data.repositories.FriendshipRepository
-import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.ui.components.UserAvatar
-import org.koin.compose.koinInject
+import com.example.projektiop.ui.viewmodels.ChatDetailViewModel
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import java.time.Duration
-import java.time.Instant
 
-@RequiresApi(Build.VERSION_CODES.O)
-private val timeFormatter: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
 
-@RequiresApi(Build.VERSION_CODES.O)
-private val dateFormatter: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("d MMMM yyyy").withZone(ZoneId.systemDefault())
 
-@RequiresApi(Build.VERSION_CODES.O)
-private fun parseTimeShort(iso: String?): String {
-    if (iso.isNullOrBlank()) return ""
-    return try {
-        val inst = Instant.parse(iso)
-        timeFormatter.format(inst)
-    } catch (e: Exception) { "" }
-}
 
-@RequiresApi(Build.VERSION_CODES.O)
-private fun parseDate(iso: String?): String? {
-    if (iso.isNullOrBlank()) return null
-    return try {
-        val inst = Instant.parse(iso)
-        dateFormatter.format(inst)
-    } catch (e: Exception) { null }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: String?) {
-    val scope = rememberCoroutineScope()
-    var resolvedChatId by remember { mutableStateOf(chatId) }
-    var messages by remember { mutableStateOf<List<MessageDto>>(emptyList()) }
-    var loading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var input by remember { mutableStateOf("") }
-    var blockInfo by remember { mutableStateOf<BlockInfo?>(null) }
-    val chatRepository = koinInject<ChatRepository>()
-    val friendshipRepository = koinInject<FriendshipRepository>()
-    val sharedDataSource = koinInject<SharedDataSource>()
-    val myId = sharedDataSource.get("_id", "")
+    val viewModel = koinViewModel<ChatDetailViewModel>(parameters = { parametersOf(friendId) })
 
-    LaunchedEffect(friendId, chatId) {
-        if (resolvedChatId.isNullOrBlank() && !friendId.isNullOrBlank()) {
-            chatRepository.ensureChatWithUser(friendId)
-                .onSuccess { resolvedChatId = it }
-                .onFailure { error = it.message }
-        }
-        if (!friendId.isNullOrBlank()) {
-            friendshipRepository.getBlockInfo(myId ,friendId).onSuccess { blockInfo = it }
-        }
-        val id = resolvedChatId
-        if (!id.isNullOrBlank()) {
-            loading = true
-            chatRepository.loadMessages(id)
-                .onSuccess { messages = it }
-                .onFailure { error = it.message }
-            loading = false
-            // Mark read using last message timestamp
-            val lastTimestamp = messages.lastOrNull()?.createdAt
-            chatRepository.markChatRead(id, lastTimestamp)
-        } else {
-            loading = false
-        }
-    }
+    val messages by viewModel.messages.collectAsState()
+    val loading by viewModel.loading.collectAsState()
+    val error by viewModel.errorMessage.collectAsState()
+    val blockInfo by viewModel.blockInfo.collectAsState()
+    val chat by viewModel.chat.collectAsState()
+    val dateFormatter = viewModel.dateFormatter
+    val timeFormatter = viewModel.timeFormatter
+
+    var input by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -136,17 +85,13 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                                 state = listState,
                                 contentPadding = PaddingValues(12.dp)
                             ) {
-                                itemsIndexed(
-                                    messages,
-                                    key = { _, m ->
-                                        m._id ?: m.hashCode().toString()
-                                    }) { index, m ->
+                                itemsIndexed(messages, key = { _, m -> m.id }) { index, m ->
                                     val isIncoming = m.senderId == friendId
 
                                     val showTime = index == messages.lastIndex || runCatching {
                                         val diff = Duration.between(
-                                            Instant.parse(m.createdAt),
-                                            Instant.parse(messages[index + 1].createdAt)
+                                            m.createdAt,
+                                            messages[index + 1].createdAt
                                         ).toMinutes()
                                         diff >= 1
                                     }.getOrDefault(false)
@@ -154,37 +99,37 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                                     val prevSame = index > 0 && runCatching {
                                         val sameSender = messages[index - 1].senderId == m.senderId
                                         if (!sameSender) false else {
-                                            val prevInstant = Instant.parse(messages[index - 1].createdAt)
-                                            val currInstant = Instant.parse(m.createdAt)
+                                            val prevInstant = messages[index - 1].createdAt
+                                            val currInstant = m.createdAt
                                             val diffMinutes = Duration.between(prevInstant, currInstant).toMinutes()
                                             diffMinutes < 1
                                         }
                                     }.getOrDefault(false)
-
-                                    val currentDate = parseDate(m.createdAt)
-                                    val prevDate = if (index > 0) parseDate(messages[index - 1].createdAt) else null
-                                    val showDateHeader = currentDate != null && currentDate != prevDate
+                                    val currentDate = dateFormatter.format(m.createdAt)
+                                    val prevDate = if (index > 0) messages[index - 1].createdAt else null
+                                    val showDateHeader = m.createdAt != prevDate
                                     if (showDateHeader) {
-                                        DateSeparator(date = currentDate!!)
+                                        DateSeparator(date = currentDate)
                                         Spacer(Modifier.height(6.dp))
                                     }
-                                    val urlShouldBeHere = null // TODO() not working bc of backend update
+                                    val url: String? = chat!!.participants.firstOrNull { user -> user.id == m.senderId }?.profile?.avatarUrl
+
                                     MessageBubble(
-                                        text = m.content ?: "",
+                                        text = m.content,
                                         incoming = isIncoming,
                                         groupedWithPrev = prevSame,
-                                        avatarUrl = if (isIncoming && !prevSame) urlShouldBeHere else null,
-                                        timestampIso = if (showTime) m.createdAt else null
+                                        avatarUrl = if (isIncoming && !prevSame) url else null,
+                                        timeText = if (showTime) timeFormatter.format(m.createdAt) else ""
                                     )
                                 }
                             }
                         }
                 }
             }
-            val isBlocked = blockInfo?.isBlocked == true
-            val blockedByMe = blockInfo?.blockedByMe == true
+
+            val isBlocked = blockInfo != null
             if (isBlocked) {
-                val msg = if (blockedByMe) {
+                val msg = if (blockInfo?.blockedByMe == true) {
                     stringResource(R.string.blocked_by_me)
                 } else {
                     stringResource(R.string.blocked_by_other)
@@ -210,18 +155,9 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                 Spacer(Modifier.width(8.dp))
                 Button(
                     onClick = {
-                    val id = resolvedChatId
-                    if (input.isBlank() || id.isNullOrBlank() || isBlocked) return@Button
-                    val content = input
-                    input = ""
-                    scope.launch {
-                        chatRepository.sendMessage(id, content)
-                            .onSuccess { sent -> messages = messages + sent }
-                            .onFailure { error = it.message }
-                        val lastTimestamp = messages.lastOrNull()?.createdAt
-                        chatRepository.markChatRead(id, lastTimestamp)
-                    }
-                }, enabled = !resolvedChatId.isNullOrBlank() && !isBlocked,
+                        viewModel.onSendClick(input)
+                        input = "" },
+                    enabled = !chat?.id.isNullOrBlank() && !isBlocked && viewModel.validateInput(input),
                     colors = buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
@@ -239,7 +175,7 @@ private fun MessageBubble(
     incoming: Boolean,
     groupedWithPrev: Boolean,
     avatarUrl: String?,
-    timestampIso: String?
+    timeText: String
 ) {
     val bg = if (incoming) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.tertiary
     val contentColor = if (incoming) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onTertiary
@@ -258,12 +194,11 @@ private fun MessageBubble(
             bottomStart = 18.dp
         )
     }
-    val timeText = remember(timestampIso) { parseTimeShort(timestampIso) }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (incoming) Arrangement.Start else Arrangement.End) {
-        if (incoming && !groupedWithPrev) {
+        if (!groupedWithPrev) {
             UserAvatar(
                 avatarUrl,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(32.dp)
             )
             Spacer(Modifier.width(6.dp))
         }

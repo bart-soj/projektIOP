@@ -70,7 +70,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
                 val result = authRepository.login(email, password)
                 when(result) {
                     is Result.Error -> {
-                         _errorMessage.value = when (result.error) { // TODO() actual registration errors
+                         _errorMessage.value = when (result.error) {
                             DataError.Local.DISK_FULL -> "no disk space"
                             DataError.Local.DB_ERROR -> "db failed"
                             DataError.Network.REQUEST_TIMEOUT -> "request timeout"

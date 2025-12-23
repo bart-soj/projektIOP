@@ -14,10 +14,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -33,7 +33,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
 
 
@@ -41,6 +40,10 @@ import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
 fun KeyLoadingScreen() {
     val viewModel = koinViewModel<KeyLoadingViewModel>()
     val gettingBackup by viewModel.gettingBackup.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.ensureKeys()
+    }
 
     when {
         gettingBackup -> GetBackupDialog(viewModel)
@@ -119,7 +122,6 @@ fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifie
                     viewModel.onBackupClick(password)
                 },
                 modifier = Modifier
-                    .weight(1f)
                     .padding(start = 8.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,

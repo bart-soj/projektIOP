@@ -1,6 +1,7 @@
 package com.example.projektiop.data.db.realm
 
 import android.content.Context
+import com.example.projektiop.data.db.realm.objects.Chat
 import com.example.projektiop.data.db.realm.objects.Friendship
 import com.example.projektiop.data.db.realm.objects.Interest
 import com.example.projektiop.data.db.realm.objects.InterestCategory
@@ -30,7 +31,8 @@ object RealmProvider {
                 Interest::class,
                 UserInterest::class,
                 InterestCategory::class,
-                SearchProfile::class
+                SearchProfile::class,
+                Chat::class
             )
         )
             .deleteRealmIfMigrationNeeded() // deletes db when it changes, only for development

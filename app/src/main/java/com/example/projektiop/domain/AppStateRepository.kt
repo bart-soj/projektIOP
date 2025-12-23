@@ -1,5 +1,6 @@
 package com.example.projektiop.domain
 
+import android.util.Log
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,7 +31,7 @@ class AppStateRepository {
     val appStateEventFlow = _appStateEventFlow.asSharedFlow()
 
     suspend fun login() {
-        if (_appState == AppState.Unauthenticated) {
+        if (appState.value == AppState.Unauthenticated) {
             _appStateEventFlow.emit(AppStateEvent.OnAuthorization)
             _appState.value = AppState.Authenticated
         }
@@ -42,7 +43,7 @@ class AppStateRepository {
     }
 
     suspend fun gotKeys() {
-        if (appState == AppState.Authenticated) {
+        if (appState.value == AppState.Authenticated) {
             _appStateEventFlow.emit(AppStateEvent.OnGotKeys)
             _appState.value = AppState.GotKeys
         }

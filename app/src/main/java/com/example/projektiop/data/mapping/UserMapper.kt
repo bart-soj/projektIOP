@@ -8,8 +8,13 @@ import com.example.projektiop.domain.models.Gender
 import com.example.projektiop.domain.models.UserRole
 import com.example.projektiop.util.mongoTimestampToRealmInstant
 import com.example.projektiop.util.realmInstantToMongoTimestamp
+import com.example.projektiop.util.toJavaInstant
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.RealmInstant
+import java.time.Instant
+import kotlin.String
+import com.example.projektiop.domain.models.User as DomainUser
+import com.example.projektiop.domain.models.UserProfile as DomainUserProfile
 
 
 fun UserProfileResponse.toRealm(): User {
@@ -90,6 +95,32 @@ fun User.toUserProfileResponse(): UserProfileResponse {
         updatedAt = realmInstantToMongoTimestamp(this.updatedAt),
         __v = null,
         interests = null // TODO() need to store in db first
+    )
+}
+
+
+fun User.toDomain(): DomainUser {
+    return DomainUser(
+        id = this._id.toHexString(),
+        username = this.username,
+        email = this.email,
+        profile = DomainUserProfile(
+            displayName = this.profile!!.displayName,
+            avatarUrl = this.profile!!.avatarUrl,
+            gender = this.profile!!.gender,
+            birthDate = this.profile!!.birthDate?.toJavaInstant(),
+            location = this.profile!!.location,
+            bio = this.profile!!.bio,
+            broadcastMessage = this.profile!!.broadcastMessage
+        ),
+        role = this.role!!,
+        interests = this.interests.map { it.toDomain() },
+        isBanned = this.isBanned,
+        banReason = this.banReason,
+        bannedAt = this.bannedAt?.toJavaInstant(),
+        isDeleted = this.isDeleted,
+        deletedAt = this.deletedAt?.toJavaInstant(),
+        createdAt = this.createdAt?.toJavaInstant()
     )
 }
 

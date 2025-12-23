@@ -3,6 +3,7 @@ package com.example.projektiop.data.mapping
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.db.realm.objects.UserInterest
 import com.example.projektiop.data.db.realm.RealmDBRepository
+import com.example.projektiop.domain.models.UserInterest as DomainUserInterest
 
 fun UserInterestDto.toRealm(userId: String, dbRepository: RealmDBRepository): UserInterest {
 
@@ -29,6 +30,16 @@ fun UserInterest.toDto(): UserInterestDto {
     return UserInterestDto(
         userInterestId = this._id.toHexString(),
         interest = this.interest!!.toDto(),
+        customDescription = this.customDescription
+    )
+}
+
+
+fun UserInterest.toDomain(): DomainUserInterest {
+    return DomainUserInterest(
+        id = this._id.toHexString(),
+        userId = this.userId!!.toHexString(),
+        interest = this.interest!!.toDomain(),
         customDescription = this.customDescription
     )
 }

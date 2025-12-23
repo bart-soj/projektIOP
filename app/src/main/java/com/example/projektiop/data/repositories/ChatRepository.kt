@@ -4,47 +4,23 @@ import com.example.projektiop.data.api.MessageDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.content.Context
-import android.content.SharedPreferences
+import android.util.Log
 import com.example.projektiop.data.api.ChatApi
+import com.example.projektiop.data.api.ChatDto
 import com.example.projektiop.data.db.realm.RealmDBRepository
+import com.example.projektiop.data.mapping.toDomain
+import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.mapping.toUserProfileResponse
+import com.example.projektiop.domain.models.Message
+import com.example.projektiop.domain.models.base64
+import com.example.projektiop.util.CertificateUtils
+import com.example.projektiop.util.DataError
+import com.example.projektiop.util.apiExceptionToDataError
 import kotlinx.coroutines.flow.StateFlow
+import com.example.projektiop.domain.models.Chat as DomainChat
 
 private const val BASE_URL_KEY: String = "BASE_URL"
 
-// Lightweight local storage for last read timestamps per chat
-private object ChatReadState {
-    private const val PREFS = "chat_read_state"
-    private const val KEY_PREFIX = "last_read_"
-    private var prefs: SharedPreferences? = null
-
-    fun ensure(context: Context) {
-        if (prefs == null) {
-            prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        }
-    }
-
-    fun getLastRead(chatId: String): String? = prefs?.getString(KEY_PREFIX + chatId, null)
-
-    fun markRead(chatId: String, lastMessageTime: String?) {
-        if (lastMessageTime == null) return
-        prefs?.edit()?.putString(KEY_PREFIX + chatId, lastMessageTime)?.apply()
-    }
-
-    fun storeBaseline(chatId: String, lastMessageTime: String) {
-        // Only set if absent to avoid retroactively marking old messages unread
-        if (getLastRead(chatId) == null) markRead(chatId, lastMessageTime)
-    }
-
-    fun isAfter(candidate: String, baseline: String?): Boolean {
-        if (baseline == null) return false
-        // ISO-8601 lexical compare works for ordering if same format
-        return candidate > baseline
-    }
-}
-
-// Public list item used by ChatsScreen
-// Includes friendId and avatarUrl for navigation and UI
 
 data class ChatListItem(
     val id: String,
@@ -59,10 +35,11 @@ data class ChatListItem(
 class ChatRepository(private val chatApi: ChatApi,
                      context: Context,
                      private val sharedDataSource: SharedDataSource,
-                     private val dbRepository: RealmDBRepository
+                     private val dbRepository: RealmDBRepository,
+                     private val certificateUtils: CertificateUtils
 ) {
 
-    lateinit var chats: StateFlow<List<ChatListItem>>
+    lateinit var chats: StateFlow<List<DomainChat>>
 
     private fun normalizeUrl(url: String?): String? {
         if (url.isNullOrBlank()) return null
@@ -71,91 +48,117 @@ class ChatRepository(private val chatApi: ChatApi,
         val base = sharedDataSource.get(BASE_URL_KEY,"")
         return if (trimmed.startsWith("/")) base + trimmed else "$base/$trimmed"
     }
-    // Call once at app start
-    init { ChatReadState.ensure(context) }
-    /** Mark a chat read by persisting last seen message timestamp */
-    fun markChatRead(chatId: String, lastMessageTime: String?) {
-        ChatReadState.markRead(chatId, lastMessageTime)
-    }
 
-    suspend fun fetchChats(currentUserId: String? = null, currentUsername: String? = null): Result<List<ChatListItem>> = withContext(Dispatchers.IO) {
+
+    suspend fun fetchChats(myUserId: String): com.example.projektiop.util.Result<List<DomainChat>, DataError> = withContext(Dispatchers.IO) {
+        val dtoList: List<ChatDto> = emptyList()
+        var domainList: List<DomainChat> = emptyList()
         try {
             val response = chatApi.getChats()
-            if (response.isSuccessful) {
-                val body = response.body().orEmpty()
-                val mapped = body.mapNotNull { chat ->
-                    val id = chat._id ?: return@mapNotNull null
-                    val participants = chat.participants?.mapNotNull{ dbRepository.getUserById(it)?.toUserProfileResponse() }
-                    val other = participants?.firstOrNull { p ->
-                        (!currentUserId.isNullOrBlank()  && !p._id.isNullOrBlank()  && p._id != currentUserId) && // TODO() was some issue with currentUserId never failing this, most likely because of conversion from ObjectId
-                                (currentUsername != null && p.username != null && p.username != currentUsername)
-                    } ?: if (participants?.size == 2) {
-                        participants.firstOrNull { !it.username.isNullOrBlank() && !currentUsername.isNullOrBlank() && it.username != currentUsername }
-                    } else {
-                        return@mapNotNull null
-                    }
-                    val title = other?.profile?.displayName ?: other?.username ?: "Czat"
-                    val lastMsg = chat.lastMessage?.content ?: "(brak wiadomości)"
-                    val lastMessageTime = chat.lastMessage?.createdAt
-                    val lastRead = ChatReadState.getLastRead(id)
-                    // If no stored lastRead baseline, establish one to avoid flagging entire history as unread immediately
-                    if (lastRead == null && lastMessageTime != null) {
-                        ChatReadState.storeBaseline(id, lastMessageTime)
-                    }
-                    val unread = if (lastMessageTime == null) false else ChatReadState.isAfter(lastMessageTime, ChatReadState.getLastRead(id))
-                    ChatListItem(
-                        id = id,
-                        title = title,
-                        lastMessage = lastMsg,
-                        lastMessageTime = lastMessageTime,
-                        friendId = other?._id,
-                        avatarUrl = normalizeUrl(other?.profile?.avatarUrl),
-                        unread = unread
-                    )
-                }
-                val sorted = mapped.sortedWith(
-                    compareBy<ChatListItem> { it.lastMessageTime == null }
-                        .thenByDescending { it.lastMessageTime }
-                )
-                Result.success(sorted)
-            } else {
-                Result.failure(Exception("Nie udało się pobrać czatów (${response.code()})"))
-            }
+            val body = response.body()
+            require(body != null)
+            val dtoList = body
+
         } catch (e: Exception) {
-            Result.failure(e)
+            return@withContext apiExceptionToDataError<List<DomainChat>>(e)
         }
+
+        dtoList.forEach {
+            try {
+                val chatId = it._id
+                require(chatId != null)
+                val otherUserId = it.participants?.firstOrNull { id -> id != myUserId }
+                require(otherUserId != null)
+                val otherUser = dbRepository.getUserById(otherUserId)
+                require(otherUser != null) // should have users we have chats with since they are friends
+
+                val local = dbRepository.getChatById( chatId )?.chatKey
+                val chatKey: base64
+                if (! local.isNullOrBlank()) {
+                    chatKey = local
+                } else {
+                    val otherUserPubResult = certificateUtils.getPubKey(otherUserId)
+                    val otherUserPub: base64?
+                    when (otherUserPubResult) {
+                        is com.example.projektiop.util.Result.Error -> { return@forEach }
+
+                        is com.example.projektiop.util.Result.Success -> otherUserPub =
+                            otherUserPubResult.data
+                    }
+                    chatKey = certificateUtils.calculateChatKey(myUserId, otherUserPub)
+                }
+
+                val realmChat = it.toRealm(chatKey)
+                dbRepository.addChat(realmChat)
+                val domainCHat = realmChat.toDomain(myUserId, dbRepository)
+                domainList += domainCHat
+            } catch(e: Exception ) {}
+        }
+
+        return@withContext com.example.projektiop.util.Result.Success(domainList)
     }
 
-    suspend fun ensureChatWithUser(friendId: String): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun ensureChatWithUser(friendId: String, myId: String): com.example.projektiop.util.Result<DomainChat, DataError>  {
+        val localData = dbRepository.getChatByFriendId(friendId)
+        if (localData != null) return com.example.projektiop.util.Result.Success(localData.toDomain(myId, dbRepository))
         try {
+            // if we created the chat and got an error before saving it could exist on server but not locally
+            var dto: ChatDto? = null
             val existing = chatApi.getChats()
             if (existing.isSuccessful) {
                 existing.body().orEmpty().firstOrNull { chat ->
                     chat.participants?.any { it == friendId } == true
-                }?.let { return@withContext Result.success(it._id!!) }
+                }?.let {
+                    dto = it
+                }
             }
-            val created = chatApi.accessChat(mapOf("userId" to friendId))
-            if (created.isSuccessful) {
-                Result.success(created.body()?._id ?: return@withContext Result.failure(Exception("Brak ID czatu")))
-            } else Result.failure(Exception("Tworzenie czatu nie powiodło się (${created.code()}) ${created.errorBody()?.string()?.take(150)}"))
-        } catch (e: Exception) { Result.failure(e) }
+            if (dto == null){
+                val created = chatApi.accessChat(mapOf("userId" to friendId))
+                dto = created.body()
+            }
+
+            require(dto != null)
+
+            val otherUserPubResult = certificateUtils.getPubKey(friendId)
+            val otherUserPub: base64?
+            when (otherUserPubResult) {
+                is com.example.projektiop.util.Result.Error -> { return com.example.projektiop.util.Result.Error(otherUserPubResult.error) }
+                is com.example.projektiop.util.Result.Success -> otherUserPub =
+                    otherUserPubResult.data
+            }
+            val chatKey = certificateUtils.calculateChatKey(myId, otherUserPub)
+            val realmChat = dto.toRealm(chatKey)
+            dbRepository.addChat(realmChat)
+            val domainChat = realmChat.toDomain(myId, dbRepository)
+            return com.example.projektiop.util.Result.Success(domainChat)
+        } catch (e: Exception) {
+            return apiExceptionToDataError<DomainChat>(e)
+        }
     }
 
-    suspend fun loadMessages(chatId: String): Result<List<MessageDto>> = withContext(Dispatchers.IO) {
+    suspend fun loadMessages(chatId: String): Result<List<Message>> = withContext(Dispatchers.IO) {
         try {
             val r = chatApi.getMessages(chatId)
-            if (r.isSuccessful) Result.success(r.body()?.messages.orEmpty()) else Result.failure(Exception("Błąd pobierania wiadomości (${r.code()})"))
+            val chatKey = dbRepository.getChatById(chatId)!!.chatKey
+            if (r.isSuccessful) Result.success(r.body()?.messages.orEmpty().map {
+                require(it.content != null)
+                val decrypted = certificateUtils.decryptMessage(it.content, chatKey!!)
+                it.toDomain(decrypted)
+            }
+            ) else Result.failure(Exception("Błąd pobierania wiadomości (${r.code()})"))
         } catch (e: Exception) { Result.failure(e) }
     }
 
     suspend fun sendMessage(chatId: String, content: String): Result<MessageDto> = withContext(Dispatchers.IO) {
         try {
-            val r = chatApi.sendMessage(mapOf("chatId" to chatId, "content" to content))
+            val chatKey = dbRepository.getChatById(chatId)!!.chatKey
+            val encrypted = certificateUtils.encryptMessage(content, chatKey!!)
+            val r = chatApi.sendMessage(mapOf("chatId" to chatId, "content" to encrypted))
             if (r.isSuccessful) Result.success(r.body()!!) else Result.failure(Exception("Błąd wysyłania (${r.code()})"))
         } catch (e: Exception) { Result.failure(e) }
     }
 
-    fun connectToService(serviceFlow: StateFlow<List<ChatListItem>>) {
+    fun connectToService(serviceFlow: StateFlow<List<DomainChat>>) {
         chats = serviceFlow
     }
 }
