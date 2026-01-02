@@ -26,7 +26,7 @@ class UserProfile : EmbeddedRealmObject {
 
     private var _gender: String? = null
 
-    var birthDate: RealmInstant? = null
+    var birthDate: String? = null
     var location: String = ""
     var bio: String = ""
     var broadcastMessage: String = ""

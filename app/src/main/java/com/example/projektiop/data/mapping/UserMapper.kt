@@ -14,7 +14,7 @@ import io.realm.kotlin.types.RealmInstant
 import java.time.Instant
 import kotlin.String
 import com.example.projektiop.domain.models.User as DomainUser
-import com.example.projektiop.domain.models.UserProfile as DomainUserProfile
+import com.example.projektiop.domain.models.User.UserProfile as DomainUserProfile
 
 
 fun UserProfileResponse.toRealm(): User {
@@ -26,13 +26,13 @@ fun UserProfileResponse.toRealm(): User {
     val email = this.email
 
     val profile = UserProfile().apply {
-        displayName = this@toRealm.profile?.displayName.orEmpty()
+        displayName = this@toRealm.profile?.displayName ?: this@toRealm.username
         avatarUrl = this@toRealm.profile?.avatarUrl.orEmpty()
         gender = this@toRealm.profile?.gender
             ?.takeIf { it.isNotBlank() }
             ?.uppercase()
             ?.let { runCatching { Gender.valueOf(it) }.getOrNull() }
-        birthDate = mongoTimestampToRealmInstant(this@toRealm.profile?.birthDate)
+        birthDate = this.birthDate
         location = this@toRealm.profile?.location.orEmpty()
         bio = this@toRealm.profile?.bio.orEmpty()
         broadcastMessage = this@toRealm.profile?.broadcastMessage.orEmpty()
@@ -76,7 +76,7 @@ fun User.toUserProfileResponse(): UserProfileResponse {
             bio = this.profile?.bio,
             gender = this.profile?.gender?.name,
             location = this.profile?.location,
-            birthDate = realmInstantToMongoTimestamp(this.profile?.birthDate),
+            birthDate = this.profile?.birthDate,
             broadcastMessage = this.profile?.broadcastMessage,
             avatarUrl = this.profile?.avatarUrl
         ),
@@ -108,7 +108,7 @@ fun User.toDomain(): DomainUser {
             displayName = this.profile!!.displayName,
             avatarUrl = this.profile!!.avatarUrl,
             gender = this.profile!!.gender,
-            birthDate = this.profile!!.birthDate?.toJavaInstant(),
+            birthDate = this.profile!!.birthDate,
             location = this.profile!!.location,
             bio = this.profile!!.bio,
             broadcastMessage = this.profile!!.broadcastMessage

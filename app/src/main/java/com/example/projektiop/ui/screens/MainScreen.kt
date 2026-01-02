@@ -127,15 +127,7 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
                 else -> null
             }
             val locationVal = user?.profile?.location?.takeIf { it.isNotBlank() }
-            val ageVal = user?.profile?.birthDate?.let { bd ->
-                val datePart = realmInstantToMongoTimestamp(bd)?.take(10)
-                try {
-                    val ld = LocalDate.parse(datePart, DateTimeFormatter.ISO_DATE)
-                    val now = LocalDate.now()
-                    val years = Period.between(ld, now).years
-                    if (years in 0..150) years else null
-                } catch (e: DateTimeParseException) { null }
-            }
+            val ageVal = user?.profile?.birthDate
             val infoItems = listOfNotNull(
                 genderLabel?.let { InfoItem(Icons.Default.Person, it) },
                 locationVal?.let { InfoItem(Icons.Default.LocationOn, it) },

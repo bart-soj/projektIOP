@@ -34,15 +34,14 @@ data class User(
     val deletedAt: Instant? = null,
 
     val createdAt: Instant? = null
-)
-
-
-data class UserProfile(
-    val displayName: String = "",
-    val avatarUrl: String = "",
-    val gender: Gender? = null,
-    val birthDate: Instant? = null,
-    val location: String = "",
-    val bio: String = "",
-    val broadcastMessage: String = ""
-)
+) {
+    class UserProfile(
+        val displayName: String = "",
+        val avatarUrl: String = "",
+        val gender: Gender? = null,
+        val birthDate: String? = null,
+        val location: String = "",
+        val bio: String = "",
+        val broadcastMessage: String = ""
+    )
+}

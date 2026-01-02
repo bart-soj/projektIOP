@@ -178,11 +178,12 @@ class UserRepository(private val userApi: UserApi,
                         Exception("Error saving interests to database: $e")
                     )
                 }
-
+                /*
                 // Save ID in SharedPreferences
-                if (!tmpId.isNullOrBlank()) {
+                if (tmpId.isNotBlank()) {
                     sharedDataSource.set(ID, tmpId.toString())
                 }
+                 */
 
                 _myUser.value = dbRepository.getUserById(id!!)
                 Result.success(response.body()!!)

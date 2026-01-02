@@ -1,20 +1,14 @@
 package com.example.projektiop.util
 
-import android.content.Context
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
 import android.util.Log
-import androidx.activity.compose.BackHandler
 import com.example.projektiop.data.api.BackupApi
 import com.example.projektiop.data.api.PublicKeyApi
 import com.example.projektiop.data.api.PublishPublicKeyRequest
 import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.data.repositories.SharedDataSource
-import com.example.projektiop.domain.models.AlgorithmParams
 import com.example.projektiop.domain.models.AlgorithmParams.EncryptionParams
 import com.example.projektiop.domain.models.AlgorithmParams.PasswordDerivationParams
 import com.example.projektiop.domain.models.BackupInfo
-import com.example.projektiop.domain.models.KB
 import com.example.projektiop.domain.models.base64
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
@@ -40,14 +34,11 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder
 import java.io.ByteArrayInputStream
 import java.io.StringWriter
 import java.security.KeyPair
-import java.security.KeyPairGenerator
-import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.security.Security
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
-import java.security.spec.RSAKeyGenParameterSpec
 import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec

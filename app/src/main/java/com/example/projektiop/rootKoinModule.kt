@@ -15,6 +15,7 @@ import com.example.projektiop.screens.friends.FriendsViewModel
 import com.example.projektiop.ui.viewmodels.AuthViewModel
 import com.example.projektiop.ui.viewmodels.ChatDetailViewModel
 import com.example.projektiop.ui.viewmodels.ChatsViewModel
+import com.example.projektiop.ui.viewmodels.EditProfileViewModel
 import com.example.projektiop.ui.viewmodels.FriendProfileViewModel
 import com.example.projektiop.ui.viewmodels.KeyLoadingViewModel
 import com.example.projektiop.ui.viewmodels.MainViewModel
@@ -46,4 +47,5 @@ val rootKoinModule = module {
     viewModel { (userId: String) -> FriendProfileViewModel(userId, get()) }
     viewModel { (friendId: String) -> ChatDetailViewModel(friendId, get(), get(), get()) }
     viewModel { KeyLoadingViewModel( get(), get(), get(), get() ) }
+    viewModel { EditProfileViewModel( get(), get() ) }
 }

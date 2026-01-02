@@ -21,95 +21,54 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.projektiop.R
-import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.domain.models.Gender
 import com.example.projektiop.ui.components.MultiSelectInterestsDropdown
 import com.example.projektiop.ui.components.UserAvatar
-import org.koin.compose.koinInject
+import com.example.projektiop.ui.viewmodels.EditProfileViewModel
+import com.example.projektiop.util.toJavaInstant
 import com.example.projektiop.util.translateInterestName
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun EditProfileScreen(
-    navController: NavController,
-    context: Context = LocalContext.current
+    navController: NavController
 ) {
-    var name by remember { mutableStateOf("") }
-    var location by remember { mutableStateOf("") }
-    var birthDate by remember { mutableStateOf("") }
-    var gender by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var interests by remember { mutableStateOf("") }
-    var allInterests by remember { //todo: check
-        mutableStateOf(
-            listOf(
-                "Cyberbezpieczeństwo",
-                "Czytanie Książek",
-                "Gry Komputerowe",
-                "Górskie Wędrówki",
-                "Kino Niezależne",
-                "Kolarstwo",
-                "Muzyka Elektroniczna",
-                "Piłka Nożna",
-                "Podróże z Plecakiem",
-                "Programowanie",
-                "Siłownia i Fitness"
-            )
-        )
-    }
-    var selectedInterests by remember { mutableStateOf<Set<String>>(emptySet()) }
-    var selectedDescriptions by remember { mutableStateOf(mutableMapOf<String, String>()) }
+    val viewModel = koinViewModel<EditProfileViewModel>()
+    val publicInterests by viewModel.publicInterests.collectAsState()
+    val myInterests by viewModel.myInterests.collectAsState()
+    val error by viewModel.errorMessage.collectAsState()
+    val myUser by viewModel.myUser.collectAsState()
+
+    val uploading by viewModel.uploading.collectAsState()
+    val uploadError by viewModel.errorUploading.collectAsState()
+    val currentAvatarUrl by viewModel.currentAvatarUrl.collectAsState()
+
+    val context = LocalContext.current
+
+    var name by remember { mutableStateOf(myUser?.profile?.displayName ?: "")}
+    var location by remember { mutableStateOf(myUser?.profile?.location ?: "")}
+    var birthDate by remember { mutableStateOf(
+        myUser?.profile?.birthDate ?: "")}
+    var gender by remember { mutableStateOf<Gender?>(myUser?.profile?.gender)}
+    var description by remember { mutableStateOf(myUser?.profile?.bio ?: "") }
+
+    var selectedInterests by remember { mutableStateOf<Set<String>>(emptySet())}
+    var selectedDescriptions = remember { mutableStateMapOf<String, String>() }
     var interestsSaving by remember { mutableStateOf(false) }
     var broadcastMessage by remember { mutableStateOf("") }
-    var loadingInitial by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
     var avatarPreviewUri by remember { mutableStateOf<Uri?>(null) }
     var avatarPreviewBytes by remember { mutableStateOf<ByteArray?>(null) }
-    var uploading by remember { mutableStateOf(false) }
-    var uploadError by remember { mutableStateOf<String?>(null) }
-    var currentAvatarUrl by remember { mutableStateOf<String?>(null) }
-    var avatarVersionTag by remember { mutableStateOf<String?>(null) }
-    val userRepository = koinInject<UserRepository>()
-    val interestRepository = koinInject<InterestRepository>()
+
 
     LaunchedEffect(Unit) {
-        loadingInitial = true
-        userRepository.fetchMyProfile()
-            .onSuccess { prof ->
-                name = prof.effectiveDisplayName ?: prof.username ?: prof.email ?: ""
-                description = prof.effectiveDescription ?: ""
-                gender = prof.profile?.gender ?: ""
-                location = prof.profile?.location ?: ""
-                birthDate = prof.profile?.birthDate?.takeIf { it.length >= 10 }?.substring(0,10) ?: ""
-                broadcastMessage = prof.profile?.broadcastMessage ?: ""
-                currentAvatarUrl = prof.profile?.avatarUrl
-                avatarVersionTag = prof.updatedAt?.hashCode()?.toString()
-                val names = prof.interests?.mapNotNull { it.interest.name }?.toSet().orEmpty()
-                selectedInterests = names
-                val descMap = mutableMapOf<String, String>()
-                prof.interests.orEmpty().forEach { ui ->
-                    val nm = ui.interest.name
-                    if (!nm.isNullOrBlank()) {
-                        descMap[nm] = ui.customDescription ?: ""
-                    }
-                }
-                selectedDescriptions = descMap
-            }
-            .onFailure { error = it.message }
-        interestRepository.fetchPublicInterestsMap()
-            .onSuccess { map ->
-                allInterests = map.keys.sorted()
-            }
-            .onFailure {  }
-        loadingInitial = false
+        // was fetching my profile and public interests
     }
 
     Surface(
@@ -125,28 +84,25 @@ fun EditProfileScreen(
             verticalArrangement = Arrangement.Center,
         ) {
             Text(text = stringResource(id = R.string.edit_profile), style = MaterialTheme.typography.headlineMedium)
-            if (loadingInitial) {
-                Spacer(Modifier.height(8.dp))
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
             Spacer(Modifier.height(16.dp))
             AvatarPicker(
                 avatarPreviewUri = avatarPreviewUri,
                 avatarPreviewBytes = avatarPreviewBytes,
                 currentAvatarUrl = currentAvatarUrl,
-                versionTag = avatarVersionTag,
                 onPick = { uri, bytes ->
                     avatarPreviewUri = uri
                     avatarPreviewBytes = bytes
                 },
                 onUpload = {
+                    viewModel.onAvatarUpload(avatarPreviewBytes, avatarPreviewUri, context)
+                    avatarPreviewBytes = null
+                    avatarPreviewUri = null
+                    /*
                     if (avatarPreviewUri == null || avatarPreviewBytes == null) return@AvatarPicker
                     coroutineScope.launch {
                         uploading = true
                         uploadError = null
-                        val resolver = context.contentResolver
-                        val name = queryDisplayName(context, avatarPreviewUri!!)
-                        val type = resolver.getType(avatarPreviewUri!!)
+
                         val sizeOk = avatarPreviewBytes?.size ?: 0 <= 5 * 1024 * 1024
                         if (!sizeOk) {
                             uploading = false
@@ -169,6 +125,7 @@ fun EditProfileScreen(
                             uploadError = it.message ?: context.getString(R.string.avatar_upload_error)
                         }
                     }
+                     */
                 },
                 uploading = uploading
             )
@@ -215,23 +172,20 @@ fun EditProfileScreen(
             )
             Spacer(Modifier.height(8.dp))
             MultiSelectInterestsDropdown(
-                all = allInterests,
+                all = publicInterests.map { it.id },
                 selected = selectedInterests,
                 onChange = { updated ->
                     val removed = selectedInterests.minus(updated)
                     val added = updated.minus(selectedInterests)
                     if (removed.isNotEmpty()) {
-                        selectedDescriptions = selectedDescriptions.toMutableMap().apply {
-                            removed.forEach { remove(it) }
-                        }
+                        removed.forEach { selectedDescriptions.remove(it) }
                     }
                     if (added.isNotEmpty()) {
-                        selectedDescriptions = selectedDescriptions.toMutableMap().apply {
+                        selectedDescriptions = selectedDescriptions.apply {
                             added.forEach { if (get(it) == null) put(it, "") }
                         }
                     }
                     selectedInterests = updated
-                    interests = updated.joinToString(",")
                 }
             )
             if (selectedInterests.isNotEmpty()) {
@@ -248,7 +202,7 @@ fun EditProfileScreen(
                             value = value,
                             onValueChange = { newVal ->
                                 if (newVal.length <= 200) {
-                                    selectedDescriptions = selectedDescriptions.toMutableMap().apply { put(nameKey, newVal) }
+                                    selectedDescriptions = selectedDescriptions.apply { put(nameKey, newVal) }
                                 }
                             },
                             label = {
@@ -260,7 +214,7 @@ fun EditProfileScreen(
                             trailingIcon = {
                                 if (value.isNotBlank()) {
                                     IconButton(onClick = {
-                                        selectedDescriptions = selectedDescriptions.toMutableMap().apply { put(nameKey, "") }
+                                        selectedDescriptions = selectedDescriptions.apply { put(nameKey, "") }
                                     }) {
                                         Icon(Icons.Default.Clear, contentDescription = stringResource(id = R.string.clear))
                                     }
@@ -282,6 +236,11 @@ fun EditProfileScreen(
             Spacer(Modifier.height(16.dp))
             Button(
                 onClick = {
+                    viewModel.onUpdateClick(name, gender, location, description, birthDate,
+                        broadcastMessage, selectedInterests.associateWith { key ->
+                            selectedDescriptions[key]?.takeIf { it.isNotBlank() }.toString()
+                        })
+                    /*
                     coroutineScope.launch {
                         isLoading = true
                         error = null
@@ -311,9 +270,10 @@ fun EditProfileScreen(
                             isLoading = false
                         }
                     }
+                    */
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !loadingInitial && !isLoading && name.isNotBlank() && name.length in 1..50 && (birthDate.isBlank() || birthDate.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$")))
+                enabled = !isLoading && name.isNotBlank() && name.length in 1..50 && (birthDate.isBlank() || birthDate.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$")))
             ) {
                 val label = when {
                     isLoading && interestsSaving -> stringResource(id = R.string.saving_interests)
@@ -358,14 +318,14 @@ fun EditProfileScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GenderDropdown(gender: String, onGenderChange: (String) -> Unit) {
+private fun GenderDropdown(gender: Gender?, onGenderChange: (Gender?) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val options = listOf(
-        "" to stringResource(id = R.string.gender_none),
-        "male" to stringResource(id = R.string.gender_male),
-        "female" to stringResource(id = R.string.gender_female),
-        "other" to stringResource(id = R.string.gender_other),
-        "prefer_not_to_say" to stringResource(id = R.string.gender_prefer_not_to_say)
+        null to stringResource(id = R.string.gender_none),
+        Gender.MALE to stringResource(id = R.string.gender_male),
+        Gender.FEMALE to stringResource(id = R.string.gender_female),
+        Gender.OTHER  to stringResource(id = R.string.gender_other),
+        Gender.PREFER_NOT_TO_SAY to stringResource(id = R.string.gender_prefer_not_to_say)
     )
     val currentLabel = options.firstOrNull { it.first == gender }?.second ?: stringResource(id = R.string.gender_none)
     ExposedDropdownMenuBox(
@@ -404,7 +364,6 @@ private fun AvatarPicker(
     avatarPreviewUri: Uri?,
     avatarPreviewBytes: ByteArray?,
     currentAvatarUrl: String?,
-    versionTag: String?,
     onPick: (Uri?, ByteArray?) -> Unit,
     onUpload: () -> Unit,
     uploading: Boolean
@@ -446,11 +405,5 @@ private fun AvatarPicker(
     }
 }
 
-private fun queryDisplayName(context: Context, uri: Uri): String? {
-    val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
-    return context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
-        val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-        if (index >= 0 && cursor.moveToFirst()) cursor.getString(index) else null
-    }
-}
+
 

@@ -115,7 +115,6 @@ data class UserStats(
     val likes: Int? = null
 )
 
-// Request do aktualizacji profilu – dopasowany do validatorów w userRoutes.js (profile.*)
 data class UpdateProfileRequest(
     val profile: ProfileDto
 )

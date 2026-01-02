@@ -63,7 +63,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
 
     fun onLoginClick(email: String, password: String) {
         if (loading.value) return
-        if (true) { // todo: if (inputsValid.value) {
+        if (inputsValid.value) {
             _loading.value = true
             _errorMessage.value = null
             viewModelScope.launch {
@@ -104,7 +104,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
 
                 when (result) {
                     is Result.Error -> {
-                        _errorMessage.value = when (result.error) { // TODO() actual registration errors
+                        _errorMessage.value = when (result.error) {
                             DataError.Local.DISK_FULL -> "no disk space"
                             DataError.Local.DB_ERROR -> "db failed"
                             DataError.Network.REQUEST_TIMEOUT -> "request timeout"
