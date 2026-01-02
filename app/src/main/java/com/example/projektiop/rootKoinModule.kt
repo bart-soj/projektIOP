@@ -13,6 +13,7 @@ import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.AppStateRepository
 import com.example.projektiop.screens.friends.FriendsViewModel
 import com.example.projektiop.ui.viewmodels.AuthViewModel
+import com.example.projektiop.ui.viewmodels.BackupDialogViewModel
 import com.example.projektiop.ui.viewmodels.ChatDetailViewModel
 import com.example.projektiop.ui.viewmodels.ChatsViewModel
 import com.example.projektiop.ui.viewmodels.EditProfileViewModel
@@ -46,6 +47,7 @@ val rootKoinModule = module {
     viewModel { ChatsViewModel(get(), get()) }
     viewModel { (userId: String) -> FriendProfileViewModel(userId, get()) }
     viewModel { (friendId: String) -> ChatDetailViewModel(friendId, get(), get(), get()) }
-    viewModel { KeyLoadingViewModel( get(), get(), get(), get() ) }
+    viewModel { KeyLoadingViewModel( get(), get(), get() ) }
     viewModel { EditProfileViewModel( get(), get() ) }
+    viewModel { BackupDialogViewModel( get(), get(), get() ) }
 }

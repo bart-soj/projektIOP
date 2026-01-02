@@ -84,7 +84,7 @@ fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifie
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = stringResource(R.string.backup_dialog_title),
+                text = stringResource(R.string.restore_backup_title),
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(bottom = 24.dp)
             )

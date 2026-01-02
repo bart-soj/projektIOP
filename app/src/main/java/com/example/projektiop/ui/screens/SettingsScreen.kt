@@ -25,6 +25,7 @@ import com.example.projektiop.data.repositories.FriendItem
 import com.example.projektiop.data.repositories.ThemePreference
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.screens.components.FriendCard
+import com.example.projektiop.ui.components.BackupDialogButton
 import com.example.projektiop.ui.viewmodels.AuthViewModel
 import com.example.projektiop.ui.viewmodels.SettingsViewModel
 import com.example.projektiop.util.DataError
@@ -111,6 +112,11 @@ fun SettingsScreen(
                         )
                     )
                 }
+
+                // Backup
+                BackupDialogButton(modifier = Modifier.fillMaxWidth())
+
+                Spacer(Modifier.size(8.dp))
 
                 Button(
                     onClick = { showBlockedDialog = true },

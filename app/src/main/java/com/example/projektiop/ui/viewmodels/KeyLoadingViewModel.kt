@@ -1,28 +1,22 @@
 package com.example.projektiop.ui.viewmodels
 
 import android.util.Log
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.domain.AppStateRepository
-import com.example.projektiop.domain.models.base64
 import com.example.projektiop.util.BackupError
 import com.example.projektiop.util.CertificateUtils
 import com.example.projektiop.util.DataError
 import com.example.projektiop.util.Result
-import com.example.projektiop.util.ValidationError
-import com.example.projektiop.util.ValidationError.Common
-import com.example.projektiop.util.ValidationError.EmailError
-import com.example.projektiop.util.ValidationError.PasswordError
+import com.example.projektiop.util.backupPasswordValidator
+import com.example.projektiop.util.mapToResource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
-                          private val authRepository: AuthRepository,
                           private val appStateRepository: AppStateRepository,
                           private val sharedDataSource: SharedDataSource) : ViewModel() {
 
@@ -54,7 +48,7 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
         _errorMessage.value = null
         _gotKeys.value = false
         viewModelScope.launch {
-            Log.d("KYS", "getting local")
+            Log.d("KEYS", "getting local")
             val localResult = certificateUtils.getLocalKeyPair(userId)
             when(localResult) {
                 is Result.Error -> {}
@@ -65,22 +59,22 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
                 }
             }
 
-            Log.d("KYS","checking for backup")
+            Log.d("KEYS","checking for backup")
             if (isBackedUp == false && gotKeys.value == false) {
-                Log.d("KYS","creating keys")
+                Log.d("KEYS","creating keys")
                 val createResult = certificateUtils.createKeyPair(userId)
                 when (createResult) {
                     is Result.Error -> {
-                        Log.d("KYS","logging-out cuz failed")
+                        Log.d("KEYS","logging-out cuz failed")
                         appStateRepository.logout()} // unlikely, force user to log-in again
                     is Result.Success -> {
-                        Log.d("KYS", "got em!")
+                        Log.d("KEYS", "got em!")
                         _gotKeys.value = true
                         appStateRepository.gotKeys()
                     }
                 }
             } else if(gotKeys.value == false) {
-                Log.d("KYS", "getting backup")
+                Log.d("KEYS", "getting backup")
                 _gettingBackup.value = true
             }
         }
@@ -116,7 +110,7 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
                         }
                         is Result.Success -> {
                             _gotKeys.value = true
-                            Log.d("KYS", "got em!")
+                            Log.d("KEYS", "got em!")
                             appStateRepository.gotKeys()}
                     }
                 }
@@ -125,36 +119,8 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
     }
 
     fun onPasswordChange(password: String) {
-        _passwordErrors.value = passwordValidator(password).mapToResource()
+        _passwordErrors.value = backupPasswordValidator(password).mapToResource()
     }
 
-    fun passwordValidator(password: String): List<ValidationError> {
-        var out = emptyList<ValidationError>()
-        val hasMinimumLength = password.length >= 12
-        val hasLowercase = password.any { it.isLowerCase() }
-        val hasUppercase = password.any { it.isUpperCase() }
-        val hasDigit = password.any { it.isDigit() }
 
-        if (!hasMinimumLength) out += PasswordError.TOO_SHORT
-        if (!hasLowercase) out += PasswordError.NO_LOWERCASE
-        if (!hasUppercase) out += PasswordError.NO_UPPERCASE
-        if (!hasDigit) out += PasswordError.NO_DIGIT
-
-        return out
-    }
-
-    fun List<ValidationError>.mapToResource(): List<Int> {
-        return this.map { item ->
-            when (item) {
-                Common.BLANK ->  com.example.projektiop.R.string.error_field_empty
-                EmailError.NOT_EMAIL -> com.example.projektiop.R.string.error_invalid_email
-                PasswordError.TOO_SHORT -> com.example.projektiop.R.string.error_backup_password_too_short
-                PasswordError.NO_UPPERCASE -> com.example.projektiop.R.string.error_password_no_uppercase
-                PasswordError.NO_DIGIT -> com.example.projektiop.R.string.error_password_no_digit
-                PasswordError.NO_LOWERCASE -> com.example.projektiop.R.string.error_password_no_lowercase
-
-                else -> com.example.projektiop.R.string.error_unknown
-            }
-        }
-    }
 }

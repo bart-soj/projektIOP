@@ -231,6 +231,10 @@
     <string name="error_backup_password_too_short">musi zawierać conajmniej 12 znaków</string>
     <string name="getting_backup">Pobieranie backupu...</string>
     <string name="get_backup">Pobierz backup</string>
-    <string name="backup_dialog_title">Przywróć Dane z backupu</string>
+    <string name="restore_backup_title">Odzyskaj Dane z backupu</string>
+    <string name="backup_dialog_title">Stwórz hasło backupu</string>
+    <string name="password_repeated_label">Powtórzone Hasło</string>
+    <string name="backed_up">To konto ma backup</string>
+    <string name="create_backup">Stwórz backup</string>
 
 </resources>
