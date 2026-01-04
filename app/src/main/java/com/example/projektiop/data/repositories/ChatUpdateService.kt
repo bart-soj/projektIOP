@@ -18,8 +18,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import okhttp3.internal.wait
 import org.koin.android.ext.android.inject
 import java.time.Instant
+import kotlin.math.ceil
+import kotlin.math.ln
+import kotlin.math.max
+import kotlin.math.min
 import com.example.projektiop.domain.models.Chat as DomainChat
 
 class ChatUpdateService(): Service() {
@@ -40,6 +45,10 @@ class ChatUpdateService(): Service() {
     private var pollingJob: Job? = null
 
     private val lastMessageTimes: MutableMap<String, Instant?> = mutableMapOf()
+
+    private var waitCounter: Int = 0
+    private var waitDuration: Int = 1
+    private val waitDoubling = intArrayOf(12, 18, 21, 23, 24, 25, 26, 27) // max wait time 256 * 5 = ~ 21 min
 
     companion object {
         private const val POLL_INTERVAL_MS = 5000L
@@ -99,6 +108,7 @@ class ChatUpdateService(): Service() {
 
         pollingJob = scope.launch {
             while (isActive) {
+                var newNotification = false
                 val user = myUserState.value
                 if (user != null) {
                     try {
@@ -111,7 +121,7 @@ class ChatUpdateService(): Service() {
                                 Log.e("ChatUpdateService", "Error fetching chats")
                             is Result.Success -> {
                                 val list = result.data
-                                detectNotifications(list)
+                                newNotification = detectNotifications(list)
                                 _chatsFlow.value = list
                             }
                         }
@@ -119,13 +129,25 @@ class ChatUpdateService(): Service() {
                         Log.e("ChatUpdateService", "Exception in polling", e)
                     }
                 }
-                delay(POLL_INTERVAL_MS)
+
+                if (newNotification) {
+                    waitCounter = 0
+                    waitDuration = 1
+                } else {
+                    waitCounter++
+                    if (waitCounter in waitDoubling) {
+                        waitDuration *= 2
+                    }
+                }
+
+                delay(POLL_INTERVAL_MS * waitDuration)
             }
         }
     }
 
     @SuppressLint("MissingPermission") // todo: handle permissions properly
-    private fun detectNotifications(newList: List<DomainChat>) {
+    private fun detectNotifications(newList: List<DomainChat>): Boolean {
+        var out = false
         newList.forEach { item ->
             val prevTime = lastMessageTimes[item.id]
             val currentTime = item.lastMessage?.createdAt
@@ -138,12 +160,14 @@ class ChatUpdateService(): Service() {
                         fromUser = item.title,
                         preview = item.lastMessage.content.take(100)
                     )
+                    out = true
                 }
             }
             if (currentTime != null) {
                 lastMessageTimes[item.id] = currentTime
             }
         }
+        return out
     }
 
     override fun onDestroy() {
