@@ -34,10 +34,6 @@ fun ChatsScreen(navController: NavController) {
     val error by viewModel.error.collectAsState()
     val searchText by viewModel.searchText.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.refreshAll()
-    }
-
     Scaffold(
         bottomBar = {
             BottomNavigationBar(navController = navController, currentRoute = currentRoute)
@@ -61,9 +57,13 @@ fun ChatsScreen(navController: NavController) {
                 loading -> {
                     Box(Modifier.fillMaxSize()) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
                 }
+
                 error != null -> {
                     Box(Modifier.fillMaxSize()) {
-                        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(
+                            Modifier.align(Alignment.Center),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             Text(error ?: "Błąd", color = MaterialTheme.colorScheme.error)
                             Spacer(Modifier.height(8.dp))
                             Button(onClick = {
@@ -72,6 +72,7 @@ fun ChatsScreen(navController: NavController) {
                         }
                     }
                 }
+
                 filteredChats.isEmpty() -> {
                     Box(Modifier.fillMaxSize()) {
                         Text(
@@ -80,6 +81,7 @@ fun ChatsScreen(navController: NavController) {
                         )
                     }
                 }
+
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),

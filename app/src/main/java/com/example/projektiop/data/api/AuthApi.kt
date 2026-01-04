@@ -1,6 +1,7 @@
 package com.example.projektiop.data.api
 
 import android.health.connect.datatypes.units.Length
+import android.provider.ContactsContract
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import retrofit2.HttpException
@@ -8,7 +9,24 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 
-// Data classes for requests and responses
+
+interface AuthApi {
+    @POST("auth/register")
+    suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
+
+    @POST("auth/login")
+    suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
+
+    @POST("auth/resend-verification")
+    suspend fun resendVerificationEmail(
+        @Body request: EmailRequest
+    ): Response<MessageResponse>
+
+    @POST("auth/forgot-password")
+    suspend fun forgotPassword(
+        @Body request: EmailRequest
+    ): Response<MessageResponse>
+}
 
 
 data class RegisterRequest(
@@ -33,15 +51,12 @@ data class AuthResponse(
     val isBackedUp: Boolean?
 )
 
-data class AuthFailedDto(
-    @SerializedName("message")
-    val message: String?,
+data class EmailRequest(
+    val email: String
 )
 
-interface AuthApi {
-    @POST("auth/register")
-    suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
+data class MessageResponse(
+    val message: String
+)
 
-    @POST("auth/login")
-    suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
-}
+

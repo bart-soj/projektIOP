@@ -5,8 +5,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.content.Context
 import android.util.Log
+import com.example.projektiop.data.api.AccesChatRequest
 import com.example.projektiop.data.api.ChatApi
 import com.example.projektiop.data.api.ChatDto
+import com.example.projektiop.data.api.SendMessageRequest
 import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.data.mapping.toDomain
 import com.example.projektiop.data.mapping.toRealm
@@ -16,7 +18,11 @@ import com.example.projektiop.domain.models.base64
 import com.example.projektiop.util.CertificateUtils
 import com.example.projektiop.util.DataError
 import com.example.projektiop.util.apiExceptionToDataError
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOf
 import com.example.projektiop.domain.models.Chat as DomainChat
 
 private const val BASE_URL_KEY: String = "BASE_URL"
@@ -39,7 +45,8 @@ class ChatRepository(private val chatApi: ChatApi,
                      private val certificateUtils: CertificateUtils
 ) {
 
-    lateinit var chats: StateFlow<List<DomainChat>>
+    private val _chats = MutableStateFlow<Flow<List<DomainChat>>>(flowOf(emptyList()))
+    val chats = _chats.asStateFlow()
 
     private fun normalizeUrl(url: String?): String? {
         if (url.isNullOrBlank()) return null
@@ -51,13 +58,13 @@ class ChatRepository(private val chatApi: ChatApi,
 
 
     suspend fun fetchChats(myUserId: String): com.example.projektiop.util.Result<List<DomainChat>, DataError> = withContext(Dispatchers.IO) {
-        val dtoList: List<ChatDto> = emptyList()
+        val dtoList: List<ChatDto>
         var domainList: List<DomainChat> = emptyList()
         try {
             val response = chatApi.getChats()
             val body = response.body()
             require(body != null)
-            val dtoList = body
+            dtoList = body
 
         } catch (e: Exception) {
             return@withContext apiExceptionToDataError<List<DomainChat>>(e)
@@ -90,8 +97,24 @@ class ChatRepository(private val chatApi: ChatApi,
 
                 val realmChat = it.toRealm(chatKey)
                 dbRepository.addChat(realmChat)
-                val domainCHat = realmChat.toDomain(myUserId, dbRepository)
-                domainList += domainCHat
+                val domainChat: DomainChat
+                val theirPubResult = certificateUtils.getPubKey(otherUserId)
+                when(theirPubResult) {
+                    is com.example.projektiop.util.Result.Error -> {
+                    domainChat = realmChat.toDomain(myUserId, dbRepository)}
+                    is com.example.projektiop.util.Result.Success -> {
+                        if (it.lastMessage != null) {
+                            val chatKey = certificateUtils.calculateChatKey(myUserId, theirPubResult.data)
+                            val decrypted = certificateUtils.decryptMessage(it.lastMessage.content!!, chatKey)
+                            domainChat = realmChat.toDomain(myUserId, dbRepository,
+                                it.lastMessage.toDomain(decrypted)
+                            )
+                        } else {
+                            domainChat = realmChat.toDomain(myUserId, dbRepository)
+                        }
+                    }
+                }
+                domainList += domainChat
             } catch(e: Exception ) {}
         }
 
@@ -113,7 +136,7 @@ class ChatRepository(private val chatApi: ChatApi,
                 }
             }
             if (dto == null){
-                val created = chatApi.accessChat(mapOf("userId" to friendId))
+                val created = chatApi.accessChat(AccesChatRequest(friendId))
                 dto = created.body()
             }
 
@@ -153,12 +176,12 @@ class ChatRepository(private val chatApi: ChatApi,
         try {
             val chatKey = dbRepository.getChatById(chatId)!!.chatKey
             val encrypted = certificateUtils.encryptMessage(content, chatKey!!)
-            val r = chatApi.sendMessage(mapOf("chatId" to chatId, "content" to encrypted))
+            val r = chatApi.sendMessage(SendMessageRequest(encrypted, chatId))
             if (r.isSuccessful) Result.success(r.body()!!) else Result.failure(Exception("Błąd wysyłania (${r.code()})"))
         } catch (e: Exception) { Result.failure(e) }
     }
 
     fun connectToService(serviceFlow: StateFlow<List<DomainChat>>) {
-        chats = serviceFlow
+        _chats.value = serviceFlow
     }
 }

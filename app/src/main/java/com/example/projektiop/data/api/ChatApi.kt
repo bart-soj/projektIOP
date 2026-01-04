@@ -17,7 +17,7 @@ interface ChatApi {
 
     // accessChat controller: POST /chats { userId }
     @POST("chats")
-    suspend fun accessChat(@Body body: Map<String, @JvmSuppressWildcards Any>): Response<ChatDto>
+    suspend fun accessChat(@Body body: AccesChatRequest): Response<ChatDto>
 
     // allMessages controller: GET /messages/:chatId
     @GET("messages/{chatId}")
@@ -25,8 +25,19 @@ interface ChatApi {
 
     // sendMessage controller: POST /messages { chatId, content }
     @POST("messages")
-    suspend fun sendMessage(@Body body: Map<String, @JvmSuppressWildcards Any>): Response<MessageDto>
+    suspend fun sendMessage(@Body body: SendMessageRequest): Response<MessageDto>
 }
+
+
+data class AccesChatRequest(
+    val userId: String
+)
+
+
+data class SendMessageRequest (
+    val content: base64,
+    val chatId: String
+)
 
 
 data class ChatDto(
@@ -34,6 +45,7 @@ data class ChatDto(
     val participants: List<String>? = null,
     val lastMessage: MessageDto? = null,
     val lastMessageTimestamp: String? = null,
+    val lastResetDate: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null
 )
@@ -54,5 +66,6 @@ data class MessagesPageDto(
     val messages: List<MessageDto>? = null,
     val currentPage: Int? = null,
     val totalPages: Int? = null,
-    val totalMessages: Int? = null
+    val totalMessages: Int? = null,
+    val historyUnavailableReason: String?
 )

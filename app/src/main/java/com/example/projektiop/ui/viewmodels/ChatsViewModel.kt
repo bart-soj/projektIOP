@@ -1,5 +1,6 @@
 package com.example.projektiop.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.repositories.ChatListItem
@@ -7,16 +8,19 @@ import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.util.DataError
 import com.example.projektiop.util.Result
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.collections.filter
 import com.example.projektiop.domain.models.Chat as DomainChat
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ChatsViewModel(
     private val userRepository: UserRepository,
     private val chatRepository: ChatRepository) : ViewModel() {
@@ -40,7 +44,7 @@ class ChatsViewModel(
     }.stateIn (
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
+        initialValue = _chatListItems.value
     )
 
     private val _error = MutableStateFlow<String?>(null)
@@ -53,7 +57,7 @@ class ChatsViewModel(
 
     init {
         viewModelScope.launch {
-            chatRepository.chats.collect { newList ->
+            chatRepository.chats.flatMapLatest{it}.collect { newList ->
                 _chats.value = newList
                 _chatListItems.value = newList.map {
                     ChatListItem(
@@ -68,6 +72,7 @@ class ChatsViewModel(
                 }
             }
         }
+        refreshAll()
     }
 
     fun refreshAll() {
@@ -90,8 +95,20 @@ class ChatsViewModel(
                     DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
                     DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
                 }
-                is Result.Success ->
+                is Result.Success -> {
                     _chats.value = result.data
+                    _chatListItems.value = result.data.map {
+                        ChatListItem(
+                            id = it.id,
+                            title = it.title,
+                            lastMessage = it.lastMessage?.content ?: "",
+                            lastMessageTime = it.lastMessage?.createdAt.toString(),
+                            friendId = it.otherUserId,
+                            avatarUrl = it.participants.first { user -> user.id == it.otherUserId }.profile.avatarUrl,
+                            unread = it.unread
+                        )
+                    }
+                }
             }
             _loading.value = false
         }

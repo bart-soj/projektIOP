@@ -10,6 +10,7 @@ class Chat(
     val otherUserId: String,
     val lastMessage: Message?,
     val unread: Boolean,
+    val lostHistory: Boolean,
     val createdAt: Instant,
 ) {}
 

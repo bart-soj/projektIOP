@@ -88,7 +88,7 @@ class ChatUpdateService(): Service() {
             channelName,
             NotificationManager.IMPORTANCE_MIN
         )
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(channel)
 
         val notification: Notification = NotificationCompat.Builder(this, channelId)
@@ -133,7 +133,7 @@ class ChatUpdateService(): Service() {
                 if (newNotification) {
                     waitCounter = 0
                     waitDuration = 1
-                } else {
+                } else if (waitCounter != waitDoubling.last()) {
                     waitCounter++
                     if (waitCounter in waitDoubling) {
                         waitDuration *= 2

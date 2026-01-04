@@ -20,6 +20,8 @@ class Chat : RealmObject {
 
     var chatKey: base64? = null
 
+    var lostHistory: Boolean = false
+
     var createdAt: RealmInstant? = null
     var updatedAt: RealmInstant? = null
 
@@ -30,6 +32,7 @@ class Chat : RealmObject {
             chatKey: base64,
             lastMessageId: String?,
             lastMessageTimestamp: RealmInstant? = null,
+            lostHistory: Boolean? = false,
             createdAt: RealmInstant? = null,
         ): Chat {
             require(participants.isNotEmpty()) {
@@ -42,6 +45,7 @@ class Chat : RealmObject {
                 this.lastMessageId = lastMessageId
                 this.chatKey = chatKey
                 this.lastMessageTimestamp = lastMessageTimestamp
+                this.lostHistory = lostHistory == true
                 this.createdAt = createdAt
                 this.updatedAt = RealmInstant.now()
             }

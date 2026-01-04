@@ -2,6 +2,7 @@ package com.example.projektiop.ui.screens
 
 import com.example.projektiop.R
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,8 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ButtonDefaults.buttonColors
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -106,8 +105,9 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                                         }
                                     }.getOrDefault(false)
                                     val currentDate = dateFormatter.format(m.createdAt)
-                                    val prevDate = if (index > 0) messages[index - 1].createdAt else null
-                                    val showDateHeader = m.createdAt != prevDate
+                                    val prevDate = if (index > 0)
+                                        dateFormatter.format(messages[index - 1].createdAt) else null
+                                    val showDateHeader = currentDate != prevDate
                                     if (showDateHeader) {
                                         DateSeparator(date = currentDate)
                                         Spacer(Modifier.height(6.dp))
@@ -195,13 +195,16 @@ private fun MessageBubble(
         )
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (incoming) Arrangement.Start else Arrangement.End) {
-        if (!groupedWithPrev) {
-            UserAvatar(
-                avatarUrl,
-                modifier = Modifier.size(32.dp)
-            )
+        if (incoming) {
+            if (!groupedWithPrev) {
+                UserAvatar(
+                    avatarUrl,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
             Spacer(Modifier.width(6.dp))
         }
+
         Column(horizontalAlignment = if (incoming) Alignment.Start else Alignment.End) {
             Surface(
                 color = bg,
@@ -209,8 +212,12 @@ private fun MessageBubble(
                 shape = shape,
                 tonalElevation = if (incoming) 0.dp else 2.dp,
                 shadowElevation = 0.dp,
-                modifier = if (groupedWithPrev) Modifier
-                    .padding(start = 34.dp)
+                modifier = if (groupedWithPrev)
+                    if (incoming) {
+                        Modifier.padding(start = 32.dp)
+                    } else {
+                        Modifier.padding(end = 32.dp)
+                    }
                 else Modifier
                     .padding(0.dp)
             ) {
@@ -224,8 +231,11 @@ private fun MessageBubble(
                     timeText,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = if (groupedWithPrev) Modifier
-                        .padding(start = 34.dp)
+                    modifier = if (groupedWithPrev) if (incoming) {
+                        Modifier.padding(start = 32.dp)
+                    } else {
+                        Modifier.padding(end = 32.dp)
+                    }
                     else Modifier
                         .padding(0.dp)
                 )
@@ -234,6 +244,12 @@ private fun MessageBubble(
         }
         if (!incoming) {
             Spacer(Modifier.width(6.dp))
+        }
+        if (!incoming && !groupedWithPrev) {
+            UserAvatar(
+                avatarUrl,
+                modifier = Modifier.size(32.dp)
+            )
         }
     }
 }
