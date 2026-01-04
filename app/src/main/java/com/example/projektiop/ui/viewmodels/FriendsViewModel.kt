@@ -31,6 +31,7 @@ sealed interface FriendsUiEffect {
     data class NavigateToProfile(val route: String) : FriendsUiEffect
     data class NavigateToChat(val friendId: String) : FriendsUiEffect
     data class ShowToast(val message: String) : FriendsUiEffect
+    data class NavigateToReport(val friendId: String) : FriendsUiEffect
 }
 
 // --- VIEWMODEL ---
@@ -134,6 +135,10 @@ class FriendsViewModel(private val friendshipRepository: FriendshipRepository,
                 .onSuccess { refreshAll() }
                 .onFailure { sendEffect(FriendsUiEffect.ShowToast("Błąd usuwania")) }
         }
+    }
+
+    fun onReportFriend(friendId: String) {
+        sendEffect(FriendsUiEffect.NavigateToReport(friendId))
     }
 
     fun onBlockFriend(friendshipId: String) {

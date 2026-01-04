@@ -183,6 +183,8 @@ fun BLEControls(viewModel: ScannerViewModel, onSearchProfileClick: () -> Unit, m
             }
         }
 
+        Spacer(modifier = Modifier.width(8.dp))
+
         Button(
             onClick = {
                 if (!isAdvertising) {

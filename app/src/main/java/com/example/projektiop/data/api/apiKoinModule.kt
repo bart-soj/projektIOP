@@ -86,4 +86,6 @@ val apiKoinModule = module {
     }
 
     single { ErrorConverter(get()) }
+
+    single<ReportApi> { get<retrofit2.Retrofit>().create(ReportApi::class.java) }
 }

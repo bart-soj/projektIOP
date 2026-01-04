@@ -23,7 +23,7 @@ object RealmProvider {
 
         val config = RealmConfiguration.Builder(
             schema = setOf(
-                Message::class,
+                // Message::class,
                 UserInterest::class,
                 Friendship::class,
                 User::class,

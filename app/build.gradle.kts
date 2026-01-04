@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.realm)
 }
 
-//apply("realm_task.gradle.kts")
+apply("realm_task.gradle.kts")
 
 android {
     namespace = "com.example.projektiop"

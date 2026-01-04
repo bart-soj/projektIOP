@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -16,11 +17,19 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
 import com.example.projektiop.ui.components.GlassPanel
+import com.example.projektiop.ui.viewmodels.AuthViewModel
+import org.koin.androidx.compose.koinViewModel
+import androidx.compose.runtime.*
 
 @Composable
 
 
 fun StartScreen(navController: NavController) {
+
+    val viewModel = koinViewModel<AuthViewModel>()
+    val loading by viewModel.loading.collectAsState()
+
+
 
     Box(
         modifier = Modifier
@@ -56,36 +65,41 @@ fun StartScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(96.dp)) // Odstęp między tytułem a przyciskami
 
-                // Przycisk Zaloguj się
-                Button(
-                    onClick = {
-                        navController.navigate("login")
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                ) {
-                    Text(text = stringResource(R.string.start_screen_login_button))
+                when (loading) {
+                    true -> { CircularProgressIndicator() }
+                    false -> {
+                        // Przycisk Zaloguj się
+                        Button(
+                            onClick = {
+                                navController.navigate("login")
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                        ) {
+                            Text(text = stringResource(R.string.start_screen_login_button))
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Przycisk Zarejestruj się
+                        OutlinedButton(
+                            onClick = {
+                                navController.navigate("register")
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                        ) {
+                            Text(text = stringResource(R.string.start_screen_register_button))
+                        }
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Przycisk Zarejestruj się
-                OutlinedButton(
-                    onClick = {
-                        navController.navigate("register")
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                ) {
-                    Text(text = stringResource(R.string.start_screen_register_button))
-                }
             }
-}
-            Spacer(modifier = Modifier.height(32.dp)) // Dodatkowy odstęp od dołu
         }
-
+        Spacer(modifier = Modifier.height(32.dp)) // Dodatkowy odstęp od dołu
+    }
 }
 
 // --- Podgląd ---

@@ -25,6 +25,7 @@ fun FriendCard(
     onRemoveClick: (() -> Unit)? = null,
     onBlockClick: (() -> Unit)? = null,
     onUnblockClick: (() -> Unit)? = null,
+    onReportClick: (() -> Unit)? = null,
 
     onInviteClick: (() -> Unit)? = null,
     isInviteSent: Boolean = false,
@@ -107,6 +108,16 @@ fun FriendCard(
                                 onClick = {
                                     menuExpanded = false
                                     onBlockClick()
+                                }
+                            )
+                        }
+
+                        if (onReportClick != null) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.report)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onReportClick()
                                 }
                             )
                         }

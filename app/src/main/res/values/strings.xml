@@ -236,5 +236,18 @@
     <string name="password_repeated_label">Powtórzone Hasło</string>
     <string name="backed_up">To konto ma backup</string>
     <string name="create_backup">Stwórz backup</string>
+    <string name="report">Zgłoś</string>
+    <string name="reporting">Zgłaszanie...</string>
+    <string name="report_dialog_title">Utwórz zgłoszenie</string>
+    <string name="reason">Powód</string>
+    <string name="report_count">%1$d / %2$d</string>
+    <string name="report_type_spam">Spam\n</string>
+    <string name="report_type_other">Inny</string>
+    <string name="report_type_scam">Oszustwo</string>
+    <string name="report_type_hate_speech">Mowa Nienawiści</string>
+    <string name="report_type_inappropriate_content">Niewłaściwe Treści\n</string>
+    <string name="report_type_impersonation">Podszywanie się</string>
+    <string name="report_type_none">(brak)</string>
+    <string name="report_type_label">Typ Zgłoszenia</string>
 
 </resources>

@@ -55,6 +55,7 @@ import com.example.projektiop.domain.AppState
 import com.example.projektiop.domain.AppStateEvent
 import com.example.projektiop.domain.AppStateRepository
 import com.example.projektiop.ui.screens.KeyLoadingScreen
+import com.example.projektiop.ui.screens.ReportScreen
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
@@ -188,7 +189,7 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         Intent(this, ChatUpdateService::class.java).also { intent ->
-            bindService(intent, serviceConnection, Context.BIND_ADJUST_WITH_ACTIVITY)
+            bindService(intent, serviceConnection, BIND_ADJUST_WITH_ACTIVITY)
         }
     }
 
@@ -245,6 +246,9 @@ fun AuthNavGraph() {
 @Composable
 fun MainNavGraph() {
     val navController = rememberNavController()
+    navController.addOnDestinationChangedListener { _, destination, _ ->
+        Log.d("NAV_DEBUG", "Actual Destination: ${destination.route}")
+    }
     val startDestination = "main"
 
     NavHost(navController, startDestination = startDestination) {
@@ -259,7 +263,7 @@ fun MainNavGraph() {
         ) { backStack ->
             val chatId = backStack.arguments?.getString("chatId")
             val friendId = backStack.arguments?.getString("friendId")
-            val friendName = backStack.arguments?.getString("friendName")
+            // val friendName = backStack.arguments?.getString("friendName")
             ChatDetailScreen(navController, chatId, friendId)
         }
         composable("settings") { SettingsScreen(navController) }
@@ -279,6 +283,17 @@ fun MainNavGraph() {
             val dname = backStack.arguments?.getString("displayName")
             val avatar = backStack.arguments?.getString("avatarUrl")
             FriendProfileScreen(navController, uid, uname, dname, avatar)
+        }
+        composable(
+            route = "report/{userId}?messageId={messageId}",
+            arguments = listOf(
+                navArgument("userId") {nullable = false},
+                navArgument("messageId") {nullable = true; defaultValue = ""}
+            )
+        ) { backStack ->
+            val userId = backStack.arguments?.getString("userId") ?: ""
+            val messageId = backStack.arguments?.getString("messageId")
+            ReportScreen(navController, userId, messageId)
         }
     }
 }

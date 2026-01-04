@@ -115,6 +115,7 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
                     }
                 }
             }
+            _backupLoading.value = false
         }
     }
 

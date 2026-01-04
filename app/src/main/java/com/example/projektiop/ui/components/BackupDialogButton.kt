@@ -83,13 +83,13 @@ fun BackupDialog(viewModel: BackupDialogViewModel, onClose: () -> Unit) {
     val passwordErrors by viewModel.passwordErrors.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
-    when(loading) {
-        true -> CircularProgressIndicator()
-        false -> {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        when(loading) {
+            true -> CircularProgressIndicator()
+            false -> {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -102,6 +102,30 @@ fun BackupDialog(viewModel: BackupDialogViewModel, onClose: () -> Unit) {
                         style = MaterialTheme.typography.headlineMedium,
                         modifier = Modifier.padding(bottom = 24.dp)
                     )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
+                        Button(
+                            onClick = {
+                                viewModel.onSetClick(password)
+                            },
+                            modifier = Modifier
+                                .padding(start = 8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                            ),
+                            enabled = passwordErrors.isEmpty() && password == password_repeated
+                        ) {
+                            Text(if (loading) stringResource(R.string.saving) else stringResource(R.string.add))
+                        }
+
+                        IconButton(
+                            onClick = onClose
+                        ) { Icon(imageVector = Icons.Filled.ChevronLeft, contentDescription = null) }
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -134,29 +158,6 @@ fun BackupDialog(viewModel: BackupDialogViewModel, onClose: () -> Unit) {
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
-                        Button(
-                            onClick = {
-                                viewModel.onSetClick(password)
-                            },
-                            modifier = Modifier
-                                .padding(start = 8.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary,
-                                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                            ),
-                            enabled = passwordErrors.isEmpty() && password == password_repeated
-                        ) {
-                            Text(if (loading) stringResource(R.string.saving) else stringResource(R.string.add))
-                        }
-
-                        IconButton(
-                            onClick = onClose
-                        ) { Icon(imageVector = Icons.Filled.ChevronLeft, contentDescription = null) }
-                    }
-
 
                     if (errorMessage != null) {
                         Text(

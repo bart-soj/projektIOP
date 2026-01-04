@@ -238,5 +238,18 @@
     <string name="password_repeated_label">Repeated Password</string>
     <string name="backed_up">Account Backed-Up</string>
     <string name="create_backup">Create a backup</string>
+    <string name="report">Report</string>
+    <string name="reporting">Reporting...</string>
+    <string name="report_dialog_title">Create a report</string>
+    <string name="reason">Reason</string>
+    <string name="report_count">%1$d / %2$d</string>
+    <string name="report_type_spam">Spam</string>
+    <string name="report_type_other">Other</string>
+    <string name="report_type_scam">Scam</string>
+    <string name="report_type_hate_speech">Hate Speech</string>
+    <string name="report_type_inappropriate_content">Inappropriate Content</string>
+    <string name="report_type_impersonation">Impersonation</string>
+    <string name="report_type_none">(None)</string>
+    <string name="report_type_label">Report Type</string>
 
 </resources>

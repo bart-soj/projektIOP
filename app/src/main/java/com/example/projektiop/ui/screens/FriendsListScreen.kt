@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.R
@@ -45,12 +44,12 @@ fun FriendsListScreen(
                 is FriendsUiEffect.NavigateToProfile -> navController.navigate(effect.route)
                 is FriendsUiEffect.NavigateToChat -> navController.navigate("chat_detail?chatId=null&friendId=${effect.friendId}")
                 is FriendsUiEffect.ShowToast -> Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                is FriendsUiEffect.NavigateToReport -> {
+                    val target = "report/${effect.friendId}"
+                    navController.navigate(target)
+                }
             }
         }
-    }
-
-    LaunchedEffect(Unit) {
-        viewModel.refreshAll()
     }
 
     LaunchedEffect(uiState.incomingRequests) {
@@ -147,7 +146,8 @@ fun FriendsListScreen(
                                     onCardClick = { viewModel.onFriendClicked(friend) },
                                     onChatClick = { viewModel.onChatClicked(friend.id) },
                                     onRemoveClick = { viewModel.onRemoveFriend(friend.friendshipId) },
-                                    onBlockClick = { viewModel.onBlockFriend(friend.friendshipId) }
+                                    onBlockClick = { viewModel.onBlockFriend(friend.friendshipId) },
+                                    onReportClick = { viewModel.onReportFriend(friend.id) }
                                 )
                             }
                         }
@@ -158,7 +158,7 @@ fun FriendsListScreen(
     }
 
     if (showSearch) {
-        UserSearchDialog(onClose = {
+        UserSearchDialog(navController, onClose = {
             showSearch = false
             viewModel.clearSearchState()
         }, viewModel = viewModel)
@@ -167,7 +167,7 @@ fun FriendsListScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun UserSearchDialog(onClose: () -> Unit, viewModel: FriendsViewModel) {
+private fun UserSearchDialog(navController: NavController, onClose: () -> Unit, viewModel: FriendsViewModel) {
     var query by remember { mutableStateOf("") }
     val uiState by viewModel.uiState.collectAsState()
 

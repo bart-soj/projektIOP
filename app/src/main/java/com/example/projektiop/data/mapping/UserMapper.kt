@@ -94,7 +94,7 @@ fun User.toUserProfileResponse(): UserProfileResponse {
         createdAt = realmInstantToMongoTimestamp(this.createdAt),
         updatedAt = realmInstantToMongoTimestamp(this.updatedAt),
         __v = null,
-        interests = null // TODO() need to store in db first
+        interests = null
     )
 }
 
