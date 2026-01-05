@@ -21,6 +21,7 @@ import com.example.projektiop.ui.viewmodels.FriendProfileViewModel
 import com.example.projektiop.ui.viewmodels.KeyLoadingViewModel
 import com.example.projektiop.ui.viewmodels.MainViewModel
 import com.example.projektiop.ui.viewmodels.ReportViewModel
+import com.example.projektiop.ui.viewmodels.ResendEmailViewModel
 import com.example.projektiop.ui.viewmodels.ScannerViewModel
 import com.example.projektiop.ui.viewmodels.SettingsViewModel
 import com.example.projektiop.util.CertificateUtils
@@ -52,4 +53,5 @@ val rootKoinModule = module {
     viewModel { EditProfileViewModel( get(), get() ) }
     viewModel { BackupDialogViewModel( get(), get(), get() ) }
     viewModel { ReportViewModel( get(), get() ) }
+    viewModel { ResendEmailViewModel( get()) }
 }

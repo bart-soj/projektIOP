@@ -11,10 +11,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import com.example.projektiop.util.ValidationError.Common
-import com.example.projektiop.util.ValidationError.EmailError
 import com.example.projektiop.util.ValidationError.PasswordError
+import com.example.projektiop.util.emailValidator
 import com.example.projektiop.util.mapToResource
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+
+sealed interface AuthUiEvent{
+    data class NavigateToResend(val email: String? = null) : AuthUiEvent
+}
 
 class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
 
@@ -38,9 +44,8 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
     private val _usernameErrors: MutableStateFlow<List<Int>> = MutableStateFlow(emptyList())
     val usernameErrors: StateFlow<List<Int>> = _usernameErrors.asStateFlow()
 
-    private val KEY_TOKEN = "auth_token"
-    private val EMAIL = "my_email"
-    private val KEY_REMEMBER = "remember_me"
+    private val _authUiChannel = Channel<AuthUiEvent>()
+    val authUiFlow = _authUiChannel.receiveAsFlow()
 
     fun rememberMe() {
         authRepository.rememberMe()
@@ -121,7 +126,9 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
                         }
                     }
 
-                    is Result.Success -> {}
+                    is Result.Success -> {
+                        _authUiChannel.send(AuthUiEvent.NavigateToResend(email))
+                    }
                 }
                 _loading.value = false
             }
@@ -131,6 +138,12 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
     fun onLogoutClick() {
         viewModelScope.launch {
             authRepository.logout()
+        }
+    }
+
+    fun onResendClick() {
+        viewModelScope.launch {
+            _authUiChannel.send(AuthUiEvent.NavigateToResend())
         }
     }
 
@@ -149,15 +162,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
         return out
     }
 
-    fun emailValidator(email: String): List<ValidationError>{
-        var out = emptyList<ValidationError>()
-        val isEmail = Patterns.EMAIL_ADDRESS.matcher(email).matches()
 
-        if(!isEmail) out += EmailError.NOT_EMAIL
-        if(!email.isNotBlank()) out += Common.BLANK
-
-        return out
-    }
     fun usernameValidator(username: String): List<ValidationError> {
         var out = emptyList<ValidationError>()
 

@@ -24,10 +24,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.projektiop.R
+import com.example.projektiop.ui.components.ObserveAsEvents
 import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
+import com.example.projektiop.ui.viewmodels.AuthUiEvent
 import com.example.projektiop.ui.viewmodels.AuthViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -41,8 +44,16 @@ fun RegisterScreen(navController: NavController) {
     val emailErrors by viewModel.emailErrors.collectAsState()
     val passwordErrors by viewModel.passwordErrors.collectAsState()
     val registrationError by viewModel.errorMessage.collectAsState()
+    val uiEvents = viewModel.authUiFlow
 
-    // TODO() add uiEffect and show a toast on successful register, or even navigate to resend email screen
+    ObserveAsEvents(uiEvents) { event -> when(event) {
+        is AuthUiEvent.NavigateToResend-> {
+            if (!event.email.isNullOrBlank())
+                navController.navigate("resend_email?email=${event.email}")
+            else
+                navController.navigate("resend_email")
+        }
+    }}
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -139,6 +150,21 @@ fun RegisterScreen(navController: NavController) {
             }
             if (registrationError != null) {
                 Text(registrationError!!, color = colorScheme.error)
+            }
+            Row (
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+
+            ) {
+                Button(
+                    onClick = { viewModel.onResendClick() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colorScheme.background,
+                        contentColor = colorScheme.onPrimary
+                    )
+                )
+                { Text(stringResource(R.string.resend_email_title),
+                    textDecoration = TextDecoration.Underline ) }
             }
         }
     }

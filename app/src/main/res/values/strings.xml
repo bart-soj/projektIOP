@@ -249,5 +249,7 @@
     <string name="report_type_impersonation">Podszywanie się</string>
     <string name="report_type_none">(brak)</string>
     <string name="report_type_label">Typ Zgłoszenia</string>
+    <string name="permission_denied">Brak uprawnienia</string>
+    <string name="resend_email_title">Ponownie wyślij email weryfikacyjny</string>
 
 </resources>

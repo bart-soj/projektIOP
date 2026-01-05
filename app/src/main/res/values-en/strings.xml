@@ -251,5 +251,6 @@
     <string name="report_type_impersonation">Impersonation</string>
     <string name="report_type_none">(None)</string>
     <string name="report_type_label">Report Type</string>
-
+    <string name="permission_denied">Permission denied</string>
+    <string name="resend_email_title">Resend verification email</string>
 </resources>

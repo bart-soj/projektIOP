@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import com.example.projektiop.data.repositories.ThemePreference
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -56,6 +57,7 @@ import com.example.projektiop.domain.AppStateEvent
 import com.example.projektiop.domain.AppStateRepository
 import com.example.projektiop.ui.screens.KeyLoadingScreen
 import com.example.projektiop.ui.screens.ReportScreen
+import com.example.projektiop.ui.screens.ResendEmailScreen
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
@@ -205,7 +207,7 @@ class MainActivity : ComponentActivity() {
 
 private fun MainActivity.showPermissionDeniedMessage(context: Context, permission: String) {
     Log.w("BLE_PERMISSIONS", "Użytkownik odmówił uprawnienia: $permission. Funkcjonalność może być ograniczona.")
-    Toast.makeText(context, "Odmówiono uprawnienia: $permission", Toast.LENGTH_SHORT).show()
+    Toast.makeText(context, context.getString(R.string.permission_denied) + ": $permission", Toast.LENGTH_SHORT).show()
 }
 
 
@@ -238,7 +240,15 @@ fun AuthNavGraph() {
         composable("start") { StartScreen(navController) }
         composable("login") { LoginScreen(navController) }
         composable("register") { RegisterScreen(navController) }
-        // TODO() verification email screen with resend option
+        composable(
+            route = "resend_email?email={email}",
+            arguments = listOf(
+                navArgument("email") { nullable = true; defaultValue = null }
+            )
+        ) { backStack ->
+            val email = backStack.arguments?.getString("email")
+            ResendEmailScreen(email)
+        }
     }
 }
 
