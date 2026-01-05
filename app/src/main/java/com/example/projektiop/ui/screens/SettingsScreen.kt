@@ -26,7 +26,9 @@ import com.example.projektiop.data.repositories.ThemePreference
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.screens.components.FriendCard
 import com.example.projektiop.ui.components.BackupDialogButton
+import com.example.projektiop.ui.theme.ProjektIOPTheme
 import com.example.projektiop.ui.viewmodels.AuthViewModel
+import com.example.projektiop.ui.viewmodels.BackupDialogViewModel
 import com.example.projektiop.ui.viewmodels.SettingsViewModel
 import com.example.projektiop.util.DataError
 import com.example.projektiop.util.Result
@@ -38,6 +40,7 @@ fun SettingsScreen(
     navController: NavController
 ) {
     val authViewModel = koinViewModel<AuthViewModel>()
+    val backupDialogViewModel = koinViewModel<BackupDialogViewModel>()
     val viewModel = koinViewModel<SettingsViewModel>()
     var animationPlayed by remember { mutableStateOf(false) }
     val alphaAnimation = animateFloatAsState(
@@ -152,7 +155,14 @@ fun SettingsScreen(
             AlertDialog(
                 onDismissRequest = { showLogoutDialog = false },
                 title = { Text(stringResource(R.string.confirmation)) },
-                text = { Text(stringResource(R.string.logout_confirm_message)) },
+                text = {
+                    if (backupDialogViewModel.isBackedUp) {
+                        Text(stringResource(R.string.logout_confirm_message))
+                    } else {
+                      Text(stringResource(R.string.logout_confirm_message)
+                              + "\n" + stringResource(R.string.no_backup),
+                          color = MaterialTheme.colorScheme.error )
+                    }},
                 confirmButton = {
                     Button(onClick = {
                         showLogoutDialog = false

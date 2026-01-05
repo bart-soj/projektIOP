@@ -251,5 +251,6 @@
     <string name="report_type_label">Typ Zgłoszenia</string>
     <string name="permission_denied">Brak uprawnienia</string>
     <string name="resend_email_title">Ponownie wyślij email weryfikacyjny</string>
+    <string name="no_backup">Brak backupu, utracisz historię chatów!</string>
 
 </resources>

@@ -253,4 +253,5 @@
     <string name="report_type_label">Report Type</string>
     <string name="permission_denied">Permission denied</string>
     <string name="resend_email_title">Resend verification email</string>
+    <string name="no_backup">Missing backup, you will loose chat history!</string>
 </resources>

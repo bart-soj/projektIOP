@@ -122,6 +122,4 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
     fun onPasswordChange(password: String) {
         _passwordErrors.value = backupPasswordValidator(password).mapToResource()
     }
-
-
 }

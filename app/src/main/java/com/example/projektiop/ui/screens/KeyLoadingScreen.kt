@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
+import com.example.projektiop.ui.viewmodels.AuthViewModel
 
 
 @Composable
@@ -67,10 +69,12 @@ fun KeyLoadingScreen() {
 
 @Composable
 fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifier) {
+    val authViewModel = koinViewModel<AuthViewModel>()
     var password by remember { mutableStateOf("") }
     val passwordErrors by viewModel.passwordErrors.collectAsState()
     val loading by viewModel.backupLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -131,6 +135,39 @@ fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifie
                 enabled = passwordErrors.isEmpty() && !loading
             ) {
                 Text(if (loading) stringResource(R.string.getting_backup) else stringResource(R.string.get_backup))
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            Button(
+                onClick = { showLogoutDialog = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                )
+            ) {
+                Text(stringResource(R.string.log_out), style = MaterialTheme.typography.titleLarge)
+            }
+            if (showLogoutDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLogoutDialog = false },
+                    title = { Text(stringResource(R.string.confirmation)) },
+                    text = { Text(stringResource(R.string.logout_confirm_message)) },
+                    confirmButton = {
+                        Button(onClick = {
+                            showLogoutDialog = false
+                            authViewModel.onLogoutClick()
+                        }) {
+                            Text(stringResource(R.string.logout_confirm_yes))
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = { showLogoutDialog = false }) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                    }
+                )
             }
         }
     }

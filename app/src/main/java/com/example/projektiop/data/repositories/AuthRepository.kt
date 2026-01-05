@@ -1,32 +1,20 @@
 package com.example.projektiop.data.repositories
 
-import android.util.Log
 import com.example.projektiop.data.api.AuthApi
 import com.example.projektiop.data.api.RegisterRequest
 import com.example.projektiop.data.api.LoginRequest
 import com.example.projektiop.data.api.TokenProvider
 import com.example.projektiop.domain.AppStateRepository
 import com.example.projektiop.util.DataError
-import retrofit2.HttpException
 import com.example.projektiop.util.Result
 import com.example.projektiop.util.apiExceptionToDataError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.serialization.SerializationException
-import java.io.IOException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
-
-
-
 
 
 sealed interface AuthState {

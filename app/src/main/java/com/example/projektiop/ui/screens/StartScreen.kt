@@ -29,8 +29,6 @@ fun StartScreen(navController: NavController) {
     val viewModel = koinViewModel<AuthViewModel>()
     val loading by viewModel.loading.collectAsState()
 
-
-
     Box(
         modifier = Modifier
             .fillMaxSize()
