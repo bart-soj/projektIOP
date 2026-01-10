@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.example.projektiop.domain.models.Interest as DomainInterest
+import com.example.projektiop.domain.models.UserInterest as DomainUserInterest
 
 class InterestRepository(private val publicInterestApi: PublicInterestApi,
                          private val dbRepository: RealmDBRepository) {
@@ -145,7 +146,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
         return@withContext resp
     }
 
-    suspend fun resolveIncomingUserInterests(userInterests: List<UserInterestDto>, userId: String, flowToUpdate: MutableStateFlow<List<UserInterestDto>?>) {
+    suspend fun resolveIncomingUserInterests(userInterests: List<UserInterestDto>, userId: String, flowToUpdate: MutableStateFlow<List<DomainUserInterest>?>) {
         var localInterestCategories: List<String> = dbRepository.getInterestCategories()
             .map{ it._id.toHexString() }
 
@@ -180,7 +181,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
             }
         }
 
-        flowToUpdate.value = dbRepository.getUserInterestsByUserId(userId).map{it.toDto()}
+        flowToUpdate.value = dbRepository.getUserInterestsByUserId(userId).map{it.toDomain()}
     }
 
     suspend fun getInterestByName(name: String): DomainInterest? {

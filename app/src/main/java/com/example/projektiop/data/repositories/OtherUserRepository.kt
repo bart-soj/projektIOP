@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 import kotlin.collections.filterNotNull
 import kotlin.collections.orEmpty
 import java.time.Duration
+import com.example.projektiop.domain.models.UserInterest as DomainUserInterest
 
 private val userFreshnessTimeout: Duration = Duration.ofMinutes(5)
 
@@ -27,8 +28,8 @@ class OtherUserRepository(private val id: String,
 
     private val _Profile = MutableStateFlow<UserProfileResponse?>(null)
     val Profile: StateFlow<UserProfileResponse?> = _Profile.asStateFlow()
-    private val _UserInterests = MutableStateFlow<List<UserInterestDto>?>(null)
-    val UserInterests: StateFlow<List<UserInterestDto>?> = _UserInterests.asStateFlow()
+    private val _UserInterests = MutableStateFlow<List<DomainUserInterest>?>(null)
+    val UserInterests: StateFlow<List<DomainUserInterest>?> = _UserInterests.asStateFlow()
 
     /*
     val userFlow: Flow<User?>

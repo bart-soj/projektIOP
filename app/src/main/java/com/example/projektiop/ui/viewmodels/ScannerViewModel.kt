@@ -16,6 +16,7 @@ import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.models.FriendshipStatus
 import com.example.projektiop.domain.models.Interest
 import com.example.projektiop.domain.models.SearchProfile
+import com.example.projektiop.domain.models.UserInterest
 import com.example.projektiop.util.DataError
 import com.example.projektiop.util.Result
 import com.example.projektiop.util.cosineSimilarity
@@ -54,7 +55,7 @@ class ScannerViewModel(application: Application,
     //private val _user = MutableStateFlow<User?>(null)
     //val user: StateFlow<User?> = _user.asStateFlow()
     val publicInterests = interestRepository.publicInterests
-    val myInterests: StateFlow<List<UserInterestDto>?> = userRepository.MyUserInterests
+    val myInterests: StateFlow<List<UserInterest>?> = userRepository.MyUserInterests
     val friendsIds: StateFlow<List<String>> = friendshipRepository.friendsIds
     val pendingIds: StateFlow<List<String>> = friendshipRepository.pendingIds
     val blockedIds: StateFlow<List<String>> = friendshipRepository.blockedIds
@@ -280,11 +281,10 @@ class ScannerViewModel(application: Application,
         _chosenSearchProfile.value = searchProfile
     }
 
-    fun addSearchProfile(name: String, interests: Set<String>) {
+    fun addSearchProfile(name: String, interests: Set<Interest>) {
         _searchProfileLoading.value = true
         viewModelScope.launch {
-            val resolvedInterests = interests.mapNotNull { interestRepository.getInterestByName(it) }
-            val toAdd = SearchProfile(name, resolvedInterests)
+            val toAdd = SearchProfile(name, interests.toList())
             val result = searchProfileRepository.addSearchProfile(toAdd)
             when (result) {
                 is Result.Error -> when(result.error) {

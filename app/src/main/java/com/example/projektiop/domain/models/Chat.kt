@@ -1,5 +1,6 @@
 package com.example.projektiop.domain.models
 
+import com.google.gson.annotations.SerializedName
 import java.time.Instant
 
 
@@ -16,7 +17,7 @@ class Chat(
 
 
 class Message(
-    val id: String,
+    @SerializedName("_id") val id: String,
     val chatId: String,
     val content: String,
     val readBy: List<String>,

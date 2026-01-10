@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.map
 import com.example.projektiop.domain.models.FriendshipStatus
+import com.example.projektiop.domain.models.base64
 import io.realm.kotlin.ext.realmListOf
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.ObjectId
@@ -115,6 +116,16 @@ class RealmDBRepository(private val realm: Realm) {
                 it.role = user.role
                 it.isBanned = user.isBanned
                 it.updatedAt = user.updatedAt
+            }
+        }
+    }
+
+    fun savePubKey(userId: String, pubKey: base64) {
+        val objectId = ObjectId(userId)
+        realm.writeBlocking {
+            val user = realm.query<User>(User::class, "_id == $0", objectId).first().find()
+            if (user != null) {
+                user.publicKey = pubKey
             }
         }
     }

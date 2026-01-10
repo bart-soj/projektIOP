@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.repositories.UserRepository
+import com.example.projektiop.domain.models.UserInterest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +17,7 @@ private const val ID: String = "_id"
 
 class MainViewModel(private val userRepository: UserRepository) : ViewModel() {
 
-    val myInterests: StateFlow<List<UserInterestDto>?> = userRepository.MyUserInterests
+    val myInterests: StateFlow<List<UserInterest>?> = userRepository.MyUserInterests
 
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()

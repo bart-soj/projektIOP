@@ -1,8 +1,5 @@
 package com.example.projektiop.activeHandshake.NFC
 
-import android.app.Activity
-import android.content.Context
-import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically

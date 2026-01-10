@@ -39,7 +39,6 @@ import org.koin.androidx.compose.koinViewModel
 fun SettingsScreen(
     navController: NavController
 ) {
-    val authViewModel = koinViewModel<AuthViewModel>()
     val backupDialogViewModel = koinViewModel<BackupDialogViewModel>()
     val viewModel = koinViewModel<SettingsViewModel>()
     var animationPlayed by remember { mutableStateOf(false) }
@@ -62,6 +61,7 @@ fun SettingsScreen(
 
         var showLogoutDialog by remember { mutableStateOf(false) }
         var showBlockedDialog by remember { mutableStateOf(false) }
+        var showDeleteDialog by remember { mutableStateOf(false) }
 
         Surface(
             modifier = Modifier
@@ -134,6 +134,22 @@ fun SettingsScreen(
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
+
+                Button(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.delete_account), style = MaterialTheme.typography.titleLarge)
+                }
+
+                Spacer(modifier = Modifier.size(8.dp))
+
                 Button(
                     onClick = { showLogoutDialog = true },
                     modifier = Modifier
@@ -152,27 +168,46 @@ fun SettingsScreen(
             BlockedUsersDialog(onClose = { showBlockedDialog = false }, viewModel)
         }
         if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text(stringResource(R.string.confirmation)) },
+            text = {
+                if (backupDialogViewModel.isBackedUp) {
+                    Text(stringResource(R.string.logout_confirm_message))
+                } else {
+                    Text(stringResource(R.string.logout_confirm_message)
+                            + "\n" + stringResource(R.string.no_backup),
+                        color = MaterialTheme.colorScheme.error )
+                }},
+            confirmButton = {
+                Button(onClick = {
+                    showLogoutDialog = false
+                    viewModel.logout()
+                }) {
+                    Text(stringResource(R.string.logout_confirm_yes))
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showLogoutDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )}
+        if (showDeleteDialog) {
             AlertDialog(
-                onDismissRequest = { showLogoutDialog = false },
+                onDismissRequest = { showDeleteDialog = false },
                 title = { Text(stringResource(R.string.confirmation)) },
-                text = {
-                    if (backupDialogViewModel.isBackedUp) {
-                        Text(stringResource(R.string.logout_confirm_message))
-                    } else {
-                      Text(stringResource(R.string.logout_confirm_message)
-                              + "\n" + stringResource(R.string.no_backup),
-                          color = MaterialTheme.colorScheme.error )
-                    }},
+                text = { Text(stringResource(R.string.delete_account_warning)) },
                 confirmButton = {
                     Button(onClick = {
-                        showLogoutDialog = false
-                        authViewModel.onLogoutClick()
+                        showDeleteDialog = false
+                        viewModel.logout()
                     }) {
-                        Text(stringResource(R.string.logout_confirm_yes))
+                        Text(stringResource(R.string.delete_confirm_yes))
                     }
                 },
                 dismissButton = {
-                    Button(onClick = { showLogoutDialog = false }) {
+                    Button(onClick = { showDeleteDialog = false }) {
                         Text(stringResource(R.string.cancel))
                     }
                 }

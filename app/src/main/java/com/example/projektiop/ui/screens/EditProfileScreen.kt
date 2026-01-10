@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import com.example.projektiop.domain.models.Gender
+import com.example.projektiop.domain.models.Interest
 import com.example.projektiop.ui.components.MultiSelectInterestsDropdown
 import com.example.projektiop.ui.components.UserAvatar
 import com.example.projektiop.ui.viewmodels.EditProfileViewModel
@@ -57,8 +58,8 @@ fun EditProfileScreen(
     var gender by remember { mutableStateOf<Gender?>(myUser?.profile?.gender)}
     var description by remember { mutableStateOf(myUser?.profile?.bio ?: "") }
 
-    var selectedInterests by remember { mutableStateOf<Set<String>>(emptySet())}
-    var selectedDescriptions = remember { mutableStateMapOf<String, String>() }
+    var selectedInterests by remember { mutableStateOf<Set<Interest>>(emptySet())}
+    var selectedDescriptions = remember { mutableStateMapOf<Interest, String>() }
     var interestsSaving by remember { mutableStateOf(false) }
     var broadcastMessage by remember { mutableStateOf("") }
     var showConfirmDialog by remember { mutableStateOf(false) }
@@ -172,7 +173,7 @@ fun EditProfileScreen(
             )
             Spacer(Modifier.height(8.dp))
             MultiSelectInterestsDropdown(
-                all = publicInterests.map { it.id },
+                all = publicInterests,
                 selected = selectedInterests,
                 onChange = { updated ->
                     val removed = selectedInterests.minus(updated)
@@ -196,25 +197,25 @@ fun EditProfileScreen(
                 )
                 Spacer(Modifier.height(4.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    selectedInterests.sorted().forEach { nameKey ->
-                        val value = selectedDescriptions[nameKey] ?: ""
+                    selectedInterests.sortedBy{ it.name }.forEach { key ->
+                        val value = selectedDescriptions[key] ?: ""
                         OutlinedTextField(
                             value = value,
                             onValueChange = { newVal ->
                                 if (newVal.length <= 200) {
-                                    selectedDescriptions = selectedDescriptions.apply { put(nameKey, newVal) }
+                                    selectedDescriptions = selectedDescriptions.apply { put(key, newVal) }
                                 }
                             },
                             label = {
                                 Text(
                                     stringResource(id = R.string.interest_description_label,
-                                    translateInterestName(nameKey))
+                                    key.name)
                                 ) },
                             supportingText = { Text("${value.length}/200") },
                             trailingIcon = {
                                 if (value.isNotBlank()) {
                                     IconButton(onClick = {
-                                        selectedDescriptions = selectedDescriptions.apply { put(nameKey, "") }
+                                        selectedDescriptions = selectedDescriptions.apply { put(key, "") }
                                     }) {
                                         Icon(Icons.Default.Clear, contentDescription = stringResource(id = R.string.clear))
                                     }

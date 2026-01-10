@@ -3,6 +3,8 @@ package com.example.projektiop.ui.viewmodels
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projektiop.data.api.websocket.ChatEvent
+import com.example.projektiop.data.api.websocket.SocketManager
 import com.example.projektiop.data.repositories.BlockInfo
 import com.example.projektiop.data.repositories.ChatListItem
 import com.example.projektiop.data.repositories.ChatRepository
@@ -16,6 +18,7 @@ import com.example.projektiop.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -24,7 +27,8 @@ import java.time.format.DateTimeFormatter
 class ChatDetailViewModel(private val friendId: String,
                           private val chatRepository: ChatRepository,
                           private val userRepository: UserRepository,
-                          private val friendshipRepository: FriendshipRepository): ViewModel() {
+                          private val friendshipRepository: FriendshipRepository,
+                          private val socketManager: SocketManager): ViewModel() {
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages = _messages.asStateFlow()
@@ -38,6 +42,9 @@ class ChatDetailViewModel(private val friendId: String,
     private val _blockInfo = MutableStateFlow<BlockInfo?>(null)
     val blockInfo = _blockInfo.asStateFlow()
 
+    private val _typing = MutableStateFlow(false)
+    val typing: StateFlow<Boolean> = _typing.asStateFlow()
+
     val myId = userRepository.myUser.value!!._id.toHexString()
     private val _chat = MutableStateFlow<Chat?>(null)
     //private val _chatListItem = MutableStateFlow<ChatListItem?>(null)
@@ -48,6 +55,8 @@ class ChatDetailViewModel(private val friendId: String,
 
     val dateFormatter: DateTimeFormatter =
         DateTimeFormatter.ofPattern("d MMMM yyyy").withZone(ZoneId.systemDefault())
+
+    val chatEventFlow = socketManager.wsEventFlow
 
     init {
         ensureChat()
@@ -80,6 +89,22 @@ class ChatDetailViewModel(private val friendId: String,
             }
 
             _loading.value = false
+        }
+
+        viewModelScope.launch {
+            chatEventFlow.collect { event ->
+                when(event) {
+                    is ChatEvent.Receive -> {
+                        chatRepository.decryptMessage(event.message).onSuccess { resultMess ->
+                            _messages.value += resultMess
+                            _typing.value = false
+                        }
+                    }
+                    is ChatEvent.Send -> {}
+                    is ChatEvent.Writing -> {
+                        _typing.value = !typing.value }
+                }
+            }
         }
     }
 
@@ -115,8 +140,16 @@ class ChatDetailViewModel(private val friendId: String,
 
     fun onSendClick(content: String) {
         viewModelScope.launch {
-            chatRepository.sendMessage(chat.value!!.id, content)
-            loadMessages()
+            // chatRepository.sendMessage(chat.value!!.id, content)
+            // loadMessages()
+            Log.d("SOCC", "out send vm")
+            chatRepository.sendMessageSocket(chat.value!!.id, content, socketManager)
+        }
+    }
+
+    fun onType() {
+        viewModelScope.launch {
+            socketManager.emit(ChatEvent.Writing(chat.value!!.id))
         }
     }
 

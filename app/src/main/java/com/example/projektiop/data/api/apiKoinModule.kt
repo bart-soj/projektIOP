@@ -3,6 +3,7 @@ package com.example.projektiop.data.api
 
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.SharedDataSource
+import com.example.projektiop.data.api.websocket.SocketManager
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.core.qualifier.named
@@ -10,8 +11,12 @@ import org.koin.dsl.module
 import retrofit2.converter.gson.GsonConverterFactory
 
 val apiKoinModule = module {
-    single<String>(qualifier = named("BaseUrl")) {
+    single<String>(qualifier = named("BaseApiUrl")) {
         get<SharedDataSource>().get("BASE_URL", "") + "/api/"
+    }
+
+    single<String>(qualifier = named("BaseUrl")) {
+        get<SharedDataSource>().get("BASE_URL", "")
     }
 
     single { AuthInterceptor( get() ) }
@@ -29,7 +34,7 @@ val apiKoinModule = module {
 
     single<retrofit2.Retrofit> {
         retrofit2.Retrofit.Builder()
-            .baseUrl(get<String>(named("BaseUrl")))
+            .baseUrl(get<String>(named("BaseApiUrl")))
             .client(get())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -46,7 +51,7 @@ val apiKoinModule = module {
     single<NoAuthRetrofit> {
         NoAuthRetrofit (
             retrofit2.Retrofit.Builder()
-                .baseUrl(get<String>(named("BaseUrl")))
+                .baseUrl(get<String>(named("BaseApiUrl")))
                 .client(get<NoAuthClient>().client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
@@ -88,4 +93,7 @@ val apiKoinModule = module {
     single { ErrorConverter(get()) }
 
     single<ReportApi> { get<retrofit2.Retrofit>().create(ReportApi::class.java) }
+
+
+    single { SocketManager( get<String>(named("BaseUrl")) , get() ) }
 }

@@ -37,6 +37,7 @@ import com.example.projektiop.R
 import com.example.projektiop.activeHandshake.NFC.ActiveHandshakeButton
 import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.domain.models.FriendshipStatus
+import com.example.projektiop.domain.models.Interest
 import com.example.projektiop.domain.models.SearchProfile
 import com.example.projektiop.ui.components.MultiSelectInterestsDropdown
 import com.example.projektiop.ui.components.UserAvatar
@@ -359,7 +360,7 @@ fun SearchProfileDialog(viewModel: ScannerViewModel, onClose: () -> Unit, modifi
     when (showAddDialog) {
         true -> { // TODO() better input validation and respond to errors/loading
             var name by remember { mutableStateOf("") }
-            var selectedInterests by remember { mutableStateOf<Set<String>>(emptySet()) }
+            var selectedInterests by remember { mutableStateOf<Set<Interest>>(emptySet()) }
             val allInterests by viewModel.publicInterests.collectAsState()
 
             Row(horizontalArrangement = Arrangement.SpaceBetween) {
@@ -386,7 +387,7 @@ fun SearchProfileDialog(viewModel: ScannerViewModel, onClose: () -> Unit, modifi
             Spacer(Modifier.height(8.dp))
 
             MultiSelectInterestsDropdown(
-                all = allInterests.map{ it.name },
+                all = allInterests,
                 selected = selectedInterests,
                 onChange = { set -> selectedInterests = set }
             )

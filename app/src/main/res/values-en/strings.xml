@@ -254,4 +254,8 @@
     <string name="permission_denied">Permission denied</string>
     <string name="resend_email_title">Resend verification email</string>
     <string name="no_backup">Missing backup, you will loose chat history!</string>
+    <string name="delete_account">Delete Account</string>
+    <string name="delete_account_warning">Deleted account can\'t be restored!</string>
+    <string name="delete_confirm_yes">Yes, delete!</string>
+    <string name="typing">Typing...</string>
 </resources>

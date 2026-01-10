@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import java.util.UUID
+import com.example.projektiop.domain.models.Interest as DomainInterest
+import com.example.projektiop.domain.models.UserInterest as DomainUserInterest
 
 
 private const val ID = "_id"
@@ -34,11 +36,12 @@ class UserRepository(private val userApi: UserApi,
                      private val sharedDataSource: SharedDataSource,
                      private val interestRepository: InterestRepository) {
     private var id: String? = null
-    private val _MyUserInterests = MutableStateFlow<List<UserInterestDto>?>(null)
-    val MyUserInterests: StateFlow<List<UserInterestDto>?> = _MyUserInterests.asStateFlow()
+    private val _MyUserInterests = MutableStateFlow<List<DomainUserInterest>?>(null)
+    val MyUserInterests: StateFlow<List<DomainUserInterest>?> = _MyUserInterests.asStateFlow()
 
     private val _repositoryCache = MutableStateFlow<Map<String, OtherUserRepository>>(emptyMap())
-    val repositoryCache: StateFlow<Map<String, OtherUserRepository>> = _repositoryCache.asStateFlow()
+    val repositoryCache: StateFlow<Map<String, OtherUserRepository>> =
+        _repositoryCache.asStateFlow()
 
     private val _myUser = MutableStateFlow<User?>(null)
     val myUser = _myUser.asStateFlow()
@@ -54,18 +57,24 @@ class UserRepository(private val userApi: UserApi,
         }
     }
 
-    suspend fun ensureRepository(id: String): Result<OtherUserRepository> = withContext(Dispatchers.IO) {
-       if (id in repositoryCache.value) {
-           return@withContext Result.success(repositoryCache.value[id]!!)
-       } else {
-           fetchUserById(id).onSuccess {
-               val tmpRep = OtherUserRepository(id, userApi, dbRepository, interestRepository) // TODO() inject with koin
-               _repositoryCache.value += Pair(id, tmpRep)
-               return@withContext Result.success(repositoryCache.value[id]!!)
-           }.onFailure { res -> return@withContext Result.failure(res) }
-           return@withContext Result.failure(Exception("Can't ensure repository"))
-       }
-    }
+    suspend fun ensureRepository(id: String): Result<OtherUserRepository> =
+        withContext(Dispatchers.IO) {
+            if (id in repositoryCache.value) {
+                return@withContext Result.success(repositoryCache.value[id]!!)
+            } else {
+                fetchUserById(id).onSuccess {
+                    val tmpRep = OtherUserRepository(
+                        id,
+                        userApi,
+                        dbRepository,
+                        interestRepository
+                    ) // TODO() inject with koin
+                    _repositoryCache.value += Pair(id, tmpRep)
+                    return@withContext Result.success(repositoryCache.value[id]!!)
+                }.onFailure { res -> return@withContext Result.failure(res) }
+                return@withContext Result.failure(Exception("Can't ensure repository"))
+            }
+        }
 
 
     suspend fun fetchMyProfile(): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
@@ -75,7 +84,7 @@ class UserRepository(private val userApi: UserApi,
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
                 val userInterests: List<UserInterestDto> =
-                    body.interests.orEmpty().filter{ it.interest != null }
+                    body.interests.orEmpty().filter { it.interest != null }
 
                 val tmpId: String? = body._id
 
@@ -90,7 +99,11 @@ class UserRepository(private val userApi: UserApi,
 
                 // Save interests in DB
                 try {
-                    interestRepository.resolveIncomingUserInterests(userInterests, tmpId!!, _MyUserInterests)
+                    interestRepository.resolveIncomingUserInterests(
+                        userInterests,
+                        tmpId!!,
+                        _MyUserInterests
+                    )
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving interests to database: $e")
@@ -158,7 +171,7 @@ class UserRepository(private val userApi: UserApi,
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
                 val userInterests: List<UserInterestDto> =
-                    body.interests.orEmpty().filterNotNull().filter{ it.interest != null }
+                    body.interests.orEmpty().filterNotNull().filter { it.interest != null }
                 val tmpId: String? = body._id
 
                 // Save user in DB
@@ -172,7 +185,11 @@ class UserRepository(private val userApi: UserApi,
 
                 // Save interests in DB
                 try {
-                    interestRepository.resolveIncomingUserInterests(userInterests, tmpId!!, _MyUserInterests)
+                    interestRepository.resolveIncomingUserInterests(
+                        userInterests,
+                        tmpId!!,
+                        _MyUserInterests
+                    )
                 } catch (e: Exception) {
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving interests to database: $e")
@@ -188,7 +205,11 @@ class UserRepository(private val userApi: UserApi,
                 _myUser.value = dbRepository.getUserById(id!!)
                 Result.success(response.body()!!)
             } else {
-                val errBody = try { response.errorBody()?.string() } catch (_: Exception) { null }
+                val errBody = try {
+                    response.errorBody()?.string()
+                } catch (_: Exception) {
+                    null
+                }
                 val msg = buildString {
                     append("Nie udało się zaktualizować profilu (${response.code()})")
                     if (!errBody.isNullOrBlank()) append(": ").append(errBody.take(300))
@@ -201,70 +222,82 @@ class UserRepository(private val userApi: UserApi,
     }
 
 
-    suspend fun fetchUserById(id: String): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
-        try {
-            val response = userApi.getUserById(id)
-            if (response.isSuccessful && response.body() != null) {
-                val body = response.body()!!
-                val userInterests: List<UserInterestDto> =
-                    body.interests.orEmpty().filterNotNull().filter{ it.interest != null }
+    suspend fun fetchUserById(id: String): Result<UserProfileResponse> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response = userApi.getUserById(id)
+                if (response.isSuccessful && response.body() != null) {
+                    val body = response.body()!!
+                    val userInterests: List<UserInterestDto> =
+                        body.interests.orEmpty().filterNotNull().filter { it.interest != null }
 
-                // Save user in DB
-                try {
-                    dbRepository.addUser(body.toRealm())
-                } catch (e: Exception) {
-                    return@withContext Result.failure<UserProfileResponse>(
-                        Exception("Error saving to database: $e")
-                    )
+                    // Save user in DB
+                    try {
+                        dbRepository.addUser(body.toRealm())
+                    } catch (e: Exception) {
+                        return@withContext Result.failure<UserProfileResponse>(
+                            Exception("Error saving to database: $e")
+                        )
+                    }
+
+                    // Save interests in DB
+                    try {
+                        interestRepository.resolveIncomingUserInterests(
+                            userInterests,
+                            body._id!!,
+                            MutableStateFlow(null)
+                        ) // TODO() placeholder mutable stateflow for now
+                    } catch (e: Exception) {
+                        return@withContext Result.failure<UserProfileResponse>(
+                            Exception("Error saving interests to database: $e")
+                        )
+                    }
+
+                    Result.success(response.body()!!)
+                } else {
+                    // API failed → fallback to DB
+                    val localUser = dbRepository.getUserById(id)
+                    if (localUser != null) {
+                        val userProfile = localUser.toUserProfileResponse()
+                        return@withContext Result.success(userProfile)
+                    }
+
+                    val errBody = try {
+                        response.errorBody()?.string()
+                    } catch (_: Exception) {
+                        null
+                    }
+                    val msg = buildString {
+                        append("Nie udało się pobrać użytkownika po id z api, brak lokalnych danych (${response.code()})")
+                        if (!errBody.isNullOrBlank()) append(": ").append(errBody.take(300))
+                    }
+                    Result.failure(Exception(msg))
                 }
-
-                // Save interests in DB
-                try {
-                    interestRepository.resolveIncomingUserInterests(userInterests, body._id!!, MutableStateFlow(null)) // TODO() placeholder mutable stateflow for now
-                } catch (e: Exception) {
-                    return@withContext Result.failure<UserProfileResponse>(
-                        Exception("Error saving interests to database: $e")
-                    )
-                }
-
-                Result.success(response.body()!!)
-            } else {
+            } catch (e: Exception) {
                 // API failed → fallback to DB
                 val localUser = dbRepository.getUserById(id)
                 if (localUser != null) {
                     val userProfile = localUser.toUserProfileResponse()
                     return@withContext Result.success(userProfile)
                 }
-
-                val errBody = try { response.errorBody()?.string() } catch (_: Exception) { null }
-                val msg = buildString {
-                    append("Nie udało się pobrać użytkownika po id z api, brak lokalnych danych (${response.code()})")
-                    if (!errBody.isNullOrBlank()) append(": ").append(errBody.take(300))
-                }
-                Result.failure(Exception(msg))
+                return@withContext Result.failure(Exception("API error and no local data available: $e"))
             }
-        } catch (e: Exception) {
-            // API failed → fallback to DB
-            val localUser = dbRepository.getUserById(id)
-            if (localUser != null) {
-                val userProfile = localUser.toUserProfileResponse()
-                return@withContext Result.success(userProfile)
-            }
-            return@withContext Result.failure(Exception("API error and no local data available: $e"))
         }
-    }
 
 
-    suspend fun searchUsers(query: String): Result<List<UserSearchDto>> = withContext(Dispatchers.IO) {
-        try {
-            val response = userApi.searchUsers(query)
-            if (response.isSuccessful) {
-                Result.success(response.body().orEmpty())
-            } else {
-                Result.failure(Exception("Błąd wyszukiwania (${response.code()})"))
+    suspend fun searchUsers(query: String): Result<List<UserSearchDto>> =
+        withContext(Dispatchers.IO) {
+            try {
+                val response = userApi.searchUsers(query)
+                if (response.isSuccessful) {
+                    Result.success(response.body().orEmpty())
+                } else {
+                    Result.failure(Exception("Błąd wyszukiwania (${response.code()})"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
             }
-        } catch (e: Exception) { Result.failure(e) }
-    }
+        }
 
 
     suspend fun uploadAvatar(
@@ -275,7 +308,8 @@ class UserRepository(private val userApi: UserApi,
         try {
             val safeMime = (mimeType ?: "image/jpeg").toMediaTypeOrNull()
             val requestBody: RequestBody = bytes.toRequestBody(safeMime)
-            val fileName = originalFileName?.takeIf { it.isNotBlank() } ?: "avatar_${UUID.randomUUID()}.jpg"
+            val fileName =
+                originalFileName?.takeIf { it.isNotBlank() } ?: "avatar_${UUID.randomUUID()}.jpg"
             val part = MultipartBody.Part.createFormData(
                 name = "avatarImage",
                 filename = fileName,
@@ -285,7 +319,11 @@ class UserRepository(private val userApi: UserApi,
             val response = userApi.uploadAvatar(part)
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
-                val tmpId: String? = try { body._id } catch (_: Throwable) { null }
+                val tmpId: String? = try {
+                    body._id
+                } catch (_: Throwable) {
+                    null
+                }
                 if (!tmpId.isNullOrBlank()) {
                     sharedDataSource.set(ID, tmpId.toString())
                 }
@@ -293,16 +331,24 @@ class UserRepository(private val userApi: UserApi,
                 try {
                     dbRepository.addUser(body.toRealm())
                 } catch (e: Exception) {
-                    Log.w("UserRepository", "uploadAvatar: failed to persist locally, will continue. ${e.message}")
+                    Log.w(
+                        "UserRepository",
+                        "uploadAvatar: failed to persist locally, will continue. ${e.message}"
+                    )
                 }
                 // Best effort: refresh full profile (backend may return partial)
                 try {
                     val refreshed = fetchMyProfile().getOrNull()
                     if (refreshed != null) return@withContext Result.success(refreshed)
-                } catch (_: Exception) { /* ignore */ }
+                } catch (_: Exception) { /* ignore */
+                }
                 Result.success(body)
             } else {
-                val errBody = try { response.errorBody()?.string() } catch (_: Exception) { null }
+                val errBody = try {
+                    response.errorBody()?.string()
+                } catch (_: Exception) {
+                    null
+                }
                 val msg = buildString {
                     append("Nie udało się wgrać avatara (${response.code()})")
                     if (!errBody.isNullOrBlank()) append(": ").append(errBody.take(300))
@@ -314,156 +360,40 @@ class UserRepository(private val userApi: UserApi,
         }
     }
 
+    // TODO make it respond to individual failures not just all failing
+    suspend fun syncMyInterestsWithDescriptions(desired: Map<DomainInterest, String>): Result<Unit> {
+        val desiredSet = desired.toList().toSet()
+        val currentSet = MyUserInterests.value?.map { it.interest to it.customDescription }
+            ?.toSet() ?: emptySet()
 
+        val toAdd = desiredSet.minus(currentSet)
+        val toRemove = currentSet.minus(desiredSet)
+        val toKeep = desiredSet.intersect(currentSet)
 
+        var success = true
 
-    // Sync interests: desiredNames is set of interest names selected in UI.
-    // We diff against server's current interests and call add/remove endpoints.
-    suspend fun syncMyInterestsByNames(desiredNames: Set<String>): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
-        try {
-            // 1) Get current profile to know existing interests
-            val current = fetchMyProfile().getOrElse { return@withContext Result.failure(it) }
-            val currentInterests: List<UserInterestDto> = current.interests ?: emptyList()
-            val currentNames = currentInterests.mapNotNull { it.interest.name }.toSet()
-
-            // 2) Build diffs
-            val toAdd = desiredNames.minus(currentNames)
-            val toRemoveNames = currentNames.minus(desiredNames)
-            val toRemove = currentInterests.filter { it.interest.name in toRemoveNames }
-
-            // 3) Map names -> ids via public catalog
-            val nameToId = interestRepository.fetchPublicInterestsMap().getOrElse { return@withContext Result.failure(it) }
-
-            // 4) Execute adds
-            for (name in toAdd) {
-                val id = nameToId[name] ?: continue
-                val resp = userApi.addUserInterest(
-                    AddUserInterestRequest(interestId = id, customDescription = null)
-                )
-                if (!resp.isSuccessful) {
-                    val err = try { resp.errorBody()?.string() } catch (_: Exception) { null }
-                    return@withContext Result.failure(Exception("Dodanie zainteresowania nie powiodło się (${resp.code()})${if(!err.isNullOrBlank()) ": ${err.take(200)}" else ""}"))
-                }
-            }
-
-            // 5) Execute removals
-            fun jsonIdToString(el: JsonElement?): String? = try {
-                when {
-                    el == null || el.isJsonNull -> null
-                    el.isJsonPrimitive && el.asJsonPrimitive.isString -> el.asString
-                    el.isJsonObject && el.asJsonObject.has("_id") -> el.asJsonObject.get("_id").asString
-                    else -> el.toString()
-                }
-            } catch (_: Exception) { null }
-
-            for (ui in toRemove) {
-                val id = ui.userInterestId ?: continue
-                val resp = userApi.removeUserInterest(id)
-                if (!resp.isSuccessful) {
-                    val err = try { resp.errorBody()?.string() } catch (_: Exception) { null }
-                    return@withContext Result.failure(Exception("Usunięcie zainteresowania nie powiodło się (${resp.code()})${if(!err.isNullOrBlank()) ": ${err.take(200)}" else ""}"))
-                }
-            }
-
-            // 6) Refresh and persist
-            val refreshed = userApi.getMyProfile()
-            if (refreshed.isSuccessful && refreshed.body() != null) {
-                val body = refreshed.body()!!
-                try { dbRepository.addUser(body.toRealm()) } catch (_: Exception) {}
-                Result.success(body)
-            } else {
-                val err = try { refreshed.errorBody()?.string() } catch (_: Exception) { null }
-                Result.failure(Exception("Nie udało się odświeżyć profilu po zmianie zainteresowań${if(!err.isNullOrBlank()) ": ${err.take(200)}" else ""}"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+        toAdd.forEach() { (interest, description) ->
+            val request =
+                AddUserInterestRequest(interest.id, description.takeIf { it.isNotBlank() })
+            val resp = userApi.addUserInterest(request)
+            if (!resp.isSuccessful) success = false
         }
+
+        toRemove.forEach() { (interest, description) ->
+            val resp = userApi.removeUserInterest(interest.id)
+            if (!resp.isSuccessful) success = false
+        }
+        return if (success) Result.success(Unit) else Result.failure(Exception())
     }
-// TODO: zerknąć tutaj
-    suspend fun syncMyInterestsWithDescriptions(desired: Map<String, String?>): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
+
+    suspend fun deleteMyAccount(): Result<Unit> {
         try {
-            // 1) Current profile with interests
-            val current = fetchMyProfile().getOrElse { return@withContext Result.failure(it) }
-            val currentInterests: List<UserInterestDto> = current.interests ?: emptyList()
-            val currentNames = currentInterests.mapNotNull { it.interest.name }.toSet()
-
-            val desiredNames = desired.keys
-
-            // 2) Diff
-            val toAdd = desiredNames.minus(currentNames)
-            val toRemoveNames = currentNames.minus(desiredNames.toSet())
-            val toKeepNames = desiredNames.intersect(currentNames)
-
-            fun jsonIdToString(el: JsonElement?): String? = try {
-                when {
-                    el == null || el.isJsonNull -> null
-                    el.isJsonPrimitive && el.asJsonPrimitive.isString -> el.asString
-                    el.isJsonObject && el.asJsonObject.has("_id") -> el.asJsonObject.get("_id").asString
-                    else -> el.toString()
-                }
-            } catch (_: Exception) { null }
-
-            // 3) Map names -> ids
-            val nameToId = interestRepository.fetchPublicInterestsMap().getOrElse { return@withContext Result.failure(it) }
-
-            // 4) Adds (pass description if provided)
-            for (name in toAdd) {
-                val id = nameToId[name] ?: continue
-                val customDesc = desired[name]?.takeIf { !it.isNullOrBlank() }
-                val resp = userApi.addUserInterest(
-                    AddUserInterestRequest(interestId = id, customDescription = customDesc)
-                )
-                if (!resp.isSuccessful) {
-                    val err = try { resp.errorBody()?.string() } catch (_: Exception) { null }
-                    return@withContext Result.failure(Exception("Dodanie zainteresowania nie powiodło się (${resp.code()})${if(!err.isNullOrBlank()) ": ${err.take(200)}" else ""}"))
-                }
-            }
-
-            // 5) Removes
-            val toRemove = currentInterests.filter { it.interest.name in toRemoveNames }
-            for (ui in toRemove) {
-                val id = ui.userInterestId ?: continue
-                val resp = userApi.removeUserInterest(id)
-                if (!resp.isSuccessful) {
-                    val err = try { resp.errorBody()?.string() } catch (_: Exception) { null }
-                    return@withContext Result.failure(Exception("Usunięcie zainteresowania nie powiodło się (${resp.code()})${if(!err.isNullOrBlank()) ": ${err.take(200)}" else ""}"))
-                }
-            }
-
-            // 6) Updates of descriptions for kept interests (only when changed)
-            val kept = currentInterests.filter { it.interest.name in toKeepNames }
-            for (ui in kept) {
-                val name = ui.interest.name
-                val desiredRaw = desired[name]
-                val desiredDesc = desiredRaw?.trim() ?: ""
-                val currentDesc = ui.customDescription?.trim().orEmpty()
-                if (desiredDesc != currentDesc) {
-                    val id = ui.userInterestId ?: continue
-                    val toSend = if (desiredDesc.isBlank() && currentDesc.isNotBlank()) "" else desiredDesc.ifBlank { null }
-                    val resp = userApi.updateUserInterest(
-                        userInterestId = id,
-                        body = UpdateUserInterestRequest(customDescription = toSend)
-                    )
-                    if (!resp.isSuccessful) {
-                        val err = try { resp.errorBody()?.string() } catch (_: Exception) { null }
-                        return@withContext Result.failure(Exception("Aktualizacja opisu zainteresowania nie powiodła się (${resp.code()})${if(!err.isNullOrBlank()) ": ${err.take(200)}" else ""}"))
-                    }
-                }
-            }
-
-            // 7) Refresh and persist
-            val refreshed = userApi.getMyProfile()
-            if (refreshed.isSuccessful && refreshed.body() != null) {
-                val body = refreshed.body()!!
-                try { dbRepository.addUser(body.toRealm()) } catch (_: Exception) {}
-                Result.success(body)
-            } else {
-                val err = try { refreshed.errorBody()?.string() } catch (_: Exception) { null }
-                Result.failure(Exception("Nie udało się odświeżyć profilu po zmianie zainteresowań${if(!err.isNullOrBlank()) ": ${err.take(200)}" else ""}"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+            val result = userApi.deleteOwnAccount()
+            return Result.success(Unit)
+        } catch(e: Exception) {
+            return Result.failure(e)
         }
     }
 }
+
 

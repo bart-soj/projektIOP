@@ -1,10 +1,5 @@
 package com.example.projektiop.data.api
 
-import android.health.connect.datatypes.units.Length
-import android.provider.ContactsContract
-import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
-import retrofit2.HttpException
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST

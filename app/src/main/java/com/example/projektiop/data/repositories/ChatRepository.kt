@@ -9,6 +9,8 @@ import com.example.projektiop.data.api.AccesChatRequest
 import com.example.projektiop.data.api.ChatApi
 import com.example.projektiop.data.api.ChatDto
 import com.example.projektiop.data.api.SendMessageRequest
+import com.example.projektiop.data.api.websocket.ChatEvent
+import com.example.projektiop.data.api.websocket.SocketManager
 import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.data.mapping.toDomain
 import com.example.projektiop.data.mapping.toRealm
@@ -163,13 +165,34 @@ class ChatRepository(private val chatApi: ChatApi,
         try {
             val r = chatApi.getMessages(chatId)
             val chatKey = dbRepository.getChatById(chatId)!!.chatKey
-            if (r.isSuccessful) Result.success(r.body()?.messages.orEmpty().map {
-                require(it.content != null)
-                val decrypted = certificateUtils.decryptMessage(it.content, chatKey!!)
-                it.toDomain(decrypted)
+            if (r.isSuccessful) {
+                return@withContext Result.success(r.body()?.messages.orEmpty().map {
+                    require(it.content != null)
+                    val decrypted = certificateUtils.decryptMessage(it.content, chatKey!!)
+                    it.toDomain(decrypted)
+                })
+            } else {
+                return@withContext Result.failure(Exception("Błąd pobierania wiadomości (${r.code()})"))
             }
-            ) else Result.failure(Exception("Błąd pobierania wiadomości (${r.code()})"))
-        } catch (e: Exception) { Result.failure(e) }
+        } catch (e: Exception) {
+            return@withContext Result.failure(e)
+        }
+    }
+
+    suspend fun decryptMessage(message: Message): Result<Message> {
+        try {
+            val chatKey = dbRepository.getChatById(message.chatId)!!.chatKey
+            val decrypted = certificateUtils.decryptMessage(message.content, chatKey!!)
+            val out = Message(
+                id = message.id,
+                chatId = message.chatId,
+                content = decrypted,
+                readBy = message.readBy,
+                senderId = message.senderId,
+                createdAt = message.createdAt
+            )
+            return Result.success(out)
+        } catch (e: Exception) { return Result.failure(e) }
     }
 
     suspend fun sendMessage(chatId: String, content: String): Result<MessageDto> = withContext(Dispatchers.IO) {
@@ -179,6 +202,15 @@ class ChatRepository(private val chatApi: ChatApi,
             val r = chatApi.sendMessage(SendMessageRequest(encrypted, chatId))
             if (r.isSuccessful) Result.success(r.body()!!) else Result.failure(Exception("Błąd wysyłania (${r.code()})"))
         } catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun sendMessageSocket(chatId: String, content: String, socketManager: SocketManager): Result<Unit> {
+        try {
+            val chatKey = dbRepository.getChatById(chatId)!!.chatKey
+            val encrypted = certificateUtils.encryptMessage(content, chatKey!!)
+            socketManager.emit(ChatEvent.Send(chatId, encrypted))
+            return Result.success(Unit)
+        } catch (e: Exception) { return Result.failure(e) }
     }
 
     fun connectToService(serviceFlow: StateFlow<List<DomainChat>>) {

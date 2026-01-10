@@ -9,6 +9,7 @@ import com.example.projektiop.R
 import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.models.Gender
+import com.example.projektiop.domain.models.Interest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,7 +38,7 @@ class EditProfileViewModel(private val interestRepository: InterestRepository, p
 
     fun onUpdateClick(displayName: String?, gender: Gender?, location: String?,
                       bio: String?, birthDate: String?, broadcastMessage: String?,
-                      interestsWithDescriptions: Map<String, String>
+                      interestsWithDescriptions: Map<Interest, String>
                       ) {
         _loading.value = true
         _errorMessage.value = null

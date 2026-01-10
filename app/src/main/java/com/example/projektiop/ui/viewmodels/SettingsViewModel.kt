@@ -2,7 +2,7 @@ package com.example.projektiop.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import coil.compose.AsyncImagePainter
+import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.FriendItem
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.ThemePreference
@@ -17,7 +17,8 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(private val themePreference: ThemePreference,
                         private val userRepository: UserRepository,
-                        private val friendshipRepository: FriendshipRepository): ViewModel() {
+                        private val friendshipRepository: FriendshipRepository,
+                        private val authRepository: AuthRepository): ViewModel() {
 
     private val _darkMode = MutableStateFlow<Boolean>(themePreference.isDark())
     val darkMode = _darkMode.asStateFlow()
@@ -86,4 +87,20 @@ class SettingsViewModel(private val themePreference: ThemePreference,
     }
 
 
+    fun logout() {
+        viewModelScope.launch {
+            authRepository.logout()
+        }
+    }
+
+    // TODO better error messages, success message
+    fun onDeleteAccountClick() {
+        viewModelScope.launch {
+            userRepository.deleteMyAccount().onFailure { e ->
+                _errorMessage.value = e.message
+            }.onSuccess {
+                logout()
+            }
+        }
+    }
 }

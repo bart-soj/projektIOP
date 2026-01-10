@@ -1,6 +1,5 @@
 package com.example.projektiop
 
-import android.app.Application
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.ChatUpdateService
@@ -11,22 +10,8 @@ import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.data.repositories.ThemePreference
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.AppStateRepository
-import com.example.projektiop.screens.friends.FriendsViewModel
-import com.example.projektiop.ui.viewmodels.AuthViewModel
-import com.example.projektiop.ui.viewmodels.BackupDialogViewModel
-import com.example.projektiop.ui.viewmodels.ChatDetailViewModel
-import com.example.projektiop.ui.viewmodels.ChatsViewModel
-import com.example.projektiop.ui.viewmodels.EditProfileViewModel
-import com.example.projektiop.ui.viewmodels.FriendProfileViewModel
-import com.example.projektiop.ui.viewmodels.KeyLoadingViewModel
-import com.example.projektiop.ui.viewmodels.MainViewModel
-import com.example.projektiop.ui.viewmodels.ReportViewModel
-import com.example.projektiop.ui.viewmodels.ResendEmailViewModel
-import com.example.projektiop.ui.viewmodels.ScannerViewModel
-import com.example.projektiop.ui.viewmodels.SettingsViewModel
 import com.example.projektiop.util.CertificateUtils
 import org.koin.android.ext.koin.androidContext
-import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val rootKoinModule = module {
@@ -41,17 +26,4 @@ val rootKoinModule = module {
     single { SearchProfileRepository( get(), get() ) }
     single { CertificateUtils( get(), get(), get(), get() ) }
     single { AppStateRepository() }
-    viewModel { MainViewModel(get()) }
-    viewModel { SettingsViewModel(get(), get(), get())}
-    viewModel { AuthViewModel(get()) }
-    viewModel { ScannerViewModel( get(), get(), get(), get(), get(), get() ) }
-    viewModel { FriendsViewModel( get(), get() ) }
-    viewModel { ChatsViewModel(get(), get()) }
-    viewModel { (userId: String) -> FriendProfileViewModel(userId, get()) }
-    viewModel { (friendId: String) -> ChatDetailViewModel(friendId, get(), get(), get()) }
-    viewModel { KeyLoadingViewModel( get(), get(), get() ) }
-    viewModel { EditProfileViewModel( get(), get() ) }
-    viewModel { BackupDialogViewModel( get(), get(), get() ) }
-    viewModel { ReportViewModel( get(), get() ) }
-    viewModel { ResendEmailViewModel( get()) }
 }

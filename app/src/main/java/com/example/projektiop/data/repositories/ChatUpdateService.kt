@@ -18,13 +18,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import okhttp3.internal.wait
 import org.koin.android.ext.android.inject
 import java.time.Instant
-import kotlin.math.ceil
-import kotlin.math.ln
-import kotlin.math.max
-import kotlin.math.min
 import com.example.projektiop.domain.models.Chat as DomainChat
 
 class ChatUpdateService(): Service() {

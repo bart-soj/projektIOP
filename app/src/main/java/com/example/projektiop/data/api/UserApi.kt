@@ -48,6 +48,9 @@ interface UserApi {
 
     @DELETE("users/profile/interests/{userInterestId}")
     suspend fun removeUserInterest(@Path("userInterestId") userInterestId: String): Response<UserProfileResponse>
+
+    @DELETE("users/profile")
+    suspend fun deleteOwnAccount(): Response<Unit>
 }
 
 // Dane profilu – wszystkie pola opcjonalne, żeby uniknąć crashy przy różnym JSON.

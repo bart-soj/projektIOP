@@ -46,9 +46,7 @@ class SearchProfileRepository(private val dbRepository: RealmDBRepository,
 
     suspend fun getDefaultSearchProfile(): SearchProfile {
         // turns current interests of logged-in user into a search profile
-        val interests = userRepository.MyUserInterests.value?.mapNotNull {
-            runCatching { it.interest.toDomain(dbRepository) }.getOrNull()
-        }
+        val interests = userRepository.MyUserInterests.value?.map { it.interest }
         return SearchProfile("Default", interests ?: emptyList())
     }
 }

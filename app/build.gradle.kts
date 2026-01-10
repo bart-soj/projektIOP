@@ -100,4 +100,6 @@ dependencies {
     // bouncycastle, both necessary
     implementation(libs.bcprov.jdk15on)
     implementation(libs.bcpkix.jdk15on)
+
+    implementation(libs.moko)
 }

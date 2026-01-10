@@ -7,6 +7,7 @@ import com.example.projektiop.data.api.apiKoinModule
 import com.example.projektiop.data.db.realm.RealmProvider
 import com.example.projektiop.data.db.realm.realmKoinModule
 import com.example.projektiop.data.repositories.AuthRepository
+import com.example.projektiop.ui.viewmodels.viewModelsKoinModule
 import com.example.projektiop.util.NotificationHelper
 import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
@@ -29,7 +30,9 @@ class HelloBeaconApp : Application() {
         startKoin {
             androidLogger()
             androidContext(this@HelloBeaconApp)
-            modules(rootKoinModule, nfcKoinModule, apiKoinModule, realmKoinModule, bleKoinModule)
+            modules(rootKoinModule, nfcKoinModule, apiKoinModule, realmKoinModule, bleKoinModule,
+                viewModelsKoinModule
+            )
         }
     }
 

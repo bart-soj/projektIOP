@@ -508,6 +508,7 @@ class CertificateUtils(private val pubKeyApi: PublicKeyApi,
             val body = result.body()
             val key = body?.publicKey
             require(key != null)
+            dbRepository.savePubKey(userId, key)
             return Result.Success(key)
         } catch(e: Exception) {
             return apiExceptionToDataError<base64>(e)

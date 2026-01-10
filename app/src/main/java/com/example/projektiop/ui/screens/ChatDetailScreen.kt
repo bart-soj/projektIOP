@@ -42,6 +42,8 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
     val dateFormatter = viewModel.dateFormatter
     val timeFormatter = viewModel.timeFormatter
 
+    val typing by viewModel.typing.collectAsState()
+
     var input by remember { mutableStateOf("") }
 
     Scaffold(
@@ -126,6 +128,9 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                         }
                 }
             }
+            if(typing) {
+                MessageBubble(text = stringResource(R.string.typing),incoming = true, groupedWithPrev = false, avatarUrl = null, timeText = "")
+            }
 
             val isBlocked = blockInfo != null
             if (isBlocked) {
@@ -141,7 +146,11 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
             Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = input,
-                    onValueChange = { input = it },
+                    onValueChange = {
+                        if (input == "" || it == "") {
+                            viewModel.onType()
+                        }
+                        input = it },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     placeholder = {

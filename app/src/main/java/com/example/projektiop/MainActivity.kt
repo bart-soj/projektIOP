@@ -44,6 +44,7 @@ import com.example.projektiop.ui.screens.FriendProfileScreen
 
 import com.example.projektiop.BluetoothLE.BTPermissionsManager
 import com.example.projektiop.BluetoothLE.BluetoothRepository
+import com.example.projektiop.data.api.websocket.SocketManager
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.ChatUpdateService
 import com.example.projektiop.data.repositories.FriendshipRepository
@@ -85,6 +86,8 @@ class MainActivity : ComponentActivity() {
     private val userRepository: UserRepository by inject()
     private val bleManager: BluetoothRepository by inject()
 
+    private val socketManager: SocketManager by inject()
+
     private var chatService: ChatUpdateService? = null
     private var isBound = false
 
@@ -121,6 +124,7 @@ class MainActivity : ComponentActivity() {
                         is AppStateEvent.OnGotKeys -> {
                             friendshipRepository.refreshAll()
                             userRepository.updateMyId()
+                            socketManager.connect()
                             val intent = Intent(this@MainActivity, ChatUpdateService::class.java)
                             startForegroundService(intent)
                             Intent(this@MainActivity, ChatUpdateService::class.java).also { intent ->
@@ -128,6 +132,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         is AppStateEvent.OnLogout -> {
+                            socketManager.disconnect()
                             if (isBound) {
                                 unbindService(serviceConnection)
                                 isBound = false

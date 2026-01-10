@@ -252,5 +252,9 @@
     <string name="permission_denied">Brak uprawnienia</string>
     <string name="resend_email_title">Ponownie wyślij email weryfikacyjny</string>
     <string name="no_backup">Brak backupu, utracisz historię chatów!</string>
+    <string name="delete_account">"Usuń Konto "</string>
+    <string name="delete_account_warning">Nie można przywrócić usuniętego konta!</string>
+    <string name="delete_confirm_yes">Tak, usuń!</string>
+    <string name="typing">Pisze...</string>
 
 </resources>
