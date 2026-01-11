@@ -1,5 +1,6 @@
 package com.example.projektiop.ui.screens
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,6 +14,9 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.material3.ButtonDefaults.shape
@@ -25,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -42,6 +47,8 @@ import com.example.projektiop.domain.models.SearchProfile
 import com.example.projektiop.ui.components.MultiSelectInterestsDropdown
 import com.example.projektiop.ui.components.UserAvatar
 import org.koin.androidx.compose.koinViewModel
+import com.example.projektiop.ui.components.SearchBar
+import com.example.projektiop.ui.components.SearchProfileDialog
 
 
 private const val ID: String = "_id"
@@ -289,191 +296,74 @@ fun ScannedUsersList(
 
 
 @Composable
-fun SearchProfileItem(searchProfile: SearchProfile, modifier: Modifier = Modifier,
-                      onDeleteClick: (() -> Unit)? = null, onChooseClick: (() -> Unit)? = null) {
-    var expaneded by remember { mutableStateOf(false) }
+fun SearchProfileItem(
+    searchProfile: SearchProfile,
+    modifier: Modifier = Modifier,
+    // Added to allow proper Card tinting while keeping the shape
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
+    onDeleteClick: (() -> Unit)? = null,
+    onChooseClick: (() -> Unit)? = null
+) {
+    var expanded by remember { mutableStateOf(false) }
 
-    Box(modifier = modifier) {
-        Button(onClick = { expaneded = !expaneded }, modifier = Modifier.background(color = Color.Transparent)) {
+    ElevatedCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = containerColor
+        ),
+        onClick = { expanded = !expanded }
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            // --- Header (Name + Actions) ---
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.padding(vertical = 4.dp).fillMaxWidth()
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                // name
-                Text(searchProfile.name)
+                Text(
+                    text = searchProfile.name,
+                    style = MaterialTheme.typography.titleMedium
+                )
 
-                Row() {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     if (onChooseClick != null) {
                         IconButton(onClick = onChooseClick) {
-                            Icon(
-                                imageVector = Icons.Filled.Wifi,
-                                contentDescription = null
-                            )
+                            Icon(imageVector = Icons.Filled.Wifi, contentDescription = null)
                         }
                     }
-                    // delete button
                     if (onDeleteClick != null) {
                         IconButton(onClick = onDeleteClick) {
-                            Icon(
-                                imageVector = Icons.Filled.Delete,
-                                contentDescription = null
-                            )
+                            Icon(imageVector = Icons.Filled.Delete, contentDescription = null)
                         }
                     }
-                }
-            }
-        }
-
-        if (expaneded) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                searchProfile.interests.forEach { item ->
-                    Text(
-                        text = item.name,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(4.dp)
+                    // Visual cue for expansion
+                    Icon(
+                        imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                        contentDescription = null,
+                        modifier = Modifier.alpha(0.5f)
                     )
                 }
             }
-        }
-    }
-}
 
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SearchProfileDialog(viewModel: ScannerViewModel, onClose: () -> Unit, modifier: Modifier = Modifier) {
-
-    val searchProfileList by viewModel.searchProfileList.collectAsState()
-    val errorMessage by viewModel.searchProfileError.collectAsState()
-    val searchText by viewModel.searchSearchProfileText.collectAsState()
-    val loading by viewModel.searchProfileLoading.collectAsState()
-    val searchProfile by viewModel.searchProfile.collectAsState()
-
-    var showAddDialog by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        viewModel.refreshSearchProfileList()
-    }
-
-    when (showAddDialog) {
-        true -> { // TODO() better input validation and respond to errors/loading
-            var name by remember { mutableStateOf("") }
-            var selectedInterests by remember { mutableStateOf<Set<Interest>>(emptySet()) }
-            val allInterests by viewModel.publicInterests.collectAsState()
-
-            Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                // save
-                IconButton(onClick = { viewModel.addSearchProfile(name, selectedInterests)
-                    showAddDialog = false },
-                    enabled = name.isNotBlank() && !searchProfileList.map{it.name}.contains(name)
-                ) { Icon(imageVector = Icons.Filled.Add, contentDescription = null) }
-                // go back
-                IconButton(onClick = {showAddDialog = false}
-                ) { Icon(imageVector = Icons.Filled.ChevronLeft, contentDescription = null) }
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = name,
-                onValueChange = { if (it.length <= 50) name = it },
-                label = { Text(stringResource(id = R.string.name_label)) },
-                supportingText = { Text(stringResource(id = R.string.nickname_count, name.length)) },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            MultiSelectInterestsDropdown(
-                all = allInterests,
-                selected = selectedInterests,
-                onChange = { set -> selectedInterests = set }
-            )
-        }
-        false -> {
-
-            Row(horizontalArrangement = Arrangement.SpaceEvenly) {
-                // add
-                IconButton(onClick = {
-                    showAddDialog = true
-                }) { Icon(imageVector = Icons.Filled.Add, contentDescription = null) }
-                // refresh
-                IconButton(
-                    onClick = { viewModel.refreshSearchProfileList() }
-                ) { Icon(imageVector = Icons.Filled.Refresh, contentDescription = null) }
-                // go back
-                IconButton(
-                    onClick = onClose
-                ) { Icon(imageVector = Icons.Filled.ChevronLeft, contentDescription = null) }
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            SearchBar(
-                searchText = searchText,
-                onSearchTextChanged = { viewModel.searchForSearchProfile(it) },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            when {
-                loading -> {
-                    Box(Modifier.fillMaxSize()) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
-                }
-
-                errorMessage != null -> {
-                    Box(Modifier.fillMaxSize()) {
-                        Column(
-                            Modifier.align(Alignment.Center),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                errorMessage ?: stringResource(R.string.error),
-                                color = MaterialTheme.colorScheme.error
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            Button(onClick = {
-                                viewModel.refreshSearchProfileList()
-                            }) { Text(stringResource(R.string.retry)) }
-                        }
-                    }
-                }
-
-                searchProfileList.isEmpty() -> {
-                    SearchProfileItem(searchProfile,
-                        modifier = Modifier.background(color = Color.Green).padding(horizontal = 16.dp))
-                    Box(Modifier.fillMaxSize()) {
+            // --- Expanded Content (Text below content) ---
+            if (expanded) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                Column {
+                    searchProfile.interests.forEach { item ->
                         Text(
-                            stringResource(R.string.no_search_profiles),
-                            Modifier.align(Alignment.Center)
+                            text = item.name,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp),
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
                 }
-
-                else -> {
-                    SearchProfileItem(searchProfile,
-                        modifier = Modifier.background(color = Color.Green).padding(horizontal = 16.dp))
-                    LazyColumn(
-                        modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(searchProfileList, key = { it.name }) { searchProfile ->
-                            SearchProfileItem(
-                                searchProfile,
-                                onDeleteClick = { viewModel.deleteSearchProfile(searchProfile) },
-                                onChooseClick = { viewModel.chooseSearchProfile(searchProfile) }
-                            )
-                        }
-                    }
-                }
             }
         }
     }
 }
-

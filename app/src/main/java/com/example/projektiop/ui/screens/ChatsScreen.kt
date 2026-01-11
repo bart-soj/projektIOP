@@ -5,14 +5,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow // Do ucinania tekstu
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -21,6 +19,7 @@ import com.example.projektiop.data.repositories.ChatListItem
 import com.example.projektiop.ui.components.UserAvatar
 import com.example.projektiop.ui.viewmodels.ChatsViewModel
 import org.koin.androidx.compose.koinViewModel
+import com.example.projektiop.ui.components.SearchBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -111,29 +110,6 @@ fun ChatsScreen(navController: NavController) {
 }
 
 // --- Komponenty pomocnicze dla ChatsScreen ---
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SearchBar(
-    searchText: String,
-    onSearchTextChanged: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = searchText,
-        onValueChange = onSearchTextChanged,
-        modifier = modifier
-            .fillMaxWidth(),
-        label = { Text(stringResource(R.string.search_label)) },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = stringResource(R.string.search_icon_desc)
-            )
-        },
-        singleLine = true
-    )
-}
 
 @Composable
 fun ChatItem(
