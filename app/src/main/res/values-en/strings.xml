@@ -134,7 +134,7 @@
     <string name="scanner_stop_scanning">Stop scanning</string>
     <string name="scanner_start_advertising">Start advertising</string>
     <string name="scanner_stop_advertising">Stop advertising</string>
-    <string name="ble_status_label">BLE status: %s</string>
+    <string name="ble_status_label">BLE status:</string>
     <string name="ble_status_scanning_and_advertising">Scanning and advertising active</string>
     <string name="ble_status_scanning">Scanning for nearby users…</string>
     <string name="ble_status_advertising">Advertising your profile</string>
@@ -262,4 +262,5 @@
     <string name="forget_confirm_message">Do you really want to loose chat history?</string>
     <string name="forget_confirm_yes">Yes, delete the history!</string>
     <string name="forget">Log-in without backup</string>
+    <string name="search_profile">Scan Profile</string>
 </resources>

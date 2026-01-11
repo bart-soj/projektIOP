@@ -3,6 +3,7 @@ package com.example.projektiop.ui.screens
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
@@ -124,6 +125,7 @@ fun SettingsScreen(
                 Button(
                     onClick = { showBlockedDialog = true },
                     modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(4.dp),
                     colors = buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary

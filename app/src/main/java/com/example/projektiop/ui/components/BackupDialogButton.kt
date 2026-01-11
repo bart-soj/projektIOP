@@ -57,7 +57,7 @@ fun BackupDialogButton(modifier: Modifier = Modifier) {
         }
         false -> {
             Button(
-                onClick = {expanded = true},
+                onClick = { expanded = true },
                 modifier = modifier,
                 enabled = !viewModel.isBackedUp,
                 shape = RoundedCornerShape(4.dp),

@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -130,10 +131,12 @@ fun ActiveHandshakeButton(
                 ) {
                    Button (
                         onClick = {viewModel.onGreenClick(context)},
+                        colors = ButtonDefaults.buttonColors(
+                            contentColor = Color.Green
+                        ),
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
                             .weight(1f)
-                            .background(Color.Green)
                             .fillMaxHeight()
                     ) {
                         Box(contentAlignment = Alignment.Center) {
@@ -142,10 +145,12 @@ fun ActiveHandshakeButton(
                     }
                     Button (
                         onClick = {viewModel.onBlueClick(context)},
+                        colors = ButtonDefaults.buttonColors(
+                            contentColor = Color.Blue
+                        ),
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
                             .weight(1f)
-                            .background(Color.Blue)
                             .fillMaxHeight()
                     ) {
                         Box(contentAlignment = Alignment.Center) {

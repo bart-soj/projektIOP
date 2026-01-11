@@ -133,7 +133,7 @@
     <string name="scanner_stop_scanning">Zatrzymaj Skanowanie</string>
     <string name="scanner_start_advertising">Rozpocznij Rozgłaszanie</string>
     <string name="scanner_stop_advertising">Zatrzymaj Rozgłaszanie</string>
-    <string name="ble_status_label">Status BLE: %s</string>
+    <string name="ble_status_label">Status BLE:</string>
     <string name="ble_status_scanning_and_advertising">Skanowanie i Rozgłaszanie aktywne</string>
     <string name="ble_status_scanning">Skanowanie w poszukiwaniu użytkowników…</string>
     <string name="ble_status_advertising">Rozgłaszanie profilu aktywne</string>
@@ -260,5 +260,6 @@
     <string name="forget_confirm_message">Czy na pewno chcesz stracić historię chatów?</string>
     <string name="forget_confirm_yes">Tak, usuń historię!</string>
     <string name="forget">Zaloguj bez backupu</string>
+    <string name="search_profile">Profil Skanowania</string>
 
 </resources>

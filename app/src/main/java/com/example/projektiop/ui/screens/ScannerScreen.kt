@@ -14,12 +14,17 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.material3.ButtonDefaults.shape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -75,16 +80,15 @@ fun ScannerScreen( navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp), // Dodatkowy padding wewnętrzny
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally // Wycentruj elementy
         ) {
-            Spacer(modifier = Modifier.height(16.dp)) // Odstęp od góry
-
-            // Tytuł Ekranu
             Text(
                 text = stringResource(R.string.scanner_screen_title),
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(16.dp)
             )
+
             Spacer(modifier = Modifier.height(8.dp))
 
             BLEControls(viewModel, onSearchProfileClick = { showSearchProfileDialog = true })
@@ -129,33 +133,50 @@ fun ScanStatus(isScanning: Boolean, isAdvertising: Boolean, modifier: Modifier =
         else -> stringResource(R.string.ble_status_inactive)
     }
 
-    Text(
-        text = stringResource(R.string.ble_status_label, statusText),
-        style = MaterialTheme.typography.bodyMedium,
-        modifier = modifier.padding(vertical = 8.dp)
-    )
+    Row(horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.ble_status_label),
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        Text(
+            text = statusText,
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+
+
 }
 
 
 @Composable
 fun SearchProfileStatus(searchProfile: SearchProfile, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    SuggestionChip(
-        onClick = onClick,
-        colors = SuggestionChipDefaults.suggestionChipColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            labelColor = MaterialTheme.colorScheme.onPrimaryContainer
-        ),
-        label = {
-            Text(
-                text = searchProfile.name,
-                modifier = Modifier.padding(
-                    horizontal = 10.dp,
-                    vertical = 4.dp
+    Row(horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()) {
+
+        Text(
+            text = stringResource(R.string.search_profile),
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        SuggestionChip(
+            onClick = onClick,
+            colors = SuggestionChipDefaults.suggestionChipColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ),
+            label = {
+                Text(
+                    text = searchProfile.name,
+                    style = MaterialTheme.typography.bodyMedium
                 )
-            )
-        },
-        modifier = modifier
-    )
+            },
+            modifier = modifier
+        )
+    }
 }
 
 
@@ -165,60 +186,130 @@ fun BLEControls(viewModel: ScannerViewModel, onSearchProfileClick: () -> Unit, m
     val isAdvertising by viewModel.isAdvertising.collectAsState()
     val searchProfile by viewModel.searchProfile.collectAsState()
 
-    ScanStatus(isScanning, isAdvertising)
+    Column {
 
-    Spacer(modifier = Modifier.height(8.dp))
+        ScanStatus(isScanning, isAdvertising)
 
-    Row(horizontalArrangement = Arrangement.SpaceBetween) {
+        Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
-            onClick = {
-                if (!isScanning) {
-                    viewModel.startScan()
-                } else {
-                    viewModel.stopScan()
-                }
-            },
-            colors = buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ),
-            modifier = Modifier.weight(1f)
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
         ) {
+
             if (!isScanning) {
-                Text(stringResource(R.string.scanner_start_scanning))
+                Text(
+                    stringResource(R.string.scanner_start_scanning),
+                    style = MaterialTheme.typography.bodyMedium
+                )
             } else {
-                Text(stringResource(R.string.scanner_stop_scanning))
+                Text(
+                    stringResource(R.string.scanner_stop_scanning),
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
+
+            Switch(
+                checked = isScanning,
+                onCheckedChange = {
+                    if (!isScanning) {
+                        viewModel.startScan()
+                    } else {
+                        viewModel.stopScan()
+                    }
+                },
+                thumbContent = {
+                    if (isScanning) {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.Cancel,
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                        )
+                    }
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.secondaryContainer,
+                    checkedTrackColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    checkedBorderColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    checkedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+
+                    uncheckedThumbColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    uncheckedTrackColor = MaterialTheme.colorScheme.secondaryContainer,
+                    uncheckedBorderColor = MaterialTheme.colorScheme.secondaryContainer,
+                    uncheckedIconColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            )
         }
 
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
-            onClick = {
-                if (!isAdvertising) {
-                    viewModel.startAdvertising()
-                } else {
-                    viewModel.stopAdvertising()
-                }
-            },
-            colors = buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ),
-            modifier = Modifier.weight(1f)
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
         ) {
+
             if (!isAdvertising) {
-                Text(stringResource(R.string.scanner_start_advertising))
+                Text(
+                    stringResource(R.string.scanner_start_advertising),
+                    style = MaterialTheme.typography.bodyMedium
+                )
             } else {
-                Text(stringResource(R.string.scanner_stop_advertising))
+                Text(
+                    stringResource(R.string.scanner_stop_advertising),
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
+
+            Switch(
+                checked = isAdvertising,
+                onCheckedChange = {
+                    if (!isAdvertising) {
+                        viewModel.startAdvertising()
+                    } else {
+                        viewModel.stopAdvertising()
+                    }
+                },
+                thumbContent = {
+                    if (isAdvertising) {
+                        Icon(
+                            imageVector = Icons.Filled.Wifi,
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.Cancel,
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                        )
+                    }
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.secondaryContainer,
+                    checkedTrackColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    checkedBorderColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    checkedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+
+                    uncheckedThumbColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    uncheckedTrackColor = MaterialTheme.colorScheme.secondaryContainer,
+                    uncheckedBorderColor = MaterialTheme.colorScheme.secondaryContainer,
+                    uncheckedIconColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            )
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        SearchProfileStatus(searchProfile, onSearchProfileClick)
     }
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    SearchProfileStatus(searchProfile, onSearchProfileClick)
 }
 
 
