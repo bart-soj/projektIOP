@@ -201,7 +201,7 @@ fun SettingsScreen(
                 confirmButton = {
                     Button(onClick = {
                         showDeleteDialog = false
-                        viewModel.logout()
+                        viewModel.onDeleteAccountClick()
                     }) {
                         Text(stringResource(R.string.delete_confirm_yes))
                     }
@@ -221,7 +221,7 @@ private fun BlockedUsersDialog(
     onClose: () -> Unit,
     viewModel: SettingsViewModel
 ) {
-    var loading by remember { mutableStateOf(false) } // TODO() is this really necessary
+    var loading by remember { mutableStateOf(false) }
 
     val processingIds by viewModel.processingIds.collectAsState()
     val items by viewModel.blockedFriendItems.collectAsState()

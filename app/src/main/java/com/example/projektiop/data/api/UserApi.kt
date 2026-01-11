@@ -38,7 +38,6 @@ interface UserApi {
     // Interests management
     @POST("users/profile/interests")
     suspend fun addUserInterest(@Body body: AddUserInterestRequest): Response<UserInterestDto>
-    // TODO() server in fact returns interestId name category isArchived
 
     @PUT("users/profile/interests/{userInterestId}")
     suspend fun updateUserInterest(

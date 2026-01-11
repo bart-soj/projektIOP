@@ -20,7 +20,8 @@ sealed interface DataError: RootError {
     enum class Authentication: DataError {
         INVALID_EMAIL_PASSWORD,
         ACCOUNT_BANNED,
-        EMAIL_NOT_VERIFIED
+        EMAIL_NOT_VERIFIED,
+        EMAIL_USERNAME_TAKEN
     }
 }
 

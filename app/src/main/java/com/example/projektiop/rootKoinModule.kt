@@ -18,9 +18,9 @@ val rootKoinModule = module {
     single { UserRepository( get(), get(), get(), get() ) }
     single { InterestRepository( get(), get() ) }
     single { ThemePreference( get() ) }
-    single { AuthRepository( get(), get(), get() ) }
+    single { AuthRepository( get(), get(), get(), get() ) }
     single { ChatUpdateService }
-    single { ChatRepository( get(), androidContext(), get(), get(), get() ) }
+    single { ChatRepository( get(), androidContext(), get(), get(), get(), get() ) }
     single { FriendshipRepository( get(), get(), get() ) }
     single { SharedDataSource( androidContext() ) }
     single { SearchProfileRepository( get(), get() ) }

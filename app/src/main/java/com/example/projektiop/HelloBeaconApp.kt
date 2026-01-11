@@ -9,6 +9,8 @@ import com.example.projektiop.data.db.realm.realmKoinModule
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.ui.viewmodels.viewModelsKoinModule
 import com.example.projektiop.util.NotificationHelper
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -40,6 +42,8 @@ class HelloBeaconApp : Application() {
         super.onTerminate()
         val authRepository by inject<AuthRepository>()
         RealmProvider.close()
-        authRepository.onTerminate()
+        MainScope().launch {
+            authRepository.onTerminate()
+        }
     }
 }

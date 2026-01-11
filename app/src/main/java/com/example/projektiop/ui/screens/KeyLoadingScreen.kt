@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -67,6 +68,7 @@ fun KeyLoadingScreen() {
 }
 
 
+// TODO forget backup button
 @Composable
 fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifier) {
     val authViewModel = koinViewModel<AuthViewModel>()
@@ -75,6 +77,7 @@ fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifie
     val loading by viewModel.backupLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showForgetDialog by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -138,6 +141,19 @@ fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifie
             }
             Spacer(modifier = Modifier.weight(1f))
             Button(
+                onClick = { showForgetDialog = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                )
+            ) {
+                Text(stringResource(R.string.forget), style = MaterialTheme.typography.titleLarge)
+            }
+            Spacer(modifier = Modifier.size(8.dp))
+            Button(
                 onClick = { showLogoutDialog = true },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -148,6 +164,26 @@ fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifie
                 )
             ) {
                 Text(stringResource(R.string.log_out), style = MaterialTheme.typography.titleLarge)
+            }
+            if (showForgetDialog) {
+                AlertDialog(
+                    onDismissRequest = { showForgetDialog = false },
+                    title = { Text(stringResource(R.string.confirmation)) },
+                    text = { Text(stringResource(R.string.forget_confirm_message)) },
+                    confirmButton = {
+                        Button(onClick = {
+                            showForgetDialog  = false
+                            viewModel.onForgetClick()
+                        }) {
+                            Text(stringResource(R.string.forget_confirm_yes))
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = { showForgetDialog   = false }) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                    }
+                )
             }
             if (showLogoutDialog) {
                 AlertDialog(

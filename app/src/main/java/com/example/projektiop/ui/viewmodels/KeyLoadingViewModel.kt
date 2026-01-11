@@ -41,7 +41,9 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
 
     private var isBackedUp: Boolean
         get() = sharedDataSource.get("backup", false)
-        set(value) {}
+        set(value) {
+            sharedDataSource.set("backup", value)
+        }
 
     fun ensureKeys() {
         _gettingBackup.value = false
@@ -100,6 +102,7 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
                         DataError.Authentication.INVALID_EMAIL_PASSWORD -> "Invalid Email or Password"
                         DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
                         DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
+                        DataError.Authentication.EMAIL_USERNAME_TAKEN -> "Username or Email taken"
                     }
 
                 is Result.Success -> {
@@ -117,6 +120,11 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
             }
             _backupLoading.value = false
         }
+    }
+
+    fun onForgetClick() {
+        isBackedUp = false
+        ensureKeys()
     }
 
     fun onPasswordChange(password: String) {

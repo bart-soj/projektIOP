@@ -4,6 +4,7 @@ import com.example.projektiop.data.api.AuthApi
 import com.example.projektiop.data.api.RegisterRequest
 import com.example.projektiop.data.api.LoginRequest
 import com.example.projektiop.data.api.TokenProvider
+import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.domain.AppStateRepository
 import com.example.projektiop.util.DataError
 import com.example.projektiop.util.Result
@@ -15,11 +16,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 
 sealed interface AuthState {
     object Unauthenticated: AuthState
-    object Loading: AuthState
     data class Authenticated(
         val userId: String,
         val isBackedUp: Boolean
@@ -29,14 +30,15 @@ sealed interface AuthState {
 
 class AuthRepository(private val authApi: AuthApi,
                      private val sharedDataSource: SharedDataSource,
-                     private val appStateRepository: AppStateRepository): TokenProvider {
+                     private val appStateRepository: AppStateRepository,
+                     private val dbRepository: RealmDBRepository): TokenProvider {
     private val KEY_TOKEN = "auth_token"
     private val KEY_EMAIL = "my_email"
     private val KEY_REMEMBER = "remember_me"
     private val KEY_ID = "_id"
     private val KEY_BACKUP = "backup"
 
-    val _authState: MutableStateFlow<AuthState> = MutableStateFlow(AuthState.Loading)
+    private val _authState: MutableStateFlow<AuthState> = MutableStateFlow(AuthState.Unauthenticated)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
     private var token: String? = null
@@ -66,18 +68,23 @@ class AuthRepository(private val authApi: AuthApi,
     suspend fun login(email: String, password: String): Result<String?, DataError> {
         return try {
             val response = authApi.login(LoginRequest(email, password))
-            val tmpId = response.body()?._id
-            val tmpToken = response.body()?.token
-            val tmpEmail = response.body()?.email
-            val isBackedUp = response.body()?.isBackedUp
-            if (validateToken(tmpToken) && !tmpId.isNullOrBlank()
-                && !tmpEmail.isNullOrBlank() && isBackedUp != null) {
-                saveToken(tmpToken, remember = rememberMe.value)
-                saveInfo(email, tmpId, isBackedUp) // TODO() handle saving errors
-            } else throw Exception("bad data")
-            _authState.value = AuthState.Authenticated(tmpId, isBackedUp)
-            appStateRepository.login()
-            Result.Success(token)
+            if (response.isSuccessful) {
+                val tmpId = response.body()?._id
+                val tmpToken = response.body()?.token
+                val tmpEmail = response.body()?.email
+                val isBackedUp = response.body()?.isBackedUp
+                if (validateToken(tmpToken) && !tmpId.isNullOrBlank()
+                    && !tmpEmail.isNullOrBlank() && isBackedUp != null
+                ) {
+                    saveToken(tmpToken, remember = rememberMe.value)
+                    saveInfo(email, tmpId, isBackedUp)
+                } else throw Exception("bad data")
+                _authState.value = AuthState.Authenticated(tmpId, isBackedUp)
+                appStateRepository.login()
+                Result.Success(token)
+            } else {
+                throw HttpException(response)
+            }
         } catch (e: Exception) {
             return apiExceptionToDataError<String?>(e)
         }
@@ -86,14 +93,17 @@ class AuthRepository(private val authApi: AuthApi,
     suspend fun register(username: String, email: String, password: String): Result<Unit, DataError> {
         return try {
             val response = authApi.register(RegisterRequest(username, email, password))
-            Result.Success(Unit)
+            if (response.isSuccessful) {
+                Result.Success(Unit)
+            } else {
+                throw HttpException(response)
+            }
         }  catch (e: Exception) {
             return apiExceptionToDataError<Unit>(e)
         }
     }
 
     suspend fun logout() {
-        _authState.value = AuthState.Loading
         onLogoutCleanup()
         _authState.value = AuthState.Unauthenticated
         appStateRepository.logout()
@@ -127,13 +137,14 @@ class AuthRepository(private val authApi: AuthApi,
         sharedDataSource.set(KEY_BACKUP, isBackedUp)
     }
 
-    fun onTerminate() {
+    suspend fun onTerminate() {
         if (!rememberMe.value) {
             onLogoutCleanup()
         }
     }
 
-    fun onLogoutCleanup() {
+    suspend fun onLogoutCleanup() {
+        dbRepository.deleteContents()
         token = null
         sharedDataSource.set(KEY_REMEMBER, false)
         sharedDataSource.remove(KEY_TOKEN)

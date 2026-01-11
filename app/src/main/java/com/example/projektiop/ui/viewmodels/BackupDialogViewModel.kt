@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 sealed interface BackupDialogUiEvent {
     data object BackupSuccess : BackupDialogUiEvent
@@ -59,6 +60,7 @@ class BackupDialogViewModel(private val sharedDataSource: SharedDataSource,
 
             try {
                 val result = backupApi.saveBackup(backupInfo)
+                if (!result.isSuccessful) throw HttpException(result)
                 sharedDataSource.set("backup", true)
                 _uiEvents.send(BackupDialogUiEvent.BackupSuccess)
             } catch(e: Exception) {
@@ -77,6 +79,7 @@ class BackupDialogViewModel(private val sharedDataSource: SharedDataSource,
                     DataError.Authentication.INVALID_EMAIL_PASSWORD -> "Invalid Email or Password"
                     DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
                     DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
+                    DataError.Authentication.EMAIL_USERNAME_TAKEN -> "Username or Email taken"
                 }
             }
             _loading.value = false

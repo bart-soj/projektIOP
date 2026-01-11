@@ -44,6 +44,8 @@ import com.example.projektiop.ui.screens.FriendProfileScreen
 
 import com.example.projektiop.BluetoothLE.BTPermissionsManager
 import com.example.projektiop.BluetoothLE.BluetoothRepository
+import com.example.projektiop.data.api.websocket.AppEvent
+import com.example.projektiop.data.api.websocket.ChatEvent
 import com.example.projektiop.data.api.websocket.SocketManager
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.ChatUpdateService
@@ -59,6 +61,7 @@ import com.example.projektiop.domain.AppStateRepository
 import com.example.projektiop.ui.screens.KeyLoadingScreen
 import com.example.projektiop.ui.screens.ReportScreen
 import com.example.projektiop.ui.screens.ResendEmailScreen
+import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
@@ -67,7 +70,8 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             permissions.forEach { (permission, granted) ->
                 if (!granted) {
-                    showPermissionDeniedMessage(this, permission)
+                    val text = this.getString(R.string.permission_denied) + ": $permission"
+                    showToast(text)
                 }
             }
         }
@@ -85,6 +89,7 @@ class MainActivity : ComponentActivity() {
     private val friendshipRepository: FriendshipRepository by inject()
     private val userRepository: UserRepository by inject()
     private val bleManager: BluetoothRepository by inject()
+    private val authRepository: AuthRepository by inject()
 
     private val socketManager: SocketManager by inject()
 
@@ -145,6 +150,26 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        lifecycleScope.launch {
+            socketManager.appEventFlow.collect { event->
+                when(event) {
+                    AppEvent.Ban -> {
+                        // delete all auth data before showing the message
+                        authRepository.onLogoutCleanup()
+                        val text = this@MainActivity.getString(R.string.got_banned)
+                        showToast(text)
+                        delay(1000)
+                        authRepository.logout()
+                    }
+                    is AppEvent.Block -> {
+                        friendshipRepository.getBlocked(event.friendId)
+                    }
+                    is AppEvent.Unblock -> {
+                        friendshipRepository.getUnblocked(event.friendId)
+                    }
+                }
+            }
+        }
 
         lifecycleScope.launch {
             bleManager.bleEvents.collect { event ->
@@ -195,9 +220,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        /*
         Intent(this, ChatUpdateService::class.java).also { intent ->
             bindService(intent, serviceConnection, BIND_ADJUST_WITH_ACTIVITY)
         }
+         */
     }
 
     override fun onStop() {
@@ -207,13 +234,14 @@ class MainActivity : ComponentActivity() {
             isBound = false
         }
     }
+
+    private fun showToast(text: String) {
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+    }
 }
 
 
-private fun MainActivity.showPermissionDeniedMessage(context: Context, permission: String) {
-    Log.w("BLE_PERMISSIONS", "Użytkownik odmówił uprawnienia: $permission. Funkcjonalność może być ograniczona.")
-    Toast.makeText(context, context.getString(R.string.permission_denied) + ": $permission", Toast.LENGTH_SHORT).show()
-}
+
 
 
 @Composable

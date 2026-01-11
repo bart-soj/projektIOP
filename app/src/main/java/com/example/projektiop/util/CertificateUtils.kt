@@ -31,6 +31,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder
+import retrofit2.HttpException
 import java.io.ByteArrayInputStream
 import java.io.StringWriter
 import java.security.KeyPair
@@ -356,6 +357,7 @@ class CertificateUtils(private val pubKeyApi: PublicKeyApi,
         var backupInfo: BackupInfo
         try {
             val result = backupApi.getBackup()
+            if (!result.isSuccessful) throw HttpException(result)
             if (result.body() == null) return Result.Error(DataError.Network.UNKNOWN)
             backupInfo = result.body()!!
             return Result.Success(backupInfo)
@@ -406,7 +408,8 @@ class CertificateUtils(private val pubKeyApi: PublicKeyApi,
         sharedDataSource.setEncryptedBase64(pubKeyStorageKey, pubBase64)
 
         try {
-            pubKeyApi.publishPublicKey(PublishPublicKeyRequest(pubBase64))
+            val result = pubKeyApi.publishPublicKey(PublishPublicKeyRequest(pubBase64))
+            if (!result.isSuccessful) throw HttpException(result)
         } catch (e: Exception) {
             return apiExceptionToDataError<Pair<base64, base64>>(e)
         }
@@ -501,10 +504,11 @@ class CertificateUtils(private val pubKeyApi: PublicKeyApi,
     }
 
     suspend fun getPubKey(userId: String): Result<base64, DataError> {
-        val localData = dbRepository.getUserById(userId)?.publicKey
-        if (localData != null) return Result.Success(localData)
+        // val localData = dbRepository.getUserById(userId)?.publicKey
+        // if (localData != null) return Result.Success(localData)
         try {
             val result = pubKeyApi.getPublicKey(userId)
+            if (!result.isSuccessful) throw HttpException(result)
             val body = result.body()
             val key = body?.publicKey
             require(key != null)

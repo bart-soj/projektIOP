@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 import java.util.UUID
 import com.example.projektiop.domain.models.Interest as DomainInterest
 import com.example.projektiop.domain.models.UserInterest as DomainUserInterest
@@ -389,7 +390,11 @@ class UserRepository(private val userApi: UserApi,
     suspend fun deleteMyAccount(): Result<Unit> {
         try {
             val result = userApi.deleteOwnAccount()
-            return Result.success(Unit)
+            if(result.isSuccessful){
+                return Result.success(Unit)
+            } else {
+                throw HttpException(result)
+            }
         } catch(e: Exception) {
             return Result.failure(e)
         }

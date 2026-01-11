@@ -30,7 +30,6 @@ data class FriendItem(
 data class BlockInfo(
     val isBlocked: Boolean,
     val blockedByMe: Boolean,
-    val friendshipId: String?
 )
 
 class FriendshipRepository(private val friendshipApi: FriendshipApi,
@@ -220,6 +219,10 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
         }
     }
 
+    suspend fun getBlocked(friendId: String) {
+        dbRepository.getBlocked(friendId)
+    }
+
     /*
     TODO() serverside, what does blocking a friendship mean?
         probably should be possible at any friendship state
@@ -241,6 +244,10 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
                 Result.success(Unit)
             } else Result.failure(Exception("Błąd odblokowania (${resp.code()})"))
         } catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun getUnblocked(friendId: String) {
+        dbRepository.getUnblocked(friendId)
     }
 
     fun getLocalFriendItemByFriendId(friendId: String): com.example.projektiop.util.Result<FriendItem, DataError.Local> {

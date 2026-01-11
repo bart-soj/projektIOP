@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
+import retrofit2.HttpException
 import com.example.projektiop.domain.models.Chat as DomainChat
 
 private const val BASE_URL_KEY: String = "BASE_URL"
@@ -44,7 +45,8 @@ class ChatRepository(private val chatApi: ChatApi,
                      context: Context,
                      private val sharedDataSource: SharedDataSource,
                      private val dbRepository: RealmDBRepository,
-                     private val certificateUtils: CertificateUtils
+                     private val certificateUtils: CertificateUtils,
+                     private val socketManager: SocketManager
 ) {
 
     private val _chats = MutableStateFlow<Flow<List<DomainChat>>>(flowOf(emptyList()))
@@ -64,6 +66,7 @@ class ChatRepository(private val chatApi: ChatApi,
         var domainList: List<DomainChat> = emptyList()
         try {
             val response = chatApi.getChats()
+            if(!response.isSuccessful) throw HttpException(response)
             val body = response.body()
             require(body != null)
             dtoList = body
@@ -81,7 +84,7 @@ class ChatRepository(private val chatApi: ChatApi,
                 val otherUser = dbRepository.getUserById(otherUserId)
                 require(otherUser != null) // should have users we have chats with since they are friends
 
-                val local = dbRepository.getChatById( chatId )?.chatKey
+                val local = null // dbRepository.getChatById( chatId )?.chatKey
                 val chatKey: base64
                 if (! local.isNullOrBlank()) {
                     chatKey = local
@@ -100,21 +103,13 @@ class ChatRepository(private val chatApi: ChatApi,
                 val realmChat = it.toRealm(chatKey)
                 dbRepository.addChat(realmChat)
                 val domainChat: DomainChat
-                val theirPubResult = certificateUtils.getPubKey(otherUserId)
-                when(theirPubResult) {
-                    is com.example.projektiop.util.Result.Error -> {
-                    domainChat = realmChat.toDomain(myUserId, dbRepository)}
-                    is com.example.projektiop.util.Result.Success -> {
-                        if (it.lastMessage != null) {
-                            val chatKey = certificateUtils.calculateChatKey(myUserId, theirPubResult.data)
-                            val decrypted = certificateUtils.decryptMessage(it.lastMessage.content!!, chatKey)
-                            domainChat = realmChat.toDomain(myUserId, dbRepository,
-                                it.lastMessage.toDomain(decrypted)
-                            )
-                        } else {
-                            domainChat = realmChat.toDomain(myUserId, dbRepository)
-                        }
-                    }
+                if (it.lastMessage != null) {
+                    val decrypted = certificateUtils.decryptMessage(it.lastMessage.content!!, chatKey)
+                    domainChat = realmChat.toDomain(myUserId, dbRepository,
+                        it.lastMessage.toDomain(decrypted)
+                    )
+                } else {
+                    domainChat = realmChat.toDomain(myUserId, dbRepository)
                 }
                 domainList += domainChat
             } catch(e: Exception ) {}
@@ -124,8 +119,8 @@ class ChatRepository(private val chatApi: ChatApi,
     }
 
     suspend fun ensureChatWithUser(friendId: String, myId: String): com.example.projektiop.util.Result<DomainChat, DataError>  {
-        val localData = dbRepository.getChatByFriendId(friendId)
-        if (localData != null) return com.example.projektiop.util.Result.Success(localData.toDomain(myId, dbRepository))
+        // val localData = dbRepository.getChatByFriendId(friendId)
+        // if (localData != null) return com.example.projektiop.util.Result.Success(localData.toDomain(myId, dbRepository))
         try {
             // if we created the chat and got an error before saving it could exist on server but not locally
             var dto: ChatDto? = null
@@ -139,6 +134,7 @@ class ChatRepository(private val chatApi: ChatApi,
             }
             if (dto == null){
                 val created = chatApi.accessChat(AccesChatRequest(friendId))
+                if(!created.isSuccessful) throw HttpException(created)
                 dto = created.body()
             }
 
@@ -204,7 +200,7 @@ class ChatRepository(private val chatApi: ChatApi,
         } catch (e: Exception) { Result.failure(e) }
     }
 
-    suspend fun sendMessageSocket(chatId: String, content: String, socketManager: SocketManager): Result<Unit> {
+    suspend fun sendMessageSocket(chatId: String, content: String): Result<Unit> {
         try {
             val chatKey = dbRepository.getChatById(chatId)!!.chatKey
             val encrypted = certificateUtils.encryptMessage(content, chatKey!!)

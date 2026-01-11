@@ -129,9 +129,9 @@
     <!-- Scanner Screen -->
     <string name="scanner_screen_title">Skaner BLE</string>
     <string name="scanner_your_identifier_label">Twój identyfikator: %s</string>
-    <string name="scanner_start_scanning">Rozpocznij skanowanie</string>
-    <string name="scanner_stop_scanning">Zatrzymaj skanowanie</string>
-    <string name="scanner_start_advertising">Rozpocznij rozgłaszanie</string>
+    <string name="scanner_start_scanning">Rozpocznij Skanowanie</string>
+    <string name="scanner_stop_scanning">Zatrzymaj Skanowanie</string>
+    <string name="scanner_start_advertising">Rozpocznij Rozgłaszanie</string>
     <string name="scanner_stop_advertising">Zatrzymaj Rozgłaszanie</string>
     <string name="ble_status_label">Status BLE: %s</string>
     <string name="ble_status_scanning_and_advertising">Skanowanie i Rozgłaszanie aktywne</string>
@@ -256,5 +256,9 @@
     <string name="delete_account_warning">Nie można przywrócić usuniętego konta!</string>
     <string name="delete_confirm_yes">Tak, usuń!</string>
     <string name="typing">Pisze...</string>
+    <string name="got_banned">To konto zostało zbanowane!</string>
+    <string name="forget_confirm_message">Czy na pewno chcesz stracić historię chatów?</string>
+    <string name="forget_confirm_yes">Tak, usuń historię!</string>
+    <string name="forget">Zaloguj bez backupu</string>
 
 </resources>

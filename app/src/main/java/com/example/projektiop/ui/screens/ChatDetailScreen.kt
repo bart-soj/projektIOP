@@ -2,7 +2,6 @@ package com.example.projektiop.ui.screens
 
 import com.example.projektiop.R
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,9 +23,6 @@ import com.example.projektiop.ui.viewmodels.ChatDetailViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import java.time.Duration
-
-
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -147,8 +143,10 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                 OutlinedTextField(
                     value = input,
                     onValueChange = {
-                        if (input == "" || it == "") {
-                            viewModel.onType()
+                        if (input == "") {
+                            viewModel.onTypeStart()
+                        } else if(it == "") {
+                            viewModel.onTypeStop()
                         }
                         input = it },
                     modifier = Modifier.weight(1f),

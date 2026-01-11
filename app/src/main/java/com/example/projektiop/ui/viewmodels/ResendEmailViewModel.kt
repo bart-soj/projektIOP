@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 sealed interface ResendUiEvent{
     data object ResendSuccess : ResendUiEvent
@@ -51,6 +52,7 @@ class ResendEmailViewModel(private val emailApi: AuthApi) : ViewModel() {
 
             try {
                 val result = emailApi.resendVerificationEmail(request)
+                if (!result.isSuccessful) throw HttpException(result)
                 _uiEvents.send(ResendUiEvent.ResendSuccess)
             } catch(e: Exception) {
                 val error = apiExceptionToDataError<Unit>(e).error
@@ -68,6 +70,7 @@ class ResendEmailViewModel(private val emailApi: AuthApi) : ViewModel() {
                     DataError.Authentication.INVALID_EMAIL_PASSWORD -> "Invalid Email or Password"
                     DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
                     DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
+                    DataError.Authentication.EMAIL_USERNAME_TAKEN -> "Username or Email taken"
                 }
             }
             _loading.value = false

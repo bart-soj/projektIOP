@@ -22,6 +22,12 @@ import com.example.projektiop.domain.models.SearchProfile as DomainSearchProfile
 
 class RealmDBRepository(private val realm: Realm) {
 
+    suspend fun deleteContents() {
+        realm.write{
+            this.deleteAll()
+        }
+    }
+
     // ----------------------
     // Message operations
     // ----------------------
@@ -123,7 +129,7 @@ class RealmDBRepository(private val realm: Realm) {
     fun savePubKey(userId: String, pubKey: base64) {
         val objectId = ObjectId(userId)
         realm.writeBlocking {
-            val user = realm.query<User>(User::class, "_id == $0", objectId).first().find()
+            val user = this.query<User>(User::class, "_id == $0", objectId).first().find()
             if (user != null) {
                 user.publicKey = pubKey
             }
@@ -200,6 +206,26 @@ class RealmDBRepository(private val realm: Realm) {
         realm.writeBlocking {
             val objectId = ObjectId(friendshipId)
             val toUpdate = this.query<Friendship>(Friendship::class, "_id == $0", objectId).first().find()
+            if (toUpdate == null) return@writeBlocking
+            toUpdate.status = FriendshipStatus.ACCEPTED
+            toUpdate.isBlocked = false
+            toUpdate.blockedBy = null
+        }
+    }
+
+    fun getBlocked(friendId: String) {
+        realm.writeBlocking {
+            val toUpdate = this.query<Friendship>(Friendship::class, "user2Id == $0", friendId).first().find()
+            if (toUpdate == null) return@writeBlocking
+            toUpdate.status = FriendshipStatus.BLOCKED
+            toUpdate.isBlocked = true
+            toUpdate.blockedBy = friendId
+        }
+    }
+
+    fun getUnblocked(friendId: String) {
+        realm.writeBlocking {
+            val toUpdate = this.query<Friendship>(Friendship::class, "user2Id == $0", friendId).first().find()
             if (toUpdate == null) return@writeBlocking
             toUpdate.status = FriendshipStatus.ACCEPTED
             toUpdate.isBlocked = false

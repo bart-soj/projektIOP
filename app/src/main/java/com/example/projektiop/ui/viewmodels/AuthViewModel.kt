@@ -89,6 +89,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
                             DataError.Authentication.INVALID_EMAIL_PASSWORD -> "Invalid Email or Password"
                             DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
                             DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
+                            DataError.Authentication.EMAIL_USERNAME_TAKEN -> "Username or Email taken"
                         }
                     }
                     is Result.Success -> {}
@@ -123,6 +124,7 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
                             DataError.Authentication.INVALID_EMAIL_PASSWORD -> "Invalid Email or Password"
                             DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
                             DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
+                            DataError.Authentication.EMAIL_USERNAME_TAKEN -> "Username or Email taken"
                         }
                     }
 

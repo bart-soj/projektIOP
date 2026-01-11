@@ -175,7 +175,8 @@ fun BLEControls(viewModel: ScannerViewModel, onSearchProfileClick: () -> Unit, m
             colors = buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
-            )
+            ),
+            modifier = Modifier.weight(1f)
         ) {
             if (!isScanning) {
                 Text(stringResource(R.string.scanner_start_scanning))
@@ -197,7 +198,8 @@ fun BLEControls(viewModel: ScannerViewModel, onSearchProfileClick: () -> Unit, m
             colors = buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
-            )
+            ),
+            modifier = Modifier.weight(1f)
         ) {
             if (!isAdvertising) {
                 Text(stringResource(R.string.scanner_start_advertising))

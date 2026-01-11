@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.api.websocket.ChatEvent
 import com.example.projektiop.data.api.websocket.SocketManager
 import com.example.projektiop.data.repositories.BlockInfo
-import com.example.projektiop.data.repositories.ChatListItem
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.UserRepository
@@ -18,7 +17,6 @@ import com.example.projektiop.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -49,6 +47,10 @@ class ChatDetailViewModel(private val friendId: String,
     private val _chat = MutableStateFlow<Chat?>(null)
     //private val _chatListItem = MutableStateFlow<ChatListItem?>(null)
     val chat: StateFlow<Chat?> = _chat.asStateFlow()
+    val chatId: String
+        get() {
+            return chat.value!!.id
+        }
 
     val timeFormatter: DateTimeFormatter =
         DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
@@ -56,10 +58,40 @@ class ChatDetailViewModel(private val friendId: String,
     val dateFormatter: DateTimeFormatter =
         DateTimeFormatter.ofPattern("d MMMM yyyy").withZone(ZoneId.systemDefault())
 
-    val chatEventFlow = socketManager.wsEventFlow
+    val chatEventFlow = socketManager.chatEventFlow
 
     init {
         ensureChat()
+        viewModelScope.launch {
+            chatEventFlow.collect { event ->
+                if(event.chatId == chatId || event.chatId == friendId) {
+                    when(event) {
+                        is ChatEvent.Receive -> {
+                            chatRepository.decryptMessage(event.message).onSuccess { resultMess ->
+                                _messages.value += resultMess
+                                _typing.value = false
+                            }.onFailure { e ->
+                                Log.d("SOCC", "failed to decrypt ${event.message.content}", e)
+                            }
+                        }
+                        is ChatEvent.Send -> {}
+                        is ChatEvent.WritingStart -> { _typing.value = true }
+                        is ChatEvent.WritingStop -> { _typing.value = false }
+                        is ChatEvent.Block -> {
+                            Log.d("SOCC", "got block vm")
+                            _blockInfo.value = BlockInfo(
+                                isBlocked = true,
+                                blockedByMe = false,
+                            )
+                        }
+                        is ChatEvent.Unblock -> {
+                            Log.d("SOCC", "got unblock vm")
+                            _blockInfo.value = null
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fun ensureChat() {
@@ -80,6 +112,7 @@ class ChatDetailViewModel(private val friendId: String,
                     DataError.Authentication.INVALID_EMAIL_PASSWORD -> "Invalid Email or Password"
                     DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
                     DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
+                    DataError.Authentication.EMAIL_USERNAME_TAKEN -> "Username or Email taken"
                 }
                 is Result.Success -> {
                     _chat.value = ensureResult.data
@@ -87,24 +120,7 @@ class ChatDetailViewModel(private val friendId: String,
                     loadMessages()
                 }
             }
-
             _loading.value = false
-        }
-
-        viewModelScope.launch {
-            chatEventFlow.collect { event ->
-                when(event) {
-                    is ChatEvent.Receive -> {
-                        chatRepository.decryptMessage(event.message).onSuccess { resultMess ->
-                            _messages.value += resultMess
-                            _typing.value = false
-                        }
-                    }
-                    is ChatEvent.Send -> {}
-                    is ChatEvent.Writing -> {
-                        _typing.value = !typing.value }
-                }
-            }
         }
     }
 
@@ -124,14 +140,13 @@ class ChatDetailViewModel(private val friendId: String,
             val blockedByMe = friendship?.blockedBy == myId
             _blockInfo.value = BlockInfo(
                 isBlocked = true,
-                blockedByMe = blockedByMe,
-                friendshipId = friendship?.id
+                blockedByMe = blockedByMe
             )
         }
     }
 
     suspend fun loadMessages() {
-        chatRepository.loadMessages(chat.value!!.id).onSuccess { list ->
+        chatRepository.loadMessages(chatId).onSuccess { list ->
             _messages.value = list
         }.onFailure { e ->
             Log.d("mess", "failed to load messages:\t$e")
@@ -140,16 +155,22 @@ class ChatDetailViewModel(private val friendId: String,
 
     fun onSendClick(content: String) {
         viewModelScope.launch {
-            // chatRepository.sendMessage(chat.value!!.id, content)
+            // chatRepository.sendMessage(chatId, content)
             // loadMessages()
             Log.d("SOCC", "out send vm")
-            chatRepository.sendMessageSocket(chat.value!!.id, content, socketManager)
+            chatRepository.sendMessageSocket(chatId, content)
         }
     }
 
-    fun onType() {
+    fun onTypeStart() {
         viewModelScope.launch {
-            socketManager.emit(ChatEvent.Writing(chat.value!!.id))
+            socketManager.emit(ChatEvent.WritingStart(chatId))
+        }
+    }
+
+    fun onTypeStop() {
+        viewModelScope.launch {
+            socketManager.emit(ChatEvent.WritingStop(chatId))
         }
     }
 
