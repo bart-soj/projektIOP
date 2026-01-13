@@ -9,6 +9,7 @@ import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.domain.models.base64
 import com.example.projektiop.util.mongoTimestampToRealmInstant
 import com.example.projektiop.util.toJavaInstant
+import java.time.Instant
 import com.example.projektiop.domain.models.Chat as DomainChat
 import com.example.projektiop.domain.models.Message as DomainMessage
 
@@ -60,7 +61,7 @@ fun Chat.toDomain(myUserId: String, dbRepository: RealmDBRepository, message: Do
         // lastMessage = lastMessage?.toDomain(),
         lastMessage = message,
         unread = unread == true,
-        createdAt = this.createdAt!!.toJavaInstant(),
+        createdAt = this.createdAt?.toJavaInstant() ?: Instant.now(), // TODO() hotifx
         otherUserId = otherUser!!._id.toHexString(),
         lostHistory = lostHistory
     )

@@ -27,6 +27,7 @@ import com.example.projektiop.data.repositories.ThemePreference
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.screens.components.FriendCard
 import com.example.projektiop.ui.components.BackupDialogButton
+import com.example.projektiop.ui.components.SwitchWithText
 import com.example.projektiop.ui.theme.ProjektIOPTheme
 import com.example.projektiop.ui.viewmodels.AuthViewModel
 import com.example.projektiop.ui.viewmodels.BackupDialogViewModel
@@ -63,6 +64,7 @@ fun SettingsScreen(
         var showLogoutDialog by remember { mutableStateOf(false) }
         var showBlockedDialog by remember { mutableStateOf(false) }
         var showDeleteDialog by remember { mutableStateOf(false) }
+        val rememberMe by viewModel.rememberMe.collectAsState()
 
         Surface(
             modifier = Modifier
@@ -133,6 +135,19 @@ fun SettingsScreen(
 
                 ) {
                     Text(text = stringResource(id = R.string.blocked_users))
+                }
+
+                Spacer(Modifier.size(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SwitchWithText(
+                        checked = rememberMe,
+                        text = stringResource(R.string.remember_me),
+                        onCheckedChange = { viewModel.rememberMe() }
+                    )
                 }
 
                 Spacer(modifier = Modifier.weight(1f))

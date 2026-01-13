@@ -3,6 +3,10 @@ package com.example.projektiop.ui.screens
 import com.example.projektiop.R
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -11,6 +15,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.outlined.ChevronLeft
+import androidx.compose.material.icons.outlined.Report
 import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,7 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.projektiop.ui.components.ObserveAsEvents
 import com.example.projektiop.ui.components.UserAvatar
+import com.example.projektiop.ui.viewmodels.ChatDetailUIEvent
 import com.example.projektiop.ui.viewmodels.ChatDetailViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -41,6 +49,17 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
     val typing by viewModel.typing.collectAsState()
 
     var input by remember { mutableStateOf("") }
+
+    val uiEventFlow = viewModel.uiEventFlow
+
+    ObserveAsEvents(uiEventFlow) { event ->
+        when(event) {
+            is ChatDetailUIEvent.NavigateToReport -> {
+                val target = "report/${event.messageId}?messageId=${event.messageId}&content=${event.content}"
+                navController.navigate(target)            }
+            is ChatDetailUIEvent.ShowToast -> {}
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -117,7 +136,8 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                                         incoming = isIncoming,
                                         groupedWithPrev = prevSame,
                                         avatarUrl = if (isIncoming && !prevSame) url else null,
-                                        timeText = if (showTime) timeFormatter.format(m.createdAt) else ""
+                                        timeText = if (showTime) timeFormatter.format(m.createdAt) else "",
+                                        onReportClick = { if (isIncoming)  viewModel.onReportClick(m.id, m.content) }
                                     )
                                 }
                             }
@@ -125,7 +145,8 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                 }
             }
             if(typing) {
-                MessageBubble(text = stringResource(R.string.typing),incoming = true, groupedWithPrev = false, avatarUrl = null, timeText = "")
+                MessageBubble(text = stringResource(R.string.typing), incoming = true,
+                    groupedWithPrev = false, avatarUrl = null, timeText = "")
             }
 
             val isBlocked = blockInfo != null
@@ -175,14 +196,14 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun MessageBubble(
     text: String,
     incoming: Boolean,
     groupedWithPrev: Boolean,
     avatarUrl: String?,
-    timeText: String
+    timeText: String,
+    onReportClick: (() -> Unit)? = null
 ) {
     val bg = if (incoming) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.tertiary
     val contentColor = if (incoming) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onTertiary
@@ -201,8 +222,11 @@ private fun MessageBubble(
             bottomStart = 18.dp
         )
     }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = if (incoming) Arrangement.Start else Arrangement.End) {
-        if (incoming) {
+
+    var showReportButton by remember { mutableStateOf(false) }
+
+    if(incoming) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
             if (!groupedWithPrev) {
                 UserAvatar(
                     avatarUrl,
@@ -210,53 +234,106 @@ private fun MessageBubble(
                 )
             }
             Spacer(Modifier.width(6.dp))
-        }
 
-        Column(horizontalAlignment = if (incoming) Alignment.Start else Alignment.End) {
-            Surface(
-                color = bg,
-                contentColor = contentColor,
-                shape = shape,
-                tonalElevation = if (incoming) 0.dp else 2.dp,
-                shadowElevation = 0.dp,
-                modifier = if (groupedWithPrev)
-                    if (incoming) {
-                        Modifier.padding(start = 32.dp)
-                    } else {
-                        Modifier.padding(end = 32.dp)
+            Column(horizontalAlignment = Alignment.Start) {
+                Surface(
+                    color = bg,
+                    contentColor = contentColor,
+                    shape = shape,
+                    tonalElevation =  0.dp,
+                    shadowElevation = 0.dp,
+                    modifier =
+                        (if (groupedWithPrev) Modifier.padding(start = 32.dp) else Modifier)
+                            .combinedClickable(
+                                onClick = {},
+                                onLongClick = { showReportButton = true }
+                            )
+                ) {
+                    Column(Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
+                        Text(text = text, style = MaterialTheme.typography.bodyMedium)
                     }
-                else Modifier
-                    .padding(0.dp)
-            ) {
-                Column(Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
-                    Text(text = text, style = MaterialTheme.typography.bodyMedium)
+                }
+                Spacer(Modifier.height(2.dp))
+                if (timeText.isNotBlank()) {
+                    Text(
+                        timeText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier =
+                            if (groupedWithPrev) Modifier.padding(start = 32.dp)
+                            else Modifier.padding(0.dp)
+                    )
+                    Spacer(Modifier.height(12.dp))
                 }
             }
-            Spacer(Modifier.height(2.dp))
-            if (timeText.isNotBlank()) {
-                Text(
-                    timeText,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = if (groupedWithPrev) if (incoming) {
-                        Modifier.padding(start = 32.dp)
-                    } else {
-                        Modifier.padding(end = 32.dp)
+
+            Spacer(Modifier.width(6.dp))
+
+            if (onReportClick != null) {
+                AnimatedVisibility(
+                    visible = showReportButton,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    IconButton(onClick = onReportClick) {
+                        Icon(
+                            imageVector = Icons.Outlined.Report,
+                            contentDescription = null
+                        )
                     }
-                    else Modifier
-                        .padding(0.dp)
-                )
-                Spacer(Modifier.height(12.dp))
+
+                    Spacer(Modifier.width(6.dp))
+
+                    IconButton(onClick = { showReportButton = false }) {
+                        Icon(
+                            imageVector = Icons.Outlined.ChevronLeft,
+                            contentDescription = null
+                        )
+                    }
+                }
             }
         }
-        if (!incoming) {
+
+    } else {
+
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            Column(horizontalAlignment = Alignment.End) {
+                Surface(
+                    color = bg,
+                    contentColor = contentColor,
+                    shape = shape,
+                    tonalElevation =  2.dp,
+                    shadowElevation = 0.dp,
+                    modifier =
+                        if (groupedWithPrev) Modifier.padding(end = 32.dp)
+                        else Modifier.padding(0.dp)
+                ) {
+                    Column(Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
+                        Text(text = text, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                Spacer(Modifier.height(2.dp))
+                if (timeText.isNotBlank()) {
+                    Text(
+                        timeText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier =
+                            if (groupedWithPrev) Modifier.padding(end = 32.dp)
+                            else Modifier.padding(0.dp)
+                    )
+                    Spacer(Modifier.height(12.dp))
+                }
+            }
+
             Spacer(Modifier.width(6.dp))
-        }
-        if (!incoming && !groupedWithPrev) {
-            UserAvatar(
-                avatarUrl,
-                modifier = Modifier.size(32.dp)
-            )
+
+            if (!groupedWithPrev) {
+                UserAvatar(
+                    avatarUrl,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
         }
     }
 }

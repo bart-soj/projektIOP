@@ -181,7 +181,7 @@ fun SearchProfileStatus(searchProfile: SearchProfile, onClick: () -> Unit, modif
 
 
 @Composable
-fun BLEControls(viewModel: ScannerViewModel, onSearchProfileClick: () -> Unit, modifier: Modifier = Modifier) { // TODO() use switches
+fun BLEControls(viewModel: ScannerViewModel, onSearchProfileClick: () -> Unit, modifier: Modifier = Modifier) {
     val isScanning by viewModel.isScanning.collectAsState()
     val isAdvertising by viewModel.isAdvertising.collectAsState()
     val searchProfile by viewModel.searchProfile.collectAsState()

@@ -68,7 +68,6 @@ fun KeyLoadingScreen() {
 }
 
 
-// TODO forget backup button
 @Composable
 fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifier) {
     val authViewModel = koinViewModel<AuthViewModel>()
@@ -90,6 +89,7 @@ fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifie
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = stringResource(R.string.restore_backup_title),
                 style = MaterialTheme.typography.headlineMedium,

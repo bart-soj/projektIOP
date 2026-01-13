@@ -15,9 +15,12 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.map
 import com.example.projektiop.domain.models.FriendshipStatus
 import com.example.projektiop.domain.models.base64
+import com.example.projektiop.util.mongoTimestampToRealmInstant
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.RealmInstant
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.ObjectId
+import java.time.Instant
 import com.example.projektiop.domain.models.SearchProfile as DomainSearchProfile
 
 class RealmDBRepository(private val realm: Realm) {
@@ -86,11 +89,22 @@ class RealmDBRepository(private val realm: Realm) {
         return realm.query<Chat>(Chat::class, "_id = $0", objectId).first().find()
     }
 
+    fun updateLastMessage(chatId: String, lastMessageId: String, lastMessageTimestamp: String) {
+        realm.writeBlocking {
+            val objectId = ObjectId(chatId)
+            val toUpdate = this.query<Chat>(Chat::class, "_id = $0", objectId).first().find()
+            toUpdate?.lastMessageId = lastMessageId
+            toUpdate?.lastMessageTimestamp = mongoTimestampToRealmInstant(lastMessageTimestamp)
+            toUpdate?.updatedAt = RealmInstant.now()
+        }
+    }
+
     fun deleteChat(toDelete: Chat) {
         realm.writeBlocking {
             findLatest(toDelete)?.let { delete(it) }
         }
     }
+
     // ----------------------
     // User operations
     // ----------------------

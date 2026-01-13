@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.domain.AppStateRepository
 import com.example.projektiop.util.BackupError
-import com.example.projektiop.util.CertificateUtils
+import com.example.projektiop.util.KeyUtils
 import com.example.projektiop.util.DataError
 import com.example.projektiop.util.Result
 import com.example.projektiop.util.backupPasswordValidator
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
+class KeyLoadingViewModel(private val keyUtils: KeyUtils,
                           private val appStateRepository: AppStateRepository,
                           private val sharedDataSource: SharedDataSource) : ViewModel() {
 
@@ -51,20 +51,48 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
         _gotKeys.value = false
         viewModelScope.launch {
             Log.d("KEYS", "getting local")
-            val localResult = certificateUtils.getLocalKeyPair(userId)
+            val localResult = keyUtils.getLocalKeyPair(userId)
             when(localResult) {
                 is Result.Error -> {}
                 is Result.Success -> {
-                    _gotKeys.value = true
-                    Log.d("KYS", "got em!")
-                    appStateRepository.gotKeys()
+                    var synced = false
+                    var failCounter = 0
+                    while (synced == false) {
+                        if (failCounter >= 8) {
+                            synced = true
+                            appStateRepository.logout()
+                        } // unlikely, force user to log-in again
+                        val myKeyResult = keyUtils.getPubKey(userId)
+                        when (myKeyResult) {
+                            is Result.Error -> { failCounter++ }
+                            is Result.Success -> {
+                                if (myKeyResult.data != localResult.data.first) {
+                                    val postResult = keyUtils.postMyPubKey(userId, localResult.data.first)
+                                    when (postResult) {
+                                        is Result.Error -> { failCounter++ }
+                                        is Result.Success -> {
+                                            synced = true
+                                            _gotKeys.value = true
+                                            Log.d("KYS", "got em!")
+                                            appStateRepository.gotKeys()
+                                        }
+                                    }
+                                } else {
+                                    synced = true
+                                    _gotKeys.value = true
+                                    Log.d("KYS", "got em!")
+                                    appStateRepository.gotKeys()
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
             Log.d("KEYS","checking for backup")
             if (isBackedUp == false && gotKeys.value == false) {
                 Log.d("KEYS","creating keys")
-                val createResult = certificateUtils.createKeyPair(userId)
+                val createResult = keyUtils.createKeyPair(userId)
                 when (createResult) {
                     is Result.Error -> {
                         Log.d("KEYS","logging-out cuz failed")
@@ -85,7 +113,7 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
     fun onBackupClick(password: String) {
         _backupLoading.value = true
         viewModelScope.launch {
-            val result = certificateUtils.getBackupInfo()
+            val result = keyUtils.getBackupInfo()
             when(result) {
                 is Result.Error ->
                     _errorMessage.value = when (result.error) {
@@ -106,7 +134,7 @@ class KeyLoadingViewModel(private val certificateUtils: CertificateUtils,
                     }
 
                 is Result.Success -> {
-                    val decryptionResult = certificateUtils.getDecryptedKeyPairFromBackup(password, result.data, userId)
+                    val decryptionResult = keyUtils.getDecryptedKeyPairFromBackup(password, result.data, userId)
                     when(decryptionResult) {
                         is Result.Error -> _errorMessage.value = when (decryptionResult.error) {
                             BackupError.WRONG_PASSWORD -> "Wrong password!"

@@ -10,7 +10,7 @@ import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.data.repositories.ThemePreference
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.AppStateRepository
-import com.example.projektiop.util.CertificateUtils
+import com.example.projektiop.util.KeyUtils
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -20,10 +20,10 @@ val rootKoinModule = module {
     single { ThemePreference( get() ) }
     single { AuthRepository( get(), get(), get(), get() ) }
     single { ChatUpdateService }
-    single { ChatRepository( get(), androidContext(), get(), get(), get(), get() ) }
+    single { ChatRepository( get(), get(), get(), get(), get(), get() ) }
     single { FriendshipRepository( get(), get(), get() ) }
     single { SharedDataSource( androidContext() ) }
     single { SearchProfileRepository( get(), get() ) }
-    single { CertificateUtils( get(), get(), get(), get() ) }
+    single { KeyUtils( get(), get(), get(), get() ) }
     single { AppStateRepository() }
 }

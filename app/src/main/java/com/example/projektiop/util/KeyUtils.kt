@@ -45,10 +45,10 @@ import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-class CertificateUtils(private val pubKeyApi: PublicKeyApi,
-                       private val backupApi: BackupApi,
-                       private val sharedDataSource: SharedDataSource,
-                       private val dbRepository: RealmDBRepository)
+class KeyUtils(private val pubKeyApi: PublicKeyApi,
+               private val backupApi: BackupApi,
+               private val sharedDataSource: SharedDataSource,
+               private val dbRepository: RealmDBRepository)
 {
 
     val provider = BouncyCastleProvider()
@@ -516,6 +516,17 @@ class CertificateUtils(private val pubKeyApi: PublicKeyApi,
             return Result.Success(key)
         } catch(e: Exception) {
             return apiExceptionToDataError<base64>(e)
+        }
+    }
+
+    suspend fun postMyPubKey(myUserId: String, myPubKey: base64): Result<Unit, DataError> {
+        try {
+            val result = pubKeyApi.publishPublicKey(PublishPublicKeyRequest(myPubKey))
+            if (!result.isSuccessful) throw HttpException(result)
+            dbRepository.savePubKey(myUserId, myPubKey)
+            return Result.Success(Unit)
+        } catch(e: Exception) {
+            return apiExceptionToDataError<Unit>(e)
         }
     }
 }

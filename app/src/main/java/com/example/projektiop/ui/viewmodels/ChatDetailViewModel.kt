@@ -1,5 +1,6 @@
 package com.example.projektiop.ui.viewmodels
 
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,12 +15,20 @@ import com.example.projektiop.domain.models.Friendship
 import com.example.projektiop.domain.models.Message
 import com.example.projektiop.util.DataError
 import com.example.projektiop.util.Result
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+
+
+sealed interface ChatDetailUIEvent{
+    data class ShowToast(val message: String) : ChatDetailUIEvent
+    data class NavigateToReport(val messageId: String, val content: String) : ChatDetailUIEvent
+}
 
 
 class ChatDetailViewModel(private val friendId: String,
@@ -27,6 +36,9 @@ class ChatDetailViewModel(private val friendId: String,
                           private val userRepository: UserRepository,
                           private val friendshipRepository: FriendshipRepository,
                           private val socketManager: SocketManager): ViewModel() {
+
+    private val _uiEventChannel = Channel<ChatDetailUIEvent>()
+    val uiEventFlow = _uiEventChannel.receiveAsFlow()
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages = _messages.asStateFlow()
@@ -67,7 +79,7 @@ class ChatDetailViewModel(private val friendId: String,
                 if(event.chatId == chatId || event.chatId == friendId) {
                     when(event) {
                         is ChatEvent.Receive -> {
-                            chatRepository.decryptMessage(event.message).onSuccess { resultMess ->
+                            chatRepository.decryptMessage(event.message, friendId).onSuccess { resultMess ->
                                 _messages.value += resultMess
                                 _typing.value = false
                             }.onFailure { e ->
@@ -146,7 +158,7 @@ class ChatDetailViewModel(private val friendId: String,
     }
 
     suspend fun loadMessages() {
-        chatRepository.loadMessages(chatId).onSuccess { list ->
+        chatRepository.loadMessages(chatId, friendId).onSuccess { list ->
             _messages.value = list
         }.onFailure { e ->
             Log.d("mess", "failed to load messages:\t$e")
@@ -176,5 +188,12 @@ class ChatDetailViewModel(private val friendId: String,
 
     fun validateInput(input: String): Boolean {
         return input.isNotBlank()
+    }
+
+    fun onReportClick(messageId: String, content: String) {
+        viewModelScope.launch {
+            val encodedContent = Uri.encode(content)
+            _uiEventChannel.send(ChatDetailUIEvent.NavigateToReport(messageId, encodedContent))
+        }
     }
 }

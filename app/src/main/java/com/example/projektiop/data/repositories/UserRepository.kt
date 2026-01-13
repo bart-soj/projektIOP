@@ -196,12 +196,6 @@ class UserRepository(private val userApi: UserApi,
                         Exception("Error saving interests to database: $e")
                     )
                 }
-                /*
-                // Save ID in SharedPreferences
-                if (tmpId.isNotBlank()) {
-                    sharedDataSource.set(ID, tmpId.toString())
-                }
-                 */
 
                 _myUser.value = dbRepository.getUserById(id!!)
                 Result.success(response.body()!!)
@@ -320,14 +314,7 @@ class UserRepository(private val userApi: UserApi,
             val response = userApi.uploadAvatar(part)
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
-                val tmpId: String? = try {
-                    body._id
-                } catch (_: Throwable) {
-                    null
-                }
-                if (!tmpId.isNullOrBlank()) {
-                    sharedDataSource.set(ID, tmpId.toString())
-                }
+
                 // Try to persist locally, but don't fail the whole operation if local save has issues
                 try {
                     dbRepository.addUser(body.toRealm())
@@ -341,8 +328,7 @@ class UserRepository(private val userApi: UserApi,
                 try {
                     val refreshed = fetchMyProfile().getOrNull()
                     if (refreshed != null) return@withContext Result.success(refreshed)
-                } catch (_: Exception) { /* ignore */
-                }
+                } catch (_: Exception) { /* ignore */ }
                 Result.success(body)
             } else {
                 val errBody = try {

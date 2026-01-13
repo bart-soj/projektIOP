@@ -40,7 +40,7 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun ReportScreen(navController: NavController,
-                 userId: String, messageId: String?) {
+                 userId: String, messageId: String?, content: String?) {
 
     val viewModel = koinViewModel<ReportViewModel>()
     val uiEvents = viewModel.uiEvents
@@ -50,8 +50,6 @@ fun ReportScreen(navController: NavController,
 
     val errorMessage by viewModel.errorMessage.collectAsState()
     val loading by viewModel.loading.collectAsState()
-
-    Log.d("NAV", "inside report")
 
     ObserveAsEvents(uiEvents) { event ->
         when (event) {
@@ -86,7 +84,7 @@ fun ReportScreen(navController: NavController,
 
                     Button(
                         onClick = {
-                            viewModel.onReportClick(userId, messageId, type!!, reason)
+                            viewModel.onReportClick(userId, messageId, content, type!!, reason)
                         },
                         modifier = Modifier
                             .padding(start = 8.dp),

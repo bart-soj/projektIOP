@@ -54,6 +54,7 @@ class SocketManager(private val url: String, private val sharedDataSource: Share
                         val message = gson.fromJson<Message>(payload, Message::class.java)
                         Log.d("SOCC", "in receive man, payload: ${payload}\n base64: ${message.content}")
                         _chatEventFlow.emit(ChatEvent.Receive(message.chatId, message))
+                        _appEventFlow.emit(AppEvent.Receive(message))
                     }
                 }
 

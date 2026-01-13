@@ -35,6 +35,8 @@ class SettingsViewModel(private val themePreference: ThemePreference,
     private val _processingIds = MutableStateFlow<List<String>>(emptyList())
     val processingIds: StateFlow<List<String>> = _processingIds.asStateFlow()
 
+    val rememberMe = authRepository.rememberMe
+
     init {
         viewModelScope.launch {
             userRepository.myUser.collect { updatedUser ->
@@ -90,6 +92,12 @@ class SettingsViewModel(private val themePreference: ThemePreference,
     fun logout() {
         viewModelScope.launch {
             authRepository.logout()
+        }
+    }
+
+    fun rememberMe() {
+        viewModelScope.launch {
+            authRepository.rememberMe()
         }
     }
 

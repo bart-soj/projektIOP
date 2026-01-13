@@ -4,18 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.api.BackupApi
 import com.example.projektiop.data.repositories.SharedDataSource
-import com.example.projektiop.ui.components.BackupDialog
-import com.example.projektiop.util.CertificateUtils
+import com.example.projektiop.util.KeyUtils
 import com.example.projektiop.util.DataError
 import com.example.projektiop.util.apiExceptionToDataError
 import com.example.projektiop.util.backupPasswordValidator
 import com.example.projektiop.util.mapToResource
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -28,7 +25,7 @@ sealed interface BackupDialogUiEvent {
 
 class BackupDialogViewModel(private val sharedDataSource: SharedDataSource,
                             private val backupApi: BackupApi,
-                            private val certificateUtils: CertificateUtils) : ViewModel() {
+                            private val keyUtils: KeyUtils) : ViewModel() {
 
     private val _passwordErrors: MutableStateFlow<List<Int>> = MutableStateFlow(emptyList())
     val passwordErrors: StateFlow<List<Int>> = _passwordErrors.asStateFlow()
@@ -56,7 +53,7 @@ class BackupDialogViewModel(private val sharedDataSource: SharedDataSource,
         _loading.value = true
         viewModelScope.launch {
 
-            val backupInfo = certificateUtils.createBackupInfo(password, userId)
+            val backupInfo = keyUtils.createBackupInfo(password, userId)
 
             try {
                 val result = backupApi.saveBackup(backupInfo)

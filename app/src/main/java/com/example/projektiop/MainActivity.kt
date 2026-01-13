@@ -167,6 +167,10 @@ class MainActivity : ComponentActivity() {
                     is AppEvent.Unblock -> {
                         friendshipRepository.getUnblocked(event.friendId)
                     }
+
+                    is AppEvent.Receive -> {
+                        chatRepository.receiveMessage(event.message, this@MainActivity)
+                    }
                 }
             }
         }
@@ -328,15 +332,17 @@ fun MainNavGraph() {
             FriendProfileScreen(navController, uid, uname, dname, avatar)
         }
         composable(
-            route = "report/{userId}?messageId={messageId}",
+            route = "report/{userId}?messageId={messageId}?content={content}",
             arguments = listOf(
                 navArgument("userId") {nullable = false},
-                navArgument("messageId") {nullable = true; defaultValue = ""}
+                navArgument("messageId") {nullable = true; defaultValue = ""},
+                navArgument("content") {nullable = true; defaultValue = ""}
             )
         ) { backStack ->
             val userId = backStack.arguments?.getString("userId") ?: ""
             val messageId = backStack.arguments?.getString("messageId")
-            ReportScreen(navController, userId, messageId)
+            val content = backStack.arguments?.getString("content")
+            ReportScreen(navController, userId, messageId, content)
         }
     }
 }

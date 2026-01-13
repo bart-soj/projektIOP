@@ -38,7 +38,8 @@ class ReportViewModel(private val sharedDataSource: SharedDataSource,
     private val _uiEvents = Channel<ReportUiEvent>()
     val uiEvents = _uiEvents.receiveAsFlow()
 
-    fun onReportClick(userId: String, messageId: String?, reportType: ReportType, reason: String) {
+    fun onReportClick(userId: String, messageId: String?, content: String?,
+                      reportType: ReportType, reason: String) {
         _loading.value = true
 
         viewModelScope.launch {
@@ -52,7 +53,11 @@ class ReportViewModel(private val sharedDataSource: SharedDataSource,
                 reportedUserId = userId,
                 reportedMessageId = messageId.takeIf { it?.isNotBlank() == true },
                 reportType = reportType.name.lowercase(),
-                reason = reason
+                reason = if (!content.isNullOrBlank()) {
+                    "<content>${content}</content>" + reason
+                } else {
+                    reason
+                }
             )
 
             try {
