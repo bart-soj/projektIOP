@@ -2,9 +2,11 @@ package com.example.projektiop.data.api.websocket
 
 import android.util.Log
 import com.example.projektiop.data.repositories.SharedDataSource
+import com.example.projektiop.domain.AppEvent
+import com.example.projektiop.domain.ChatEvent
 import com.example.projektiop.domain.models.Message
 import com.example.projektiop.domain.models.base64
-import com.example.projektiop.util.InstantAdapter
+import com.example.projektiop.data.util.InstantAdapter
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dev.icerock.moko.socket.Socket
@@ -38,7 +40,8 @@ class SocketManager(private val url: String, private val sharedDataSource: Share
         .disableHtmlEscaping()
         .create()
 
-    lateinit var socket: Socket
+    // is null when user logs out before getting keys
+    var socket: Socket? = null
 
     fun connect() {
         socket = Socket(
@@ -102,8 +105,8 @@ class SocketManager(private val url: String, private val sharedDataSource: Share
             }
         )
         scope.launch {
-            if (!socket.isConnected()) {
-                socket.connect()
+            if (!socket!!.isConnected()) {
+                socket!!.connect()
             }
         }
     }
@@ -119,15 +122,15 @@ class SocketManager(private val url: String, private val sharedDataSource: Share
                 is ChatEvent.Send -> {
                     Log.d("SOCC", "out send man; base64: ${event.content}")
                     val payload = gson.toJson(SocketMessage(event.chatId, event.content))
-                    socket.emit("send", payload)
+                    socket?.emit("send", payload)
                 }
                 is ChatEvent.WritingStart -> {
                     Log.d("SOCC", "out writing start man")
-                    socket.emit("writing_start", event.chatId)
+                    socket?.emit("writing_start", event.chatId)
                 }
                 is ChatEvent.WritingStop -> {
                     Log.d("SOCC", "out writing stop man")
-                    socket.emit("writing_stop", event.chatId)
+                    socket?.emit("writing_stop", event.chatId)
                 }
                 is ChatEvent.Receive -> {}
                 is ChatEvent.Block -> {}
@@ -138,7 +141,7 @@ class SocketManager(private val url: String, private val sharedDataSource: Share
 
     fun disconnect() {
         scope.launch {
-            socket.disconnect()
+            socket?.disconnect()
         }
     }
 }

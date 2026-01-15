@@ -38,7 +38,8 @@ fun FriendProfileScreen(
     displayNamePrefill: String? = null,
     avatarUrlPrefill: String? = null
 ) {
-    val viewModel = koinViewModel<FriendProfileViewModel>(parameters = { parametersOf(userId) })
+    val viewModel = koinViewModel<FriendProfileViewModel>(
+        parameters = { parametersOf(userId, usernamePrefill, displayNamePrefill, avatarUrlPrefill) })
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.errorMessage.collectAsState()
     val profile by viewModel.user.collectAsState()

@@ -6,31 +6,27 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.content.Context
 import android.util.Log
-import androidx.compose.animation.core.copy
-import androidx.compose.runtime.key
 import com.example.projektiop.data.api.AccesChatRequest
 import com.example.projektiop.data.api.ChatApi
 import com.example.projektiop.data.api.ChatDto
 import com.example.projektiop.data.api.MessagesPageDto
 import com.example.projektiop.data.api.SendMessageRequest
-import com.example.projektiop.data.api.websocket.ChatEvent
+import com.example.projektiop.domain.ChatEvent
 import com.example.projektiop.data.api.websocket.SocketManager
 import com.example.projektiop.data.db.realm.RealmDBRepository
-import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.data.mapping.toDomain
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.domain.models.Message
 import com.example.projektiop.domain.models.base64
-import com.example.projektiop.util.KeyUtils
-import com.example.projektiop.util.DataError
+import com.example.projektiop.data.util.KeyUtils
+import com.example.projektiop.domain.DataError
 import com.example.projektiop.util.NotificationHelper
-import com.example.projektiop.util.apiExceptionToDataError
+import com.example.projektiop.data.util.apiExceptionToDataError
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
-import okhttp3.Response
 import org.bouncycastle.crypto.InvalidCipherTextException
 import retrofit2.HttpException
 import com.example.projektiop.domain.models.Chat as DomainChat
@@ -61,7 +57,7 @@ class ChatRepository(private val chatApi: ChatApi,
 
     private val KEY_ID = "_id"
 
-    suspend fun fetchChats(myUserId: String): com.example.projektiop.util.Result<List<DomainChat>, DataError> = withContext(Dispatchers.IO) {
+    suspend fun fetchChats(myUserId: String): com.example.projektiop.domain.Result<List<DomainChat>, DataError> = withContext(Dispatchers.IO) {
         val dtoList: List<ChatDto>
         val domainList: MutableList<DomainChat> = emptyList<DomainChat>().toMutableList()
         try {
@@ -105,7 +101,7 @@ class ChatRepository(private val chatApi: ChatApi,
                                 keyUtils.decryptMessage(content, chatKey)
                             } catch (e: InvalidCipherTextException) {
                                 val chatKeyResult = keyUtils.getPubKey(otherUserId)
-                                if (chatKeyResult is com.example.projektiop.util.Result.Success) {
+                                if (chatKeyResult is com.example.projektiop.domain.Result.Success) {
                                     keyUtils.decryptMessage(content, chatKeyResult.data)
                                 } else {
                                     throw e
@@ -130,11 +126,11 @@ class ChatRepository(private val chatApi: ChatApi,
                         val otherUserPubResult = keyUtils.getPubKey(otherUserId)
                         val otherUserPub: base64?
                         when (otherUserPubResult) {
-                            is com.example.projektiop.util.Result.Error -> {
+                            is com.example.projektiop.domain.Result.Error -> {
                                 return@forEach
                             }
 
-                            is com.example.projektiop.util.Result.Success -> otherUserPub =
+                            is com.example.projektiop.domain.Result.Success -> otherUserPub =
                                 otherUserPubResult.data
                         }
                         chatKey = keyUtils.calculateChatKey(myUserId, otherUserPub)
@@ -147,12 +143,12 @@ class ChatRepository(private val chatApi: ChatApi,
                 Log.d("CHATS", "failed to resolve chat $e")
             }
         }
-        return@withContext com.example.projektiop.util.Result.Success(domainList)
+        return@withContext com.example.projektiop.domain.Result.Success(domainList)
     }
 
-    suspend fun ensureChatWithUser(friendId: String, myId: String): com.example.projektiop.util.Result<DomainChat, DataError>  {
+    suspend fun ensureChatWithUser(friendId: String, myId: String): com.example.projektiop.domain.Result<DomainChat, DataError>  {
         val localData = dbRepository.getChatByFriendId(friendId)
-        if (localData != null) return com.example.projektiop.util.Result.Success(localData.toDomain(myId, dbRepository))
+        if (localData != null) return com.example.projektiop.domain.Result.Success(localData.toDomain(myId, dbRepository))
         try {
             // if we created the chat and got an error before saving it could exist on server but not locally
             var dto: ChatDto? = null
@@ -175,15 +171,15 @@ class ChatRepository(private val chatApi: ChatApi,
             val otherUserPubResult = keyUtils.getPubKey(friendId)
             val otherUserPub: base64?
             when (otherUserPubResult) {
-                is com.example.projektiop.util.Result.Error -> { return com.example.projektiop.util.Result.Error(otherUserPubResult.error) }
-                is com.example.projektiop.util.Result.Success -> otherUserPub =
+                is com.example.projektiop.domain.Result.Error -> { return com.example.projektiop.domain.Result.Error(otherUserPubResult.error) }
+                is com.example.projektiop.domain.Result.Success -> otherUserPub =
                     otherUserPubResult.data
             }
             val chatKey = keyUtils.calculateChatKey(myId, otherUserPub)
             val realmChat = dto.toRealm(chatKey)
             dbRepository.addChat(realmChat)
             val domainChat = realmChat.toDomain(myId, dbRepository)
-            return com.example.projektiop.util.Result.Success(domainChat)
+            return com.example.projektiop.domain.Result.Success(domainChat)
         } catch (e: Exception) {
             return apiExceptionToDataError<DomainChat>(e)
         }
@@ -211,8 +207,8 @@ class ChatRepository(private val chatApi: ChatApi,
         } catch (e: InvalidCipherTextException) {
             val chatKeyResult = keyUtils.getPubKey(friendId)
             when(chatKeyResult) {
-                is com.example.projektiop.util.Result.Error -> {throw e}
-                is com.example.projektiop.util.Result.Success -> { chatKey = chatKeyResult.data }
+                is com.example.projektiop.domain.Result.Error -> {throw e}
+                is com.example.projektiop.domain.Result.Success -> { chatKey = chatKeyResult.data }
             }
         }
 
@@ -235,7 +231,7 @@ class ChatRepository(private val chatApi: ChatApi,
                 keyUtils.decryptMessage(message.content, chatKey!!)
             } catch (e: InvalidCipherTextException) {
                 val chatKeyResult = keyUtils.getPubKey(friendId)
-                if (chatKeyResult is com.example.projektiop.util.Result.Success) {
+                if (chatKeyResult is com.example.projektiop.domain.Result.Success) {
                     keyUtils.decryptMessage(message.content, chatKeyResult.data)
                 } else {
                     throw e
@@ -289,7 +285,9 @@ class ChatRepository(private val chatApi: ChatApi,
             val friend = dbRepository.getUserById(friendId!!)
             decryptMessage(message, friendId).onSuccess { decrypted ->
                 dbRepository.updateLastMessage(chatId, message.id, message.createdAt.toString())
-                NotificationHelper.notifyMessage(context, friend?.username.toString(), decrypted.content.take(100))
+                if (message.senderId != myId) {
+                    NotificationHelper.notifyMessage(context, friend?.username.toString(), decrypted.content.take(100))
+                }
             }
         } catch (e: Exception) {}
     }

@@ -1,4 +1,4 @@
-package com.example.projektiop.util
+package com.example.projektiop.domain
 
 import kotlin.math.sqrt
 

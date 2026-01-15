@@ -19,15 +19,10 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
-import java.time.LocalDate
-import java.time.Period
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.projektiop.domain.models.Gender
-import com.example.projektiop.util.realmInstantToMongoTimestamp
 import com.example.projektiop.ui.components.PullToRefresh
 import com.example.projektiop.ui.components.UserAvatar
 import com.example.projektiop.ui.viewmodels.MainViewModel
@@ -53,7 +48,7 @@ fun MainScreen(navController: NavController) {
 
         PullToRefresh(
             refreshing = isLoading,
-            onRefresh = { viewModel.refreshProfile() }
+            onRefresh = { viewModel.getMyProfile() }
         ) {
             Column(
                 modifier = Modifier

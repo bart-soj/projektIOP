@@ -1,4 +1,4 @@
-package com.example.projektiop.util
+package com.example.projektiop.domain
 
 sealed interface Result<out D, out E: RootError> {
     data class Success<out D, out E: RootError>(val data: D): Result<D, E>

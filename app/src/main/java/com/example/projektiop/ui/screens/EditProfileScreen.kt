@@ -1,9 +1,7 @@
 package com.example.projektiop.ui.screens
 
-import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -21,7 +19,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.projektiop.R
-import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.Icons
@@ -31,8 +28,6 @@ import com.example.projektiop.domain.models.Interest
 import com.example.projektiop.ui.components.MultiSelectInterestsDropdown
 import com.example.projektiop.ui.components.UserAvatar
 import com.example.projektiop.ui.viewmodels.EditProfileViewModel
-import com.example.projektiop.util.toJavaInstant
-import com.example.projektiop.util.translateInterestName
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -148,7 +143,7 @@ fun EditProfileScreen(
                 value = location,
                 onValueChange = { if (it.length <= 100) location = it },
                 label = { Text(stringResource(id = R.string.location_label)) },
-                supportingText = { Text(stringResource(id = R.string.location_count, location.length)) },
+                supportingText = { Text(stringResource(id = R.string.location_count , location.length)) },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))

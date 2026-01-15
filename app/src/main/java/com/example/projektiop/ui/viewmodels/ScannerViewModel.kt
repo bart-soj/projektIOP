@@ -2,24 +2,24 @@ package com.example.projektiop.ui.viewmodels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.BluetoothLE.BluetoothRepository
-import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.data.repositories.SearchProfileRepository
-import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.models.FriendshipStatus
 import com.example.projektiop.domain.models.Interest
 import com.example.projektiop.domain.models.SearchProfile
 import com.example.projektiop.domain.models.UserInterest
-import com.example.projektiop.util.DataError
-import com.example.projektiop.util.Result
-import com.example.projektiop.util.cosineSimilarity
+import com.example.projektiop.domain.DataError
+import com.example.projektiop.domain.Result
+import com.example.projektiop.domain.cosineSimilarity
+import com.example.projektiop.ui.toStringRes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -287,10 +287,8 @@ class ScannerViewModel(application: Application,
             val toAdd = SearchProfile(name, interests.toList())
             val result = searchProfileRepository.addSearchProfile(toAdd)
             when (result) {
-                is Result.Error -> when(result.error) {
-                    DataError.Local.DISK_FULL -> _searchProfileError.value = "no disk space"
-                    DataError.Local.DB_ERROR -> _searchProfileError.value = "db error ${result.error}"
-                    DataError.Local.NO_DATA -> _searchProfileError.value = "No local data"
+                is Result.Error -> {
+                    _searchProfileError.value = application.applicationContext.getString(result.error.toStringRes())
                 }
                 is Result.Success ->
                     refreshSearchProfileList()
@@ -305,10 +303,8 @@ class ScannerViewModel(application: Application,
             _searchProfileError.value = null
             val result = searchProfileRepository.getSearchProfiles()
             when (result) {
-                is Result.Error -> when(result.error) {
-                    DataError.Local.DISK_FULL -> _searchProfileError.value = "no disk space"
-                    DataError.Local.DB_ERROR -> _searchProfileError.value = "db error"
-                    DataError.Local.NO_DATA -> _searchProfileError.value = "No local data"
+                is Result.Error -> {
+                    _searchProfileError.value = application.applicationContext.getString(result.error.toStringRes())
                 }
                 is Result.Success ->
                     _searchProfileList.value = result.data
@@ -324,10 +320,8 @@ class ScannerViewModel(application: Application,
                 _chosenSearchProfile.value = null
             val result = searchProfileRepository.deleteSearchProfile(searchProfile)
             when (result) {
-                is Result.Error -> when(result.error) {
-                    DataError.Local.DISK_FULL -> _searchProfileError.value = "no disk space"
-                    DataError.Local.DB_ERROR -> _searchProfileError.value = "db error"
-                    DataError.Local.NO_DATA -> _searchProfileError.value = "No local data"
+                is Result.Error -> {
+                    _searchProfileError.value = application.applicationContext.getString(result.error.toStringRes())
                 }
                 is Result.Success ->
                     refreshSearchProfileList()

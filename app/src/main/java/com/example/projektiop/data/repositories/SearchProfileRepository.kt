@@ -3,10 +3,9 @@ package com.example.projektiop.data.repositories
 import android.util.Log
 import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.data.mapping.toDomain
-import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.domain.models.SearchProfile
-import com.example.projektiop.util.DataError
-import com.example.projektiop.util.Result
+import com.example.projektiop.domain.DataError
+import com.example.projektiop.domain.Result
 
 class SearchProfileRepository(private val dbRepository: RealmDBRepository,
                               private val userRepository: UserRepository) {

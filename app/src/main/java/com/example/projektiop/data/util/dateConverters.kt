@@ -1,4 +1,4 @@
-package com.example.projektiop.util
+package com.example.projektiop.data.util
 
 import io.realm.kotlin.types.RealmInstant
 import java.time.Instant

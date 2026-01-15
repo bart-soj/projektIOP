@@ -3,6 +3,7 @@ package com.example.projektiop.ui.screens
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
@@ -13,28 +14,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.R
-import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.data.repositories.FriendshipRepository
-import com.example.projektiop.data.repositories.FriendItem
-import com.example.projektiop.data.repositories.ThemePreference
-import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.screens.components.FriendCard
 import com.example.projektiop.ui.components.BackupDialogButton
-import com.example.projektiop.ui.components.SwitchWithText
-import com.example.projektiop.ui.theme.ProjektIOPTheme
-import com.example.projektiop.ui.viewmodels.AuthViewModel
 import com.example.projektiop.ui.viewmodels.BackupDialogViewModel
 import com.example.projektiop.ui.viewmodels.SettingsViewModel
-import com.example.projektiop.util.DataError
-import com.example.projektiop.util.Result
-import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -80,7 +68,7 @@ fun SettingsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
             ) {
-                // Tryb ciemny
+                // light/dark mode switch
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -119,6 +107,21 @@ fun SettingsScreen(
                     )
                 }
 
+                Spacer(Modifier.size(8.dp))
+
+                // remember me switch
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(stringResource(R.string.remember_me),
+                        style = MaterialTheme.typography.titleMedium)
+                    Switch(checked = rememberMe, onCheckedChange = { viewModel.rememberMe() })
+                }
+
+                Spacer(Modifier.size(8.dp))
+
                 // Backup
                 BackupDialogButton(modifier = Modifier.fillMaxWidth())
 
@@ -135,19 +138,6 @@ fun SettingsScreen(
 
                 ) {
                     Text(text = stringResource(id = R.string.blocked_users))
-                }
-
-                Spacer(Modifier.size(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    SwitchWithText(
-                        checked = rememberMe,
-                        text = stringResource(R.string.remember_me),
-                        onCheckedChange = { viewModel.rememberMe() }
-                    )
                 }
 
                 Spacer(modifier = Modifier.weight(1f))

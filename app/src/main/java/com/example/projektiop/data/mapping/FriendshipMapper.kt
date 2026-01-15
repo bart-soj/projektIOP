@@ -7,9 +7,9 @@ import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.data.repositories.FriendItem
 import com.example.projektiop.domain.models.FriendshipStatus
 import com.example.projektiop.domain.models.FriendshipType
-import com.example.projektiop.util.mongoTimestampToRealmInstant
-import com.example.projektiop.util.realmInstantToMongoTimestamp
-import com.example.projektiop.util.toJavaInstant
+import com.example.projektiop.data.util.mongoTimestampToRealmInstant
+import com.example.projektiop.data.util.realmInstantToMongoTimestamp
+import com.example.projektiop.data.util.toJavaInstant
 import com.example.projektiop.domain.models.Friendship as DomainFriendship
 import com.example.projektiop.domain.models.User as DomainUser
 

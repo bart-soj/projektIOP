@@ -1,19 +1,20 @@
 package com.example.projektiop.ui.viewmodels
 
-import android.util.Patterns
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.util.DataError
-import com.example.projektiop.util.Result
-import com.example.projektiop.util.ValidationError
+import com.example.projektiop.domain.DataError
+import com.example.projektiop.domain.Result
+import com.example.projektiop.domain.ValidationError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import com.example.projektiop.util.ValidationError.Common
-import com.example.projektiop.util.ValidationError.PasswordError
+import com.example.projektiop.domain.ValidationError.Common
+import com.example.projektiop.domain.ValidationError.PasswordError
 import com.example.projektiop.util.emailValidator
-import com.example.projektiop.util.mapToResource
+import com.example.projektiop.ui.mapToResource
+import com.example.projektiop.ui.toStringRes
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -22,7 +23,8 @@ sealed interface AuthUiEvent{
     data class NavigateToResend(val email: String? = null) : AuthUiEvent
 }
 
-class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
+class AuthViewModel(private val appContext: Context,
+                    private val authRepository: AuthRepository): ViewModel() {
 
     private val _loading: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
@@ -75,24 +77,9 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
                 val result = authRepository.login(email, password)
                 when(result) {
                     is Result.Error -> {
-                         _errorMessage.value = when (result.error) {
-                            DataError.Local.DISK_FULL -> "no disk space"
-                            DataError.Local.DB_ERROR -> "db failed"
-                            DataError.Network.REQUEST_TIMEOUT -> "request timeout"
-                            DataError.Network.TOO_MANY_REQUESTS -> "Server Error"
-                            DataError.Network.NO_INTERNET -> "no internet"
-                            DataError.Network.PAYLOAD_TOO_LARGE -> "Server Error"
-                            DataError.Network.SERVER_ERROR -> "Server Error"
-                            DataError.Network.SERIALIZATION -> "Serialization Error"
-                            DataError.Network.UNKNOWN -> "Unknown Error"
-                            DataError.Local.NO_DATA -> "no local data"
-                            DataError.Authentication.INVALID_EMAIL_PASSWORD -> "Invalid Email or Password"
-                            DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
-                            DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
-                            DataError.Authentication.EMAIL_USERNAME_TAKEN -> "Username or Email taken"
-                        }
+                         _errorMessage.value = appContext.getString(result.error.toStringRes())
                     }
-                    is Result.Success -> {}
+                    is Result.Success -> { /* login happens in the repository */ }
                 }
                 _loading.value = false
             }
@@ -110,24 +97,8 @@ class AuthViewModel(val authRepository: AuthRepository): ViewModel() {
 
                 when (result) {
                     is Result.Error -> {
-                        _errorMessage.value = when (result.error) {
-                            DataError.Local.DISK_FULL -> "no disk space"
-                            DataError.Local.DB_ERROR -> "db failed"
-                            DataError.Network.REQUEST_TIMEOUT -> "request timeout"
-                            DataError.Network.TOO_MANY_REQUESTS -> "Server Error"
-                            DataError.Network.NO_INTERNET -> "no internet"
-                            DataError.Network.PAYLOAD_TOO_LARGE -> "Server Error"
-                            DataError.Network.SERVER_ERROR -> "Server Error"
-                            DataError.Network.SERIALIZATION -> "Serialization Error"
-                            DataError.Network.UNKNOWN -> "Unknown Error"
-                            DataError.Local.NO_DATA -> "no local data"
-                            DataError.Authentication.INVALID_EMAIL_PASSWORD -> "Invalid Email or Password"
-                            DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
-                            DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
-                            DataError.Authentication.EMAIL_USERNAME_TAKEN -> "Username or Email taken"
-                        }
+                        _errorMessage.value = appContext.getString(result.error.toStringRes())
                     }
-
                     is Result.Success -> {
                         _authUiChannel.send(AuthUiEvent.NavigateToResend(email))
                     }

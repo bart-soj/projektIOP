@@ -9,7 +9,7 @@ import com.example.projektiop.data.mapping.toFriendItem
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.domain.models.Friendship
 import com.example.projektiop.domain.models.FriendshipStatus
-import com.example.projektiop.util.DataError
+import com.example.projektiop.domain.DataError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -250,26 +250,26 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
         dbRepository.getUnblocked(friendId)
     }
 
-    fun getLocalFriendItemByFriendId(friendId: String): com.example.projektiop.util.Result<FriendItem, DataError.Local> {
+    fun getLocalFriendItemByFriendId(friendId: String): com.example.projektiop.domain.Result<FriendItem, DataError.Local> {
         try {
             val friendship = dbRepository.getFriendshipByFriendId(friendId)
-            if (friendship == null) return com.example.projektiop.util.Result.Error(DataError.Local.NO_DATA)
+            if (friendship == null) return com.example.projektiop.domain.Result.Error(DataError.Local.NO_DATA)
             val friendItem = friendship.toFriendItem(dbRepository.getUserById(friendId))
-            return com.example.projektiop.util.Result.Success(friendItem)
+            return com.example.projektiop.domain.Result.Success(friendItem)
         } catch(e: Exception) {
-            return com.example.projektiop.util.Result.Error(DataError.Local.DB_ERROR)
+            return com.example.projektiop.domain.Result.Error(DataError.Local.DB_ERROR)
         }
     }
 
-    fun getLocalFriendship(friendId: String): com.example.projektiop.util.Result<Friendship, DataError.Local> {
+    fun getLocalFriendship(friendId: String): com.example.projektiop.domain.Result<Friendship, DataError.Local> {
         try {
             val friendship = dbRepository.getFriendshipByFriendId(friendId)
             val friend = dbRepository.getUserById(friendId)?.toDomain()
-            if (friendship == null || friend == null) return com.example.projektiop.util.Result.Error(DataError.Local.NO_DATA)
+            if (friendship == null || friend == null) return com.example.projektiop.domain.Result.Error(DataError.Local.NO_DATA)
             val friendItem = friendship.toDomain(friend)
-            return com.example.projektiop.util.Result.Success(friendItem)
+            return com.example.projektiop.domain.Result.Success(friendItem)
         } catch(e: Exception) {
-            return com.example.projektiop.util.Result.Error(DataError.Local.DB_ERROR)
+            return com.example.projektiop.domain.Result.Error(DataError.Local.DB_ERROR)
         }
     }
 }

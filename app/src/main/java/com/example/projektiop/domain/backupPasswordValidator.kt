@@ -1,6 +1,6 @@
-package com.example.projektiop.util
+package com.example.projektiop.domain
 
-import com.example.projektiop.util.ValidationError.PasswordError
+import com.example.projektiop.domain.ValidationError.PasswordError
 
 fun backupPasswordValidator(password: String): List<ValidationError> {
     var out = emptyList<ValidationError>()

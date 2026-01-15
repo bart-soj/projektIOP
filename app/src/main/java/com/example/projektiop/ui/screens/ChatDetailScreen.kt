@@ -1,8 +1,6 @@
 package com.example.projektiop.ui.screens
 
 import com.example.projektiop.R
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -36,7 +34,7 @@ import java.time.Duration
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: String?) {
-    val viewModel = koinViewModel<ChatDetailViewModel>(parameters = { parametersOf(friendId) })
+    val viewModel = koinViewModel<ChatDetailViewModel>(parameters = { parametersOf(chatId, friendId) })
 
     val messages by viewModel.messages.collectAsState()
     val loading by viewModel.loading.collectAsState()

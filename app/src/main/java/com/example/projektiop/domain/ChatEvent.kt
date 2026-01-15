@@ -1,4 +1,4 @@
-package com.example.projektiop.data.api.websocket
+package com.example.projektiop.domain
 
 import com.example.projektiop.domain.models.Message
 import com.example.projektiop.domain.models.base64

@@ -10,7 +10,8 @@ import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.data.repositories.ThemePreference
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.AppStateRepository
-import com.example.projektiop.util.KeyUtils
+import com.example.projektiop.data.util.KeyUtils
+import com.example.projektiop.util.NotificationHelper
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 

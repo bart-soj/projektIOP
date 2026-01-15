@@ -15,12 +15,9 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.map
 import com.example.projektiop.domain.models.FriendshipStatus
 import com.example.projektiop.domain.models.base64
-import com.example.projektiop.util.mongoTimestampToRealmInstant
-import io.realm.kotlin.ext.realmListOf
+import com.example.projektiop.data.util.mongoTimestampToRealmInstant
 import io.realm.kotlin.types.RealmInstant
-import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.ObjectId
-import java.time.Instant
 import com.example.projektiop.domain.models.SearchProfile as DomainSearchProfile
 
 class RealmDBRepository(private val realm: Realm) {

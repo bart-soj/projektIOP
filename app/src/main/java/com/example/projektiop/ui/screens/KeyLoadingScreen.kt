@@ -135,7 +135,7 @@ fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifie
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                     disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                 ),
-                enabled = passwordErrors.isEmpty() && !loading
+                enabled = passwordErrors.isEmpty() && !loading && password.isNotBlank()
             ) {
                 Text(if (loading) stringResource(R.string.getting_backup) else stringResource(R.string.get_backup))
             }

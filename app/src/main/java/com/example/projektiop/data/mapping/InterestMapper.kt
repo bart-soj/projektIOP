@@ -4,8 +4,8 @@ import com.example.projektiop.data.api.InterestDto
 import com.example.projektiop.data.db.realm.objects.Interest
 import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.domain.models.InterestCategory as DomainInterestCategory
-import com.example.projektiop.util.mongoTimestampToRealmInstant
-import com.example.projektiop.util.realmInstantToMongoTimestamp
+import com.example.projektiop.data.util.mongoTimestampToRealmInstant
+import com.example.projektiop.data.util.realmInstantToMongoTimestamp
 import com.example.projektiop.domain.models.Interest as DomainInterest
 
 fun InterestDto.toRealm(dbRepository: RealmDBRepository): Interest {

@@ -1,10 +1,11 @@
 package com.example.projektiop.ui.viewmodels
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.projektiop.data.api.websocket.ChatEvent
+import com.example.projektiop.domain.ChatEvent
 import com.example.projektiop.data.api.websocket.SocketManager
 import com.example.projektiop.data.repositories.BlockInfo
 import com.example.projektiop.data.repositories.ChatRepository
@@ -13,8 +14,9 @@ import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.models.Chat
 import com.example.projektiop.domain.models.Friendship
 import com.example.projektiop.domain.models.Message
-import com.example.projektiop.util.DataError
-import com.example.projektiop.util.Result
+import com.example.projektiop.domain.DataError
+import com.example.projektiop.domain.Result
+import com.example.projektiop.ui.toStringRes
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,7 +33,9 @@ sealed interface ChatDetailUIEvent{
 }
 
 
-class ChatDetailViewModel(private val friendId: String,
+class ChatDetailViewModel(private val appContext: Context,
+                          private val chatId: String,
+                          private val friendId: String,
                           private val chatRepository: ChatRepository,
                           private val userRepository: UserRepository,
                           private val friendshipRepository: FriendshipRepository,
@@ -55,14 +59,10 @@ class ChatDetailViewModel(private val friendId: String,
     private val _typing = MutableStateFlow(false)
     val typing: StateFlow<Boolean> = _typing.asStateFlow()
 
-    val myId = userRepository.myUser.value!!._id.toHexString()
+    val myId = userRepository.myUser.value!!.id
     private val _chat = MutableStateFlow<Chat?>(null)
     //private val _chatListItem = MutableStateFlow<ChatListItem?>(null)
     val chat: StateFlow<Chat?> = _chat.asStateFlow()
-    val chatId: String
-        get() {
-            return chat.value!!.id
-        }
 
     val timeFormatter: DateTimeFormatter =
         DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
@@ -110,21 +110,8 @@ class ChatDetailViewModel(private val friendId: String,
         viewModelScope.launch {
             val ensureResult = chatRepository.ensureChatWithUser(friendId, myId)
             when (ensureResult) {
-                is Result.Error -> _errorMessage.value = when(ensureResult.error) {
-                    DataError.Local.DISK_FULL -> "no disk space"
-                    DataError.Local.DB_ERROR -> "db failed"
-                    DataError.Network.REQUEST_TIMEOUT -> "request timeout"
-                    DataError.Network.TOO_MANY_REQUESTS -> "Server Error"
-                    DataError.Network.NO_INTERNET -> "no internet"
-                    DataError.Network.PAYLOAD_TOO_LARGE -> "Server Error"
-                    DataError.Network.SERVER_ERROR -> "Server Error"
-                    DataError.Network.SERIALIZATION -> "Serialization Error"
-                    DataError.Network.UNKNOWN -> "Unknown Error"
-                    DataError.Local.NO_DATA -> "no local data"
-                    DataError.Authentication.INVALID_EMAIL_PASSWORD -> "Invalid Email or Password"
-                    DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
-                    DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
-                    DataError.Authentication.EMAIL_USERNAME_TAKEN -> "Username or Email taken"
+                is Result.Error -> {
+                    _errorMessage.value = appContext.getString(ensureResult.error.toStringRes())
                 }
                 is Result.Success -> {
                     _chat.value = ensureResult.data
@@ -142,11 +129,7 @@ class ChatDetailViewModel(private val friendId: String,
             val result = friendshipRepository.getLocalFriendship(friendId)
             var friendship: Friendship? = null
             when (result){
-                is Result.Error -> _errorMessage.value = when(result.error) {
-                    DataError.Local.DISK_FULL -> "no disk space"
-                    DataError.Local.DB_ERROR -> "database error"
-                    DataError.Local.NO_DATA -> "no local data"
-                }
+                is Result.Error -> _errorMessage.value = appContext.getString(result.error.toStringRes())
                 is Result.Success -> friendship = result.data
             }
             val blockedByMe = friendship?.blockedBy == myId

@@ -1,14 +1,15 @@
 package com.example.projektiop.ui.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.api.AuthApi
 import com.example.projektiop.data.api.EmailRequest
-import com.example.projektiop.data.repositories.SharedDataSource
-import com.example.projektiop.util.DataError
-import com.example.projektiop.util.apiExceptionToDataError
+import com.example.projektiop.domain.DataError
+import com.example.projektiop.data.util.apiExceptionToDataError
 import com.example.projektiop.util.emailValidator
-import com.example.projektiop.util.mapToResource
+import com.example.projektiop.ui.mapToResource
+import com.example.projektiop.ui.toStringRes
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +25,8 @@ sealed interface ResendUiEvent{
     data object ShowToast : ResendUiEvent
 }
 
-class ResendEmailViewModel(private val emailApi: AuthApi) : ViewModel() {
+class ResendEmailViewModel(private val appContext: Context,
+                           private val emailApi: AuthApi) : ViewModel() {
 
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
@@ -56,22 +58,7 @@ class ResendEmailViewModel(private val emailApi: AuthApi) : ViewModel() {
                 _uiEvents.send(ResendUiEvent.ResendSuccess)
             } catch(e: Exception) {
                 val error = apiExceptionToDataError<Unit>(e).error
-                _errorMessage.value = when(error) {
-                    DataError.Local.DISK_FULL -> "no disk space"
-                    DataError.Local.DB_ERROR -> "db failed"
-                    DataError.Network.REQUEST_TIMEOUT -> "request timeout"
-                    DataError.Network.TOO_MANY_REQUESTS -> "Server Error"
-                    DataError.Network.NO_INTERNET -> "no internet"
-                    DataError.Network.PAYLOAD_TOO_LARGE -> "Server Error"
-                    DataError.Network.SERVER_ERROR -> "Server Error"
-                    DataError.Network.SERIALIZATION -> "Serialization Error"
-                    DataError.Network.UNKNOWN -> "Unknown Error"
-                    DataError.Local.NO_DATA -> "no local data"
-                    DataError.Authentication.INVALID_EMAIL_PASSWORD -> "Invalid Email or Password"
-                    DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
-                    DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
-                    DataError.Authentication.EMAIL_USERNAME_TAKEN -> "Username or Email taken"
-                }
+                _errorMessage.value = appContext.getString(error.toStringRes())
             }
             _loading.value = false
         }

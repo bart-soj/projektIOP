@@ -1,14 +1,12 @@
 package com.example.projektiop.data.mapping
 
-import androidx.compose.ui.res.stringResource
 import com.example.projektiop.data.api.ChatDto
 import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.data.db.realm.objects.Chat
-import com.example.projektiop.data.db.realm.objects.Message
 import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.domain.models.base64
-import com.example.projektiop.util.mongoTimestampToRealmInstant
-import com.example.projektiop.util.toJavaInstant
+import com.example.projektiop.data.util.mongoTimestampToRealmInstant
+import com.example.projektiop.data.util.toJavaInstant
 import java.time.Instant
 import com.example.projektiop.domain.models.Chat as DomainChat
 import com.example.projektiop.domain.models.Message as DomainMessage

@@ -4,11 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.api.BackupApi
 import com.example.projektiop.data.repositories.SharedDataSource
-import com.example.projektiop.util.KeyUtils
-import com.example.projektiop.util.DataError
-import com.example.projektiop.util.apiExceptionToDataError
-import com.example.projektiop.util.backupPasswordValidator
-import com.example.projektiop.util.mapToResource
+import com.example.projektiop.data.util.KeyUtils
+import com.example.projektiop.domain.DataError
+import com.example.projektiop.data.util.apiExceptionToDataError
+import com.example.projektiop.domain.backupPasswordValidator
+import com.example.projektiop.ui.mapToResource
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -8,24 +8,21 @@ import android.os.Build
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat.getString
 import com.example.projektiop.R
 
 object NotificationHelper {
-    const val CHANNEL_FRIEND = "friend_events"
-    const val CHANNEL_MESSAGES = "chat_messages"
-    const val CHANNEL_BLE = "ble_service"
+    val CHANNEL_FRIEND = "friend_events"
+    val CHANNEL_MESSAGES = "chat_messages"
+    val CHANNEL_BLE = "ble_service"
 
     fun initChannels(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val friend = NotificationChannel(CHANNEL_FRIEND, context.getString(R.string.channel_friend_name), NotificationManager.IMPORTANCE_DEFAULT)
-            val bleservice = NotificationChannel(CHANNEL_BLE, context.getString(R.string.channel_ble_name), NotificationManager.IMPORTANCE_DEFAULT)
-            val messages = NotificationChannel(CHANNEL_MESSAGES, context.getString(R.string.channel_messages_name), NotificationManager.IMPORTANCE_HIGH)
-            nm.createNotificationChannel(friend)
-            nm.createNotificationChannel(messages)
-            nm.createNotificationChannel(bleservice)
-        }
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val friend = NotificationChannel(CHANNEL_FRIEND, context.getString(R.string.channel_friend_name), NotificationManager.IMPORTANCE_DEFAULT)
+        val bleservice = NotificationChannel(CHANNEL_BLE, context.getString(R.string.channel_ble_name), NotificationManager.IMPORTANCE_DEFAULT)
+        val messages = NotificationChannel(CHANNEL_MESSAGES, context.getString(R.string.channel_messages_name), NotificationManager.IMPORTANCE_HIGH)
+        nm.createNotificationChannel(friend)
+        nm.createNotificationChannel(messages)
+        nm.createNotificationChannel(bleservice)
     }
 
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)

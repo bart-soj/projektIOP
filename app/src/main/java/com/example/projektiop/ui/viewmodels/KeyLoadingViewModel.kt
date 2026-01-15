@@ -1,22 +1,25 @@
 package com.example.projektiop.ui.viewmodels
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projektiop.R
 import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.domain.AppStateRepository
-import com.example.projektiop.util.BackupError
-import com.example.projektiop.util.KeyUtils
-import com.example.projektiop.util.DataError
-import com.example.projektiop.util.Result
-import com.example.projektiop.util.backupPasswordValidator
-import com.example.projektiop.util.mapToResource
+import com.example.projektiop.domain.BackupError
+import com.example.projektiop.data.util.KeyUtils
+import com.example.projektiop.domain.Result
+import com.example.projektiop.domain.backupPasswordValidator
+import com.example.projektiop.ui.mapToResource
+import com.example.projektiop.ui.toStringRes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class KeyLoadingViewModel(private val keyUtils: KeyUtils,
+class KeyLoadingViewModel(private val appContext: Context,
+                          private val keyUtils: KeyUtils,
                           private val appStateRepository: AppStateRepository,
                           private val sharedDataSource: SharedDataSource) : ViewModel() {
 
@@ -116,28 +119,13 @@ class KeyLoadingViewModel(private val keyUtils: KeyUtils,
             val result = keyUtils.getBackupInfo()
             when(result) {
                 is Result.Error ->
-                    _errorMessage.value = when (result.error) {
-                        DataError.Local.DISK_FULL -> "no disk space"
-                        DataError.Local.DB_ERROR -> "db failed"
-                        DataError.Network.REQUEST_TIMEOUT -> "request timeout"
-                        DataError.Network.TOO_MANY_REQUESTS -> "Server Error"
-                        DataError.Network.NO_INTERNET -> "no internet"
-                        DataError.Network.PAYLOAD_TOO_LARGE -> "Server Error"
-                        DataError.Network.SERVER_ERROR -> "Server Error"
-                        DataError.Network.SERIALIZATION -> "Serialization Error"
-                        DataError.Network.UNKNOWN -> "Unknown Error"
-                        DataError.Local.NO_DATA -> "no local data"
-                        DataError.Authentication.INVALID_EMAIL_PASSWORD -> "Invalid Email or Password"
-                        DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
-                        DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
-                        DataError.Authentication.EMAIL_USERNAME_TAKEN -> "Username or Email taken"
-                    }
+                    _errorMessage.value = appContext.getString(result.error.toStringRes())
 
                 is Result.Success -> {
                     val decryptionResult = keyUtils.getDecryptedKeyPairFromBackup(password, result.data, userId)
                     when(decryptionResult) {
                         is Result.Error -> _errorMessage.value = when (decryptionResult.error) {
-                            BackupError.WRONG_PASSWORD -> "Wrong password!"
+                            BackupError.WRONG_PASSWORD -> appContext.getString(R.string.error_invalid_password)
                         }
                         is Result.Success -> {
                             _gotKeys.value = true

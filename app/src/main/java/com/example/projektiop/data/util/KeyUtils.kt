@@ -1,4 +1,4 @@
-package com.example.projektiop.util
+package com.example.projektiop.data.util
 
 import android.util.Log
 import com.example.projektiop.data.api.BackupApi
@@ -6,10 +6,12 @@ import com.example.projektiop.data.api.PublicKeyApi
 import com.example.projektiop.data.api.PublishPublicKeyRequest
 import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.data.repositories.SharedDataSource
-import com.example.projektiop.domain.models.AlgorithmParams.EncryptionParams
-import com.example.projektiop.domain.models.AlgorithmParams.PasswordDerivationParams
+import com.example.projektiop.domain.BackupError
+import com.example.projektiop.domain.DataError
+import com.example.projektiop.domain.models.AlgorithmParams
 import com.example.projektiop.domain.models.BackupInfo
 import com.example.projektiop.domain.models.base64
+import com.example.projektiop.domain.Result
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair
@@ -48,7 +50,8 @@ import javax.crypto.spec.SecretKeySpec
 class KeyUtils(private val pubKeyApi: PublicKeyApi,
                private val backupApi: BackupApi,
                private val sharedDataSource: SharedDataSource,
-               private val dbRepository: RealmDBRepository)
+               private val dbRepository: RealmDBRepository
+)
 {
 
     val provider = BouncyCastleProvider()
@@ -118,7 +121,7 @@ class KeyUtils(private val pubKeyApi: PublicKeyApi,
         return Base64.getEncoder().encodeToString(keyBytes)
     }
 
-    fun createKeyFromPassword(password: String): Pair<base64, PasswordDerivationParams> {
+    fun createKeyFromPassword(password: String): Pair<base64, AlgorithmParams.PasswordDerivationParams> {
         val saltBytes: ByteArray
         val opsLimit: Int
         val memLimit: Int
@@ -169,7 +172,7 @@ class KeyUtils(private val pubKeyApi: PublicKeyApi,
         val encryptionKeyBase64 =
             Base64.getEncoder().encodeToString(encryptionKey)
 
-        val paramsOut = PasswordDerivationParams(
+        val paramsOut = AlgorithmParams.PasswordDerivationParams(
             algorithm = "Argon2id",
             salt = Base64.getEncoder().encodeToString(saltBytes),
             opsLimit = opsLimit,
@@ -184,8 +187,8 @@ class KeyUtils(private val pubKeyApi: PublicKeyApi,
 
     fun recreateKeyFromPassword(
         password: String,
-        params: PasswordDerivationParams
-    ): Result<Pair<base64, PasswordDerivationParams>, BackupError>  {
+        params: AlgorithmParams.PasswordDerivationParams
+    ): Result<Pair<base64, AlgorithmParams.PasswordDerivationParams>, BackupError> {
 
         val saltBytes: ByteArray
         val opsLimit: Int
@@ -243,7 +246,7 @@ class KeyUtils(private val pubKeyApi: PublicKeyApi,
         val encryptionKeyBase64 =
             Base64.getEncoder().encodeToString(encryptionKey)
 
-        val paramsOut = PasswordDerivationParams(
+        val paramsOut = AlgorithmParams.PasswordDerivationParams(
             algorithm = "Argon2id",
             salt = Base64.getEncoder().encodeToString(saltBytes),
             opsLimit = opsLimit,
@@ -288,7 +291,7 @@ class KeyUtils(private val pubKeyApi: PublicKeyApi,
     fun encryptKeyAES256GCM(
         encryptingKey: base64,
         keyToEncrypt: base64
-    ): Pair<base64, EncryptionParams> {
+    ): Pair<base64, AlgorithmParams.EncryptionParams> {
 
         val keyBytes = Base64.getDecoder().decode(encryptingKey)
         require(keyBytes.size == 32) { "AES-256 requires 32-byte key" }
@@ -304,7 +307,7 @@ class KeyUtils(private val pubKeyApi: PublicKeyApi,
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, gcmSpec)
         val ciphertextWithTag = cipher.doFinal(plaintext)
 
-        val encryptionParams = EncryptionParams(
+        val encryptionParams = AlgorithmParams.EncryptionParams(
             algorithm = "AES-256-GCM",
             iv = Base64.getEncoder().encodeToString(iv),
             tagLength = 128
@@ -315,7 +318,7 @@ class KeyUtils(private val pubKeyApi: PublicKeyApi,
         return ciphertext to encryptionParams
     }
 
-    fun decryptKeyAES256GCM(key: base64, keyToDecrypt: base64, encryptionParams: EncryptionParams): base64 {
+    fun decryptKeyAES256GCM(key: base64, keyToDecrypt: base64, encryptionParams: AlgorithmParams.EncryptionParams): base64 {
         require(encryptionParams.algorithm == "AES-256-GCM")
 
         val iv = Base64.getDecoder().decode(encryptionParams.iv)

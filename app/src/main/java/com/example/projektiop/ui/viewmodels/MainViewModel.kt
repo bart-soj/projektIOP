@@ -29,12 +29,10 @@ class MainViewModel(private val userRepository: UserRepository) : ViewModel() {
     val user = userRepository.myUser
 
     init {
-        viewModelScope.launch {
-            refreshProfile()
-        }
+        fetchMyProfile()
     }
 
-    fun refreshProfile() {
+    fun fetchMyProfile() {
         _loading.value = true
         _errorMessage.value = null
         viewModelScope.launch{
@@ -42,7 +40,20 @@ class MainViewModel(private val userRepository: UserRepository) : ViewModel() {
                 userRepository.fetchMyProfile()
             } catch (e: Exception) {
                 _errorMessage.value = e.message
-                Log.e("ProfileRefresh", "Error fetching profile", e)
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
+    fun getMyProfile() { // always uses local data if possible
+        _loading.value = true
+        _errorMessage.value = null
+        viewModelScope.launch{
+            try {
+                userRepository.getMyProfile()
+            } catch (e: Exception) {
+                _errorMessage.value = e.message
             } finally {
                 _loading.value = false
             }

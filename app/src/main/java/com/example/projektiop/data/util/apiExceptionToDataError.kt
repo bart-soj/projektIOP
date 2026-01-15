@@ -1,7 +1,9 @@
-package com.example.projektiop.util
+package com.example.projektiop.data.util
 
 
 import android.util.Log
+import com.example.projektiop.domain.DataError
+import com.example.projektiop.domain.Result
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.io.IOException

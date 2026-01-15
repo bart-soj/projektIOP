@@ -80,7 +80,6 @@
     <string name="nickname_label">Nick (1–50)</string>
     <string name="location_label">Miejscowość (max 100)</string>
     <string name="nickname_count">%1$d/50</string>
-    <string name="location_count">%1$d/100</string>
     <string name="birthdate_label">Data urodzenia (YYYY-MM-DD)</string>
     <string name="description_label">Opis (max 500)</string>
     <string name="description_count">%1$d/500</string>
@@ -199,9 +198,9 @@
     <string name="error_no_local_data">Brak danych lokalnych</string>
 
     <string name="error_request_timeout">Przekroczono limit czasu żądania</string>
-    <string name="error_too_many_requests">Błąd serwera</string>
+    <string name="error_too_many_requests">Zbyt wiele zapytań</string>
     <string name="error_no_internet">Brak internetu</string>
-    <string name="error_payload_too_large">Błąd serwera</string>
+    <string name="error_payload_too_large">Zbyt duża zawartość</string>
     <string name="error_server_error">Błąd serwera</string>
     <string name="error_serialization">Błąd przetwarzania danych</string>
 
@@ -261,5 +260,10 @@
     <string name="forget_confirm_yes">Tak, usuń historię!</string>
     <string name="forget">Zaloguj bez backupu</string>
     <string name="search_profile">Profil Skanowania</string>
+    <string name="error_db_error">Błąd lokalnej bazy danych</string>
+    <string name="error_no_data">Brak lokalnych danych</string>
+    <string name="error_email_username_taken">Email lub nazwa użytkownika zajęte</string>
+    <string name="error_invalid_email_password">Błędny email lub hasło</string>
+    <string name="location_count" >%1$d/100</string>
 
 </resources>

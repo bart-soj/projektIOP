@@ -2,8 +2,8 @@ package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.MessageDto
 import com.example.projektiop.data.db.realm.objects.Message
-import com.example.projektiop.util.mongoTimestampToRealmInstant
-import com.example.projektiop.util.toJavaInstant
+import com.example.projektiop.data.util.mongoTimestampToRealmInstant
+import com.example.projektiop.data.util.toJavaInstant
 import io.realm.kotlin.ext.realmListOf
 import com.example.projektiop.domain.models.Message as DomainMessage
 

@@ -44,8 +44,8 @@ import com.example.projektiop.ui.screens.FriendProfileScreen
 
 import com.example.projektiop.BluetoothLE.BTPermissionsManager
 import com.example.projektiop.BluetoothLE.BluetoothRepository
-import com.example.projektiop.data.api.websocket.AppEvent
-import com.example.projektiop.data.api.websocket.ChatEvent
+import com.example.projektiop.domain.AppEvent
+import com.example.projektiop.domain.ChatEvent
 import com.example.projektiop.data.api.websocket.SocketManager
 import com.example.projektiop.data.repositories.AuthRepository
 import com.example.projektiop.data.repositories.ChatUpdateService
@@ -167,7 +167,6 @@ class MainActivity : ComponentActivity() {
                     is AppEvent.Unblock -> {
                         friendshipRepository.getUnblocked(event.friendId)
                     }
-
                     is AppEvent.Receive -> {
                         chatRepository.receiveMessage(event.message, this@MainActivity)
                     }
@@ -302,15 +301,14 @@ fun MainNavGraph() {
         composable("scanner") { ScannerScreen(navController) }
         composable("main") { MainScreen(navController) }
         composable("chats") { ChatsScreen(navController) }
-        composable("chat_detail?chatId={chatId}&friendId={friendId}",
+        composable("chat_detail/{chatId}?friendId={friendId}",
             arguments = listOf(
-                navArgument("chatId") { nullable = true; defaultValue = null },
+                navArgument("chatId") { nullable = false },
                 navArgument("friendId") { nullable = true; defaultValue = null }
             )
         ) { backStack ->
             val chatId = backStack.arguments?.getString("chatId")
             val friendId = backStack.arguments?.getString("friendId")
-            // val friendName = backStack.arguments?.getString("friendName")
             ChatDetailScreen(navController, chatId, friendId)
         }
         composable("settings") { SettingsScreen(navController) }

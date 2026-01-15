@@ -6,7 +6,7 @@ import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.mapping.toUserProfileResponse
-import com.example.projektiop.util.checkDataFreshness
+import com.example.projektiop.data.util.checkDataFreshness
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

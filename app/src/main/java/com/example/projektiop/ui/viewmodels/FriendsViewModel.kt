@@ -1,11 +1,15 @@
 package com.example.projektiop.screens.friends
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.api.UserSearchDto
+import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.FriendItem
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.UserRepository
+import com.example.projektiop.domain.Result
+import com.example.projektiop.ui.toStringRes
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -29,21 +33,28 @@ data class FriendsUiState(
 
 sealed interface FriendsUiEffect {
     data class NavigateToProfile(val route: String) : FriendsUiEffect
-    data class NavigateToChat(val friendId: String) : FriendsUiEffect
+    data class NavigateToChat(val chatId: String, val friendId: String) : FriendsUiEffect
     data class ShowToast(val message: String) : FriendsUiEffect
     data class NavigateToReport(val friendId: String) : FriendsUiEffect
 }
 
-// --- VIEWMODEL ---
-
-class FriendsViewModel(private val friendshipRepository: FriendshipRepository,
-                       private val userRepository: UserRepository) : ViewModel() {
+class FriendsViewModel(
+    private val appContext: Context,  // for string resolution
+    private val friendshipRepository: FriendshipRepository,
+    private val userRepository: UserRepository,
+    private val chatRepository: ChatRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FriendsUiState())
     val uiState = _uiState.asStateFlow()
 
     private val _uiEffect = Channel<FriendsUiEffect>()
     val uiEffect = _uiEffect.receiveAsFlow()
+
+
+    private val myId: String
+        get() {
+            return userRepository.myUser.value!!.id
+        }
 
     init {
         refreshAll()
@@ -126,7 +137,19 @@ class FriendsViewModel(private val friendshipRepository: FriendshipRepository,
     }
 
     fun onChatClicked(friendId: String) {
-        sendEffect(FriendsUiEffect.NavigateToChat(friendId))
+        viewModelScope.launch {
+            val ensureResult = chatRepository.ensureChatWithUser(friendId, myId)
+            when(ensureResult) {
+                is Result.Error -> {
+                    val error = ensureResult.error
+                    val errorMessage = appContext.getString(error.toStringRes())
+                    sendEffect(FriendsUiEffect.ShowToast(errorMessage))
+                }
+                is Result.Success -> {
+                    sendEffect(FriendsUiEffect.NavigateToChat(ensureResult.data.id, friendId))
+                }
+            }
+        }
     }
 
     fun onRemoveFriend(friendshipId: String) {

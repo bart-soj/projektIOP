@@ -1,13 +1,12 @@
 package com.example.projektiop.ui.viewmodels
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.repositories.ChatListItem
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.UserRepository
-import com.example.projektiop.util.DataError
-import com.example.projektiop.util.Result
+import com.example.projektiop.domain.DataError
+import com.example.projektiop.domain.Result
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -78,7 +77,7 @@ class ChatsViewModel(
     fun refreshAll() {
         _loading.value = true
         viewModelScope.launch {
-            val result = chatRepository.fetchChats( myUser.value?._id?.toHexString()!! )
+            val result = chatRepository.fetchChats( myUser.value!!.id )
             when(result) {
                 is Result.Error -> _error.value = when (result.error) {
                     DataError.Local.DISK_FULL -> "no disk space"

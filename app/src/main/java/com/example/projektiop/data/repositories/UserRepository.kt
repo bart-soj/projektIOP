@@ -10,14 +10,12 @@ import com.example.projektiop.data.api.UpdateProfileRequest
 import com.example.projektiop.data.api.ProfileDto
 import com.example.projektiop.data.api.AddUserInterestRequest
 import com.example.projektiop.data.api.UserInterestDto
-import com.example.projektiop.data.api.UpdateUserInterestRequest
 import com.example.projektiop.data.api.UserApi
 import com.example.projektiop.data.api.UserSearchDto
 import com.example.projektiop.data.db.realm.RealmDBRepository
-import com.example.projektiop.data.db.realm.objects.User
+import com.example.projektiop.data.mapping.toDomain
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.mapping.toUserProfileResponse
-import com.google.gson.JsonElement
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +25,7 @@ import retrofit2.HttpException
 import java.util.UUID
 import com.example.projektiop.domain.models.Interest as DomainInterest
 import com.example.projektiop.domain.models.UserInterest as DomainUserInterest
+import com.example.projektiop.domain.models.User as DomainUser
 
 
 private const val ID = "_id"
@@ -36,7 +35,7 @@ class UserRepository(private val userApi: UserApi,
                      private val dbRepository: RealmDBRepository,
                      private val sharedDataSource: SharedDataSource,
                      private val interestRepository: InterestRepository) {
-    private var id: String? = null
+    private lateinit var id: String
     private val _MyUserInterests = MutableStateFlow<List<DomainUserInterest>?>(null)
     val MyUserInterests: StateFlow<List<DomainUserInterest>?> = _MyUserInterests.asStateFlow()
 
@@ -44,7 +43,7 @@ class UserRepository(private val userApi: UserApi,
     val repositoryCache: StateFlow<Map<String, OtherUserRepository>> =
         _repositoryCache.asStateFlow()
 
-    private val _myUser = MutableStateFlow<User?>(null)
+    private val _myUser = MutableStateFlow<DomainUser?>(null)
     val myUser = _myUser.asStateFlow()
 
     init {
@@ -78,7 +77,38 @@ class UserRepository(private val userApi: UserApi,
         }
 
 
+    suspend fun getMyProfile(): Result<DomainUser> {
+        val local = dbRepository.getUserById(id)
+        if (local != null) return Result.success(local.toDomain())
+
+        try {
+            val response = userApi.getMyProfile()
+            if(!response.isSuccessful) throw HttpException(response)
+
+            val body = response.body()!!
+            val userInterests: List<UserInterestDto> =
+                body.interests.orEmpty().filter { it.interest != null }
+
+            val tmpId: String? = body._id
+
+            dbRepository.addUser(body.toRealm())
+
+            interestRepository.resolveIncomingUserInterests(userInterests, tmpId!!, _MyUserInterests)
+
+            val local = dbRepository.getUserById(id)!!
+            _myUser.value = local.toDomain()
+
+            return Result.success(local.toDomain())
+
+        } catch (e: Exception) {
+            return Result.failure(e)
+        }
+    }
+
+
     suspend fun fetchMyProfile(): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
+
+
         try {
             val response = userApi.getMyProfile()
 
@@ -116,7 +146,8 @@ class UserRepository(private val userApi: UserApi,
                     sharedDataSource.set(ID, tmpId.toString())
                     updateMyId()
                 }
-                _myUser.value = dbRepository.getUserById(id!!)
+
+                _myUser.value = dbRepository.getUserById(id)!!.toDomain()
                 return@withContext Result.success(body)
             } else {
                 val tmpId: String = sharedDataSource.get(ID, "")
@@ -126,7 +157,7 @@ class UserRepository(private val userApi: UserApi,
                 }
                 val localUser = dbRepository.getUserById(tmpId)
                 if (localUser != null) {
-                    _myUser.value = localUser
+                    _myUser.value = localUser.toDomain()
                     val userProfile = localUser.toUserProfileResponse()
                     return@withContext Result.success(userProfile)
                 }
@@ -140,7 +171,7 @@ class UserRepository(private val userApi: UserApi,
             }
             val localUser = dbRepository.getUserById(tmpId)
             if (localUser != null) {
-                _myUser.value = localUser
+                _myUser.value = localUser.toDomain()
                 val userProfile = localUser.toUserProfileResponse()
                 return@withContext Result.success(userProfile)
             }
@@ -197,7 +228,7 @@ class UserRepository(private val userApi: UserApi,
                     )
                 }
 
-                _myUser.value = dbRepository.getUserById(id!!)
+                _myUser.value = dbRepository.getUserById(id)!!.toDomain()
                 Result.success(response.body()!!)
             } else {
                 val errBody = try {

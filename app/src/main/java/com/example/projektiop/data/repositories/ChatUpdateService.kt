@@ -13,7 +13,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.projektiop.R
 import com.example.projektiop.util.NotificationHelper
-import com.example.projektiop.util.Result
+import com.example.projektiop.domain.Result
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -108,7 +108,7 @@ class ChatUpdateService(): Service() {
                 if (user != null) {
                     try {
                         val result = chatRepository.fetchChats(
-                             user._id.toHexString(),
+                             user.id,
                         )
 
                         when (result) {

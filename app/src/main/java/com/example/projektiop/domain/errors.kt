@@ -1,4 +1,5 @@
-package com.example.projektiop.util
+package com.example.projektiop.domain
+
 
 sealed interface RootError
 
@@ -24,6 +25,9 @@ sealed interface DataError: RootError {
         EMAIL_USERNAME_TAKEN
     }
 }
+
+
+
 
 
 enum class BackupError: RootError {

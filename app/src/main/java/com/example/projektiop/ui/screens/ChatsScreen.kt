@@ -92,10 +92,10 @@ fun ChatsScreen(navController: NavController) {
                                 chatData = chatData,
                                 onClick = {
                                     val route = buildString {
-                                        append("chat_detail?")
+                                        append("chat_detail/")
                                         append("chatId=").append(chatData.id)
                                         if (!chatData.friendId.isNullOrBlank()) {
-                                            append("&friendId=").append(chatData.friendId)
+                                            append("?friendId=").append(chatData.friendId)
                                         }
                                     }
                                     navController.navigate(route)

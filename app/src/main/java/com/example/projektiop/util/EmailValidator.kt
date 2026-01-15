@@ -1,8 +1,9 @@
 package com.example.projektiop.util
 
 import android.util.Patterns
-import com.example.projektiop.util.ValidationError.Common
-import com.example.projektiop.util.ValidationError.EmailError
+import com.example.projektiop.domain.ValidationError
+import com.example.projektiop.domain.ValidationError.Common
+import com.example.projektiop.domain.ValidationError.EmailError
 
 fun emailValidator(email: String): List<ValidationError>{
     var out = emptyList<ValidationError>()

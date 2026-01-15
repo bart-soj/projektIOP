@@ -82,7 +82,6 @@
     <string name="nickname_label">Nickname (1–50)</string>
     <string name="location_label">Location (max 100)</string>
     <string name="nickname_count">%1$d/50</string>
-    <string name="location_count">%1$d/100</string>
     <string name="birthdate_label">Birthdate (YYYY-MM-DD)</string>
     <string name="description_label">Description (max 500)</string>
     <string name="description_count">%1$d/500</string>
@@ -200,9 +199,9 @@
     <string name="error_no_local_data">No local data</string>
 
     <string name="error_request_timeout">Request timeout</string>
-    <string name="error_too_many_requests">Server Error</string>
+    <string name="error_too_many_requests">Too many requests</string>
     <string name="error_no_internet">No internet</string>
-    <string name="error_payload_too_large">Server Error</string>
+    <string name="error_payload_too_large">Payload too lage</string>
     <string name="error_server_error">Server Error</string>
     <string name="error_serialization">Serialization Error</string>
 
@@ -263,4 +262,9 @@
     <string name="forget_confirm_yes">Yes, delete the history!</string>
     <string name="forget">Log-in without backup</string>
     <string name="search_profile">Scan Profile</string>
+    <string name="error_db_error">Local database error</string>
+    <string name="error_no_data">No local data</string>
+    <string name="error_email_username_taken">Email or Username taken</string>
+    <string name="error_invalid_email_password">Email or Password invalid</string>
+    <string name="location_count">%1$d/100</string>
 </resources>

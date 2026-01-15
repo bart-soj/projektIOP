@@ -6,12 +6,11 @@ import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.data.db.realm.objects.UserProfile
 import com.example.projektiop.domain.models.Gender
 import com.example.projektiop.domain.models.UserRole
-import com.example.projektiop.util.mongoTimestampToRealmInstant
-import com.example.projektiop.util.realmInstantToMongoTimestamp
-import com.example.projektiop.util.toJavaInstant
+import com.example.projektiop.data.util.mongoTimestampToRealmInstant
+import com.example.projektiop.data.util.realmInstantToMongoTimestamp
+import com.example.projektiop.data.util.toJavaInstant
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.RealmInstant
-import java.time.Instant
 import kotlin.String
 import com.example.projektiop.domain.models.User as DomainUser
 import com.example.projektiop.domain.models.User.UserProfile as DomainUserProfile

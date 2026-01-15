@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class FriendProfileViewModel(private val id: String,
+                             private val username: String? = null,
+                             private val displayName: String? = null,
+                             private val avatarUrl: String? = null,
                              private val userRepository: UserRepository) : ViewModel() {
 
     private val _user = MutableStateFlow<UserProfileResponse?>(null)
@@ -23,6 +26,10 @@ class FriendProfileViewModel(private val id: String,
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
     private var prefil: UserProfileResponse = UserProfileResponse()
+
+    init {
+        setPrefil(username, displayName, avatarUrl)
+    }
 
     fun refresh() {
         _loading.value = true
@@ -48,51 +55,7 @@ class FriendProfileViewModel(private val id: String,
             _id = id,
             username = usernamePrefill?: prefil.username,
             profile = ProfileDto( displayName = displayNamePrefill ?: prefil.profile?.displayName,
-                                  avatarUrl = avatarUrlPrefill ?: prefil.profile?.avatarUrl)
+                                  avatarUrl = avatarUrlPrefill ?: prefil.profile?.avatarUrl )
         )
     }
 }
-
-/*  code that was in the composable before, TODO() maybe use the search users in viewModel
-scope.launch {
-    loading = true
-    error = null
-    try {
-        val fullResp = RetrofitInstance.userApi.getUserById(userId)
-        if (fullResp.isSuccessful && fullResp.body() != null) {
-            profile = fullResp.body()
-        } else {
-            if (profile == null) {
-                if (displayNamePrefill != null || usernamePrefill != null) {
-                    profile = UserProfileResponse(
-                        _id = userId,
-                        username = usernamePrefill,
-                        profile = ProfileDto(displayName = displayNamePrefill),
-                        interests = emptyList(),
-                        email = null
-                    )
-                }
-                val uname = usernamePrefill ?: displayNamePrefill
-                if (!uname.isNullOrBlank()) {
-                    val searchResp = RetrofitInstance.userApi.searchUsers(uname)
-                    if (searchResp.isSuccessful) {
-                        val candidate = searchResp.body().orEmpty().firstOrNull { it._id == userId || it.username == uname }
-                        if (candidate != null) {
-                            profile = UserProfileResponse(
-                                _id = candidate._id,
-                                username = candidate.username,
-                                profile = candidate.profile,
-                                interests = emptyList(),
-                                email = null
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    } catch (e: Exception) {
-        error = e.message
-    }
-    loading = false
-}
- */

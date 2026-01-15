@@ -6,7 +6,7 @@ import com.example.projektiop.BluetoothLE.bleKoinModule
 import com.example.projektiop.activeHandshake.NFC.nfcKoinModule
 import com.example.projektiop.data.api.apiKoinModule
 import com.example.projektiop.data.db.realm.realmKoinModule
-import com.example.projektiop.ui.viewmodels.viewModelsKoinModule
+import com.example.projektiop.ui.viewModelsKoinModule
 import org.junit.Test
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.dsl.module

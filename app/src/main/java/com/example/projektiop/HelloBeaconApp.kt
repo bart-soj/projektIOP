@@ -7,7 +7,7 @@ import com.example.projektiop.data.api.apiKoinModule
 import com.example.projektiop.data.db.realm.RealmProvider
 import com.example.projektiop.data.db.realm.realmKoinModule
 import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.ui.viewmodels.viewModelsKoinModule
+import com.example.projektiop.ui.viewModelsKoinModule
 import com.example.projektiop.util.NotificationHelper
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch

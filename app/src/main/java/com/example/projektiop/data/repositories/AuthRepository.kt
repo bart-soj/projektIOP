@@ -6,9 +6,9 @@ import com.example.projektiop.data.api.LoginRequest
 import com.example.projektiop.data.api.TokenProvider
 import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.domain.AppStateRepository
-import com.example.projektiop.util.DataError
-import com.example.projektiop.util.Result
-import com.example.projektiop.util.apiExceptionToDataError
+import com.example.projektiop.domain.DataError
+import com.example.projektiop.domain.Result
+import com.example.projektiop.data.util.apiExceptionToDataError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
