@@ -265,5 +265,6 @@
     <string name="error_email_username_taken">Email lub nazwa użytkownika zajęte</string>
     <string name="error_invalid_email_password">Błędny email lub hasło</string>
     <string name="location_count" >%1$d/100</string>
+    <string name="language">Język</string>
 
 </resources>

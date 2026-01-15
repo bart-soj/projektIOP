@@ -13,8 +13,7 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-class SharedDataSource(context: Context) {
-    private var appContext: Context = context.applicationContext
+class SharedDataSource(private val appContext: Context) {
     private val PREFS_NAME = "HelloBeaconSharedPrefs"
     private val prefs = getPreferences(appContext)
 

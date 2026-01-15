@@ -1,9 +1,12 @@
 package com.example.projektiop.ui.screens
 
+import android.app.Activity
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -20,12 +23,11 @@ import com.example.projektiop.ui.components.GlassPanel
 import com.example.projektiop.ui.viewmodels.AuthViewModel
 import org.koin.androidx.compose.koinViewModel
 import androidx.compose.runtime.*
+import com.example.projektiop.ui.components.LanguageButton
+import com.example.projektiop.ui.viewmodels.LanguageViewModel
 
 @Composable
-
-
 fun StartScreen(navController: NavController) {
-
     val viewModel = koinViewModel<AuthViewModel>()
     val loading by viewModel.loading.collectAsState()
 
@@ -46,9 +48,15 @@ fun StartScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 32.dp, vertical = 64.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Bottom
         ) {
+            Row(horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                val languageViewModel = koinViewModel<LanguageViewModel>()
+                LanguageButton(languageViewModel)
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
             GlassPanel {
                 Image(
                     painter = painterResource(id = R.drawable.app_logo),
@@ -101,7 +109,6 @@ fun StartScreen(navController: NavController) {
 }
 
 // --- Podgląd ---
-
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun StartScreenPreview() {

@@ -8,6 +8,8 @@ import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.Build
 import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.content.res.Resources
 import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
@@ -20,7 +22,10 @@ import com.example.projektiop.ui.theme.ProjektIOPTheme
 import androidx.compose.runtime.getValue
 import com.example.projektiop.data.repositories.ThemePreference
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -54,15 +59,21 @@ import com.example.projektiop.ui.screens.ChatDetailScreen
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import com.example.projektiop.data.repositories.ChatRepository
+import com.example.projektiop.data.repositories.LanguageRepository
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.AppState
 import com.example.projektiop.domain.AppStateEvent
 import com.example.projektiop.domain.AppStateRepository
+import com.example.projektiop.domain.models.Language
 import com.example.projektiop.ui.screens.KeyLoadingScreen
 import com.example.projektiop.ui.screens.ReportScreen
 import com.example.projektiop.ui.screens.ResendEmailScreen
+import com.example.projektiop.ui.viewmodels.LanguageViewModel
 import kotlinx.coroutines.delay
+import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.getKoin
 import org.koin.compose.koinInject
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
@@ -84,6 +95,7 @@ class MainActivity : ComponentActivity() {
 
     private val localBTPermissionsManager: BTPermissionsManager by inject()
 
+    private val languageRepository: LanguageRepository by inject()
     private val appStateRepository: AppStateRepository by inject()
     private val chatRepository: ChatRepository by inject()
     private val friendshipRepository: FriendshipRepository by inject()
@@ -217,7 +229,27 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            MyApp()
+            val languageViewModel = koinViewModel<LanguageViewModel>()
+            val language by languageViewModel.language.collectAsState()
+
+            val localizedContext = remember(language) {
+                val locale = when (language) {
+                    Language.POLISH -> Locale("pl")
+                    Language.ENGLISH -> Locale("en")
+                    Language.SYSTEM -> Resources.getSystem().configuration.locales[0]
+                }
+                this.createConfigurationContext(
+                    Configuration(resources.configuration).apply {
+                        setLocale(locale)
+                    }
+                )
+            }
+
+            CompositionLocalProvider(LocalContext provides localizedContext) {
+                MyApp()
+            }
+
+
         }
     }
 

@@ -21,7 +21,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.R
 import com.example.projektiop.screens.components.FriendCard
 import com.example.projektiop.ui.components.BackupDialogButton
+import com.example.projektiop.ui.components.LanguageButton
 import com.example.projektiop.ui.viewmodels.BackupDialogViewModel
+import com.example.projektiop.ui.viewmodels.LanguageViewModel
 import com.example.projektiop.ui.viewmodels.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -68,6 +70,17 @@ fun SettingsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
             ) {
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(stringResource(R.string.language), style = MaterialTheme.typography.titleMedium)
+                    val languageViewModel = koinViewModel<LanguageViewModel>()
+                    LanguageButton(languageViewModel)
+                }
+
                 // light/dark mode switch
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -107,7 +120,6 @@ fun SettingsScreen(
                     )
                 }
 
-                Spacer(Modifier.size(8.dp))
 
                 // remember me switch
                 Row(
@@ -120,12 +132,9 @@ fun SettingsScreen(
                     Switch(checked = rememberMe, onCheckedChange = { viewModel.rememberMe() })
                 }
 
-                Spacer(Modifier.size(8.dp))
 
                 // Backup
                 BackupDialogButton(modifier = Modifier.fillMaxWidth())
-
-                Spacer(Modifier.size(8.dp))
 
                 Button(
                     onClick = { showBlockedDialog = true },

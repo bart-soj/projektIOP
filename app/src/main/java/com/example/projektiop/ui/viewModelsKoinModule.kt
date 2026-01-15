@@ -8,6 +8,7 @@ import com.example.projektiop.ui.viewmodels.ChatsViewModel
 import com.example.projektiop.ui.viewmodels.EditProfileViewModel
 import com.example.projektiop.ui.viewmodels.FriendProfileViewModel
 import com.example.projektiop.ui.viewmodels.KeyLoadingViewModel
+import com.example.projektiop.ui.viewmodels.LanguageViewModel
 import com.example.projektiop.ui.viewmodels.MainViewModel
 import com.example.projektiop.ui.viewmodels.ReportViewModel
 import com.example.projektiop.ui.viewmodels.ResendEmailViewModel
@@ -32,4 +33,5 @@ val viewModelsKoinModule = module {
     viewModel { BackupDialogViewModel(get(), get(), get()) }
     viewModel { ReportViewModel(androidApplication(), get(), get()) }
     viewModel { ResendEmailViewModel(androidApplication(), get()) }
+    viewModel { LanguageViewModel(get()) }
 }

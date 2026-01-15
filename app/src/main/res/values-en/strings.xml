@@ -267,4 +267,5 @@
     <string name="error_email_username_taken">Email or Username taken</string>
     <string name="error_invalid_email_password">Email or Password invalid</string>
     <string name="location_count">%1$d/100</string>
+    <string name="language">Language</string>
 </resources>
