@@ -17,19 +17,15 @@ import android.content.Context
 import android.location.LocationManager
 import android.os.ParcelUuid
 import android.util.Log
-import androidx.lifecycle.viewModelScope
-import com.example.projektiop.data.repositories.OtherUserRepository
-import com.example.projektiop.data.repositories.UserRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import java.nio.charset.Charset
 import java.util.UUID
 
-private val SERVICE_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB") // temporary
+private val SERVICE_UUID: UUID = UUID.fromString("0000DDDD-0000-1000-8000-00805F9B34FB") // temporary
 
 // Tagi do filtrowania logów w Logcat
 private const val TAG_SCAN = "BLE_SCAN_DEBUG"
@@ -83,7 +79,7 @@ class BluetoothRepository(private val context: Context) {
                     val serviceData = record.getServiceData(targetParcelUuid)
                     if (serviceData != null) {
                         try {
-                            val foundUserId = String(serviceData, Charset.forName("UTF-8")).trim()
+                            val foundUserId = bytesToUserId(serviceData)
 
                             // Sprawdzamy, czy ID jest niepuste i czy jest nowe
                             if (foundUserId.isNotEmpty() && !_foundDeviceIds.value.contains(foundUserId)) {
@@ -196,7 +192,7 @@ class BluetoothRepository(private val context: Context) {
             .setServiceUuid(ParcelUuid(SERVICE_UUID))
             .build()
         val scanSettings = ScanSettings.Builder()
-            .setLegacy(false)
+            .setLegacy(true) // false for extended packets
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             // .setReportDelay(0) // Domyślnie 0 - raportuj natychmiast
             .build()
@@ -248,7 +244,7 @@ class BluetoothRepository(private val context: Context) {
     }
 
     @SuppressLint("MissingPermission")
-    fun startAdvertising(ownUserId: String) {
+    fun startAdvertising(myId: String) {
         if (!permissionsManager.hasPermissions(permissionsManager.getRequiredPermissionsAdvertise())) {
             _foundDeviceStatus.value = "Status: Brak uprawnień rozgł."
             return
@@ -276,23 +272,18 @@ class BluetoothRepository(private val context: Context) {
 
         // Ustawienia rozgłaszania
         val settings = AdvertisingSetParameters.Builder()
-            .setInterval(AdvertisingSetParameters.INTERVAL_MEDIUM)
+            .setInterval(AdvertisingSetParameters.INTERVAL_HIGH)
             .setTxPowerLevel(AdvertisingSetParameters.TX_POWER_HIGH)
-            .setLegacyMode(false)
+            .setLegacyMode(true) // false for extended packets
             .setConnectable(false)
             .build()
 
         val parcelUuid = ParcelUuid(SERVICE_UUID)
-        val serviceData : ByteArray = try {
-            ownUserId.toByteArray(Charset.forName("UTF-8"))
+            val serviceData : ByteArray =  try { userIdToBytes(myId)
         } catch (e: Exception) {
             _foundDeviceStatus.value = "Status: Błąd kodowania ID"
             return
         }
-
-        /* not important for BLE
-        if (serviceData.size > 20) {
-        } */
 
         val data = AdvertiseData.Builder()
             .setIncludeDeviceName(false)
@@ -359,6 +350,28 @@ class BluetoothRepository(private val context: Context) {
     }
     suspend fun stopAdvertisingEvent() {
         _bleEvents.emit(BLEActions.STOP_ADVERTISE)
+    }
+
+    fun userIdToBytes(hex: String): ByteArray {
+        require(hex.length == 24) { "mongodb Id must be 24 characters" }
+        return ByteArray(12) {
+            hex.substring(it * 2, it * 2 + 2).toInt(16).toByte()
+        }
+    }
+
+    fun bytesToUserId(bytes: ByteArray): String {
+        require(bytes.size == 12) { "mongodb Id must be 12 bytes" }
+
+        val chars = CharArray(24)
+        var i = 0
+
+        for (b in bytes) {
+            val v = b.toInt() and 0xFF
+            chars[i++] = "0123456789abcdef"[v ushr 4]
+            chars[i++] = "0123456789abcdef"[v and 0x0F]
+        }
+
+        return String(chars)
     }
 
 }
