@@ -44,6 +44,8 @@ class HelloBeaconApp : Application() {
                 viewModelsKoinModule
             )
         }
+
+        // initializes language before MainActivity is created
         getKoin().get<LanguageRepository>()
     }
 

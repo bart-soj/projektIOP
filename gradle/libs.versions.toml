@@ -31,6 +31,8 @@ libraryBase = "3.0.0"
 
 moko = "0.6.0"
 
+app-compat = "1.7.1"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
@@ -53,6 +55,9 @@ androidx-navigation-fragment = { module = "androidx.navigation:navigation-fragme
 androidx-navigation-ui = { module = "androidx.navigation:navigation-ui", version.ref = "composeNavigation" }
 androidx-navigation-dynamic-features-fragment = { module = "androidx.navigation:navigation-dynamic-features-fragment", version.ref = "composeNavigation" }
 androidx-navigation-testing = { module = "androidx.navigation:navigation-testing", version.ref = "composeNavigation" }
+
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "app-compat" }
+androidx-appcompat-resources = { module = "androidx.appcompat:appcompat-resources", version.ref = "app-compat" }
 
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 
