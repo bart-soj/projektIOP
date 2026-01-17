@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.ui.res.stringResource
 import com.example.projektiop.data.api.ProfileDto
 import com.example.projektiop.ui.components.GlassPanel
+import com.example.projektiop.ui.components.InterestTag
 import com.example.projektiop.ui.components.UserAvatar
 import com.example.projektiop.util.translateInterestName
 import com.example.projektiop.ui.viewmodels.FriendProfileViewModel
@@ -44,9 +45,6 @@ fun FriendProfileScreen(
     val error by viewModel.errorMessage.collectAsState()
     val profile by viewModel.user.collectAsState()
 
-    LaunchedEffect(userId) {
-        viewModel.refresh()
-    }
 
     Scaffold(
         topBar = {

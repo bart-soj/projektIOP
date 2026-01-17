@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.example.projektiop.domain.models.Interest as DomainInterest
 import com.example.projektiop.domain.models.UserInterest as DomainUserInterest
+import com.example.projektiop.domain.models.InterestCategory as DomainInterestCategory
 
 class InterestRepository(private val publicInterestApi: PublicInterestApi,
                          private val dbRepository: RealmDBRepository) {
@@ -33,28 +34,31 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
         }
     }
 
-    suspend fun getPublicInterestCategories(): Result<List<PublicInterestCategoryDto>> = withContext(
+    suspend fun getPublicInterestCategories(): Result<List<DomainInterestCategory>> = withContext(
         Dispatchers.IO) {
         try {
             val response = publicInterestApi.getCategories()
-            if (response.isSuccessful && response.body().orEmpty() != emptyList<PublicInterestCategoryDto>()){
+            if (response.isSuccessful){
                 val body = response.body()!!
+                val outList: MutableList<DomainInterestCategory> = mutableListOf()
 
                 for (category in body) {
                     try {
                         val realmCategory = category.toRealm()
+                        val domainCategory = realmCategory.toDomain()
                         dbRepository.addInterestCategory(realmCategory)
+                        outList.add(domainCategory)
                     } catch (e: Exception) {
                         return@withContext Result.failure(Exception("Error saving user to database: $e"))
                     }
                 }
 
-                return@withContext Result.success(body)
+                return@withContext Result.success(outList)
 
             } else {
                 val local = dbRepository.getInterestCategories()
                 if (local != emptyList<InterestCategory>()){
-                    return@withContext Result.success(local.map{it.toDto()})
+                    return@withContext Result.success(local.map{it.toDomain()})
                 } else {
                     return@withContext Result.failure(Exception("API failed and no local data"))
                 }
@@ -62,20 +66,18 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
         } catch (e: Exception) {
             val local = dbRepository.getInterestCategories()
             if (local != emptyList<InterestCategory>()){
-                return@withContext Result.success(local.map{it.toDto()})
+                return@withContext Result.success(local.map{it.toDomain()})
             } else {
                 return@withContext Result.failure(Exception("API error and no local data $e"))
             }
         }
     }
 
-    suspend fun getPublicInterests(): Result<List<InterestDto>> = withContext(
-        Dispatchers.IO) {
+    suspend fun getPublicInterests(): Result<List<DomainInterest>> {
         try {
             val response = publicInterestApi.getPublicInterests()
             if (response.isSuccessful && response.body().orEmpty() != emptyList<InterestDto>()){
                 val body = response.body()!!
-                var returnList = emptyList<InterestDto>()
                 var domainList = emptyList<DomainInterest>()
 
                 for (publicInterestDto in body) {
@@ -97,23 +99,22 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
                         val realmInterest = interestDto.toRealm(dbRepository)
                         val domainInterest = realmInterest.toDomain()
                         dbRepository.addInterest(realmInterest)
-                        returnList += interestDto
                         domainList += domainInterest
                     } catch (e: Exception) {
-                        return@withContext Result.failure(Exception("Error saving public interest to database: $e"))
+                        return Result.failure(Exception("Error saving public interest to database: $e"))
                     }
                 }
 
                 _publicInterests.value = domainList
-                return@withContext Result.success(returnList)
+                return Result.success(domainList)
             } else {
                 val local = dbRepository.getInterests()
                 if (local.orEmpty() != emptyList<Interest>()){
                     val localDomain = local!!.map{it.toDomain()}
                     _publicInterests.value = localDomain
-                    return@withContext Result.success(local!!.map{it.toDto()})
+                    return Result.success(local.map{it.toDomain()})
                 } else {
-                    return@withContext Result.failure(Exception("API failed and no local data"))
+                    return Result.failure(Exception("API failed and no local data"))
                 }
             }
         } catch (e: Exception) {
@@ -121,9 +122,9 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
             if (local.orEmpty() != emptyList<Interest>()){
                 val localDomain = local!!.map{it.toDomain()}
                 _publicInterests.value = localDomain
-                return@withContext Result.success(local!!.map{it.toDto()})
+                return Result.success(local.map{it.toDomain()})
             } else {
-                return@withContext Result.failure(Exception("API error and no local data $e"))
+                return Result.failure(Exception("API error and no local data $e"))
             }
         }
     }
@@ -134,9 +135,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
         val resp = getPublicInterests().fold(
             onSuccess = { list ->
                 Result.success(list.associate {
-                    assert(it.name != null)
-                    assert(it._id != null)
-                    it.name!! to it._id!!
+                    it.name to it.id
                 })
             },
             onFailure = { exception ->
@@ -152,7 +151,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
 
         if (localInterestCategories == emptyList<String>()) {
             getPublicInterestCategories().onSuccess {
-                localInterestCategories = it.mapNotNull{ it._id } // just need a list of ids
+                localInterestCategories = it.map { it.id } // just need a list of ids
             }.onFailure { e -> throw e }
         }
 
@@ -162,9 +161,8 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
                 // first add category
                 val interestCategory = userInterestDto.interest.category
                 if (interestCategory !in localInterestCategories ) {
-                    getPublicInterests().onSuccess {
-                        localInterestCategories = dbRepository.getInterestCategories()
-                            .map{ it._id.toHexString() }
+                    getPublicInterests().onSuccess { list ->
+                        localInterestCategories = list.map { it.id }
                     }
                     if (interestCategory !in localInterestCategories) {
                         throw Exception("invalid interest category id $interestCategory")

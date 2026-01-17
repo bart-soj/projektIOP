@@ -16,6 +16,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.R
 import com.example.projektiop.data.repositories.ChatListItem
+import com.example.projektiop.ui.components.BottomNavigationBar
 import com.example.projektiop.ui.components.UserAvatar
 import com.example.projektiop.ui.viewmodels.ChatsViewModel
 import org.koin.androidx.compose.koinViewModel

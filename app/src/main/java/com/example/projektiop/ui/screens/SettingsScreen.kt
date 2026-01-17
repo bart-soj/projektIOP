@@ -21,6 +21,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.R
 import com.example.projektiop.screens.components.FriendCard
 import com.example.projektiop.ui.components.BackupDialogButton
+import com.example.projektiop.ui.components.BottomNavigationBar
 import com.example.projektiop.ui.components.LanguageButton
 import com.example.projektiop.ui.viewmodels.BackupDialogViewModel
 import com.example.projektiop.ui.viewmodels.LanguageViewModel

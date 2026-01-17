@@ -29,6 +29,7 @@ class FriendProfileViewModel(private val id: String,
 
     init {
         setPrefil(username, displayName, avatarUrl)
+        refresh()
     }
 
     fun refresh() {

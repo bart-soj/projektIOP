@@ -253,12 +253,12 @@ class ChatRepository(private val chatApi: ChatApi,
         }
     }
 
-    suspend fun sendMessage(chatId: String, content: String): Result<MessageDto> = withContext(Dispatchers.IO) {
+    suspend fun sendMessage(chatId: String, content: String): Result<Message> = withContext(Dispatchers.IO) {
         try {
             val chatKey = dbRepository.getChatById(chatId)!!.chatKey
             val encrypted = keyUtils.encryptMessage(content, chatKey!!)
             val r = chatApi.sendMessage(SendMessageRequest(encrypted, chatId))
-            if (r.isSuccessful) Result.success(r.body()!!) else Result.failure(Exception("Błąd wysyłania (${r.code()})"))
+            if (r.isSuccessful) Result.success(r.body()!!.toDomain(encrypted)) else Result.failure(Exception("Błąd wysyłania (${r.code()})"))
         } catch (e: Exception) { Result.failure(e) }
     }
 

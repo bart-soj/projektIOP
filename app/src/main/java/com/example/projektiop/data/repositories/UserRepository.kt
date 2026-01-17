@@ -68,7 +68,7 @@ class UserRepository(private val userApi: UserApi,
                         userApi,
                         dbRepository,
                         interestRepository
-                    ) // TODO() inject with koin
+                    )
                     _repositoryCache.value += Pair(id, tmpRep)
                     return@withContext Result.success(repositoryCache.value[id]!!)
                 }.onFailure { res -> return@withContext Result.failure(res) }
@@ -355,11 +355,7 @@ class UserRepository(private val userApi: UserApi,
                         "uploadAvatar: failed to persist locally, will continue. ${e.message}"
                     )
                 }
-                // Best effort: refresh full profile (backend may return partial)
-                try {
-                    val refreshed = fetchMyProfile().getOrNull()
-                    if (refreshed != null) return@withContext Result.success(refreshed)
-                } catch (_: Exception) { /* ignore */ }
+
                 Result.success(body)
             } else {
                 val errBody = try {

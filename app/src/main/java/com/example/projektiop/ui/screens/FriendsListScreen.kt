@@ -21,6 +21,7 @@ import com.example.projektiop.screens.components.FriendCard
 import com.example.projektiop.screens.components.PendingRequestCard
 import com.example.projektiop.screens.friends.FriendsUiEffect
 import com.example.projektiop.screens.friends.FriendsViewModel
+import com.example.projektiop.ui.components.BottomNavigationBar
 import com.example.projektiop.util.NotificationHelper
 import org.koin.androidx.compose.koinViewModel
 

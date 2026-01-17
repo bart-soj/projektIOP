@@ -354,7 +354,6 @@ private fun GenderDropdown(gender: Gender?, onGenderChange: (Gender?) -> Unit) {
 }
 
 
-
 @Composable
 private fun AvatarPicker(
     avatarPreviewUri: Uri?,

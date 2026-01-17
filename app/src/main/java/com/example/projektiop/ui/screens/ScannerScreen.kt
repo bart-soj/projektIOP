@@ -49,6 +49,7 @@ import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.domain.models.FriendshipStatus
 import com.example.projektiop.domain.models.Interest
 import com.example.projektiop.domain.models.SearchProfile
+import com.example.projektiop.ui.components.BottomNavigationBar
 import com.example.projektiop.ui.components.MultiSelectInterestsDropdown
 import com.example.projektiop.ui.components.UserAvatar
 import org.koin.androidx.compose.koinViewModel

@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.* // Ikony dla dolnego paska
-import androidx.compose.material3.* // Material 3
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,7 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.R
@@ -23,13 +22,19 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.projektiop.domain.models.Gender
+import com.example.projektiop.ui.components.BottomNavigationBar
+import com.example.projektiop.ui.components.InterestTag
 import com.example.projektiop.ui.components.PullToRefresh
 import com.example.projektiop.ui.components.UserAvatar
 import com.example.projektiop.ui.viewmodels.MainViewModel
 import org.koin.androidx.compose.koinViewModel
 import com.example.projektiop.util.translateInterestName
 
+
 private const val BASE_URL_KEY: String = "BASE_URL"
+
+
+internal data class InfoItem(val icon: ImageVector, val text: String)
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,7 +76,7 @@ fun MainScreen(navController: NavController) {
     }
 }
 
-// --- Komponenty pomocnicze ---
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifier, viewModel: MainViewModel) {
@@ -184,107 +189,6 @@ fun ProfileCardDynamic(navController: NavController, modifier: Modifier = Modifi
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun InterestTag(
-    base: String,
-    label : String = base
-) {
-    var showDialog by remember { mutableStateOf(false) }
-
-    val full = if (label != "") "$base — $label" else base
-    val short = if (full.length > 50) full.take(50) + "…" else full
-
-    SuggestionChip(
-        onClick = { showDialog = true },
-        colors = SuggestionChipDefaults.suggestionChipColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            labelColor = MaterialTheme.colorScheme.onPrimaryContainer
-        ),
-        label = {
-            Text(
-                text = short,
-                modifier = Modifier.padding(
-                    horizontal = 10.dp,
-                    vertical = 4.dp
-                )
-            )
-        }
-    )
-
-    if (showDialog) {
-        if (label != "") {
-            AlertDialog(
-                onDismissRequest = { showDialog = false },
-                confirmButton = {
-                    TextButton(onClick = { showDialog = false }) {
-                        Text(text = stringResource(R.string.ok))
-                    }
-                },
-                title = {
-                    Text(
-                        base,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                },
-                text = { Text(label) }
-            )
-        }
-        else showDialog = false
-    }
-}
-
-// --- Dolny Pasek Nawigacji  ---
-
-data class BottomNavItem(
-    val labelResId: Int,
-    val icon: ImageVector,
-    val route: String
-)
-
-@Composable
-fun BottomNavigationBar(navController: NavController, currentRoute: String?) {
-    val items = listOf(
-        BottomNavItem(R.string.bottom_nav_home, Icons.Default.Home, "main"),
-        BottomNavItem(R.string.bottom_nav_friends, Icons.Default.Group, "friends_list"),
-        BottomNavItem(R.string.bottom_nav_chats, Icons.Default.Chat, "chats"),
-        BottomNavItem(R.string.bottom_nav_broadcast, Icons.Default.BroadcastOnPersonal, "scanner"),
-        BottomNavItem(R.string.bottom_nav_settings, Icons.Default.Settings, "settings")
-    )
-
-    NavigationBar (
-        containerColor = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface
-    ){
-        items.forEach { item ->
-            val selected = currentRoute == item.route
-
-            NavigationBarItem(
-                icon = { Icon(item.icon, contentDescription = stringResource(item.labelResId)) },
-                selected = selected,
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primaryContainer,
-                    unselectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    indicatorColor = MaterialTheme.colorScheme.secondaryContainer
-                ),
-                onClick = {
-                    if (currentRoute != item.route) {
-                        val popped = navController.popBackStack(item.route, inclusive = false)
-                        if (!popped) {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
-                    }
-                }
-            )
-        }
-    }
-}
-
-// --- Podgląd ---
 
 @Preview(showBackground = true)
 @Composable
@@ -293,5 +197,3 @@ fun MainScreenPreview() {
         MainScreen(navController = rememberNavController())
     }
 }
-
-internal data class InfoItem(val icon: ImageVector, val text: String)
