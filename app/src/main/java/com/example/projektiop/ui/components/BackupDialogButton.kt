@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.projektiop.R
@@ -63,12 +64,16 @@ fun BackupDialogButton(modifier: Modifier = Modifier) {
                 shape = RoundedCornerShape(4.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    disabledContainerColor = Color(0xFF4CAF50),
-                    disabledContentColor = MaterialTheme.colorScheme.onPrimary
+                    contentColor = Color(0xFFFFFFFF),
+                    disabledContainerColor = Color(0xFF3c8c40),
+                    disabledContentColor = Color(0xFFFFFFFF),
                 )
             ) {
-                Text(if (viewModel.isBackedUp) stringResource(R.string.backed_up) else stringResource(R.string.create_backup))
+                Text(
+                    text = if (viewModel.isBackedUp) stringResource(R.string.backed_up)
+                    else stringResource(R.string.create_backup),
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

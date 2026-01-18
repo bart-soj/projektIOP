@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.*
@@ -15,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -129,7 +132,19 @@ fun SettingsScreen(
                 ) {
                     Text(stringResource(R.string.remember_me),
                         style = MaterialTheme.typography.titleMedium)
-                    Switch(checked = rememberMe, onCheckedChange = { viewModel.rememberMe() })
+                    Switch(
+                        checked = rememberMe,
+                        onCheckedChange = { viewModel.rememberMe() },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.secondaryContainer,
+                            checkedTrackColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            checkedBorderColor = MaterialTheme.colorScheme.onSecondaryContainer,
+
+                            uncheckedThumbColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            uncheckedTrackColor = MaterialTheme.colorScheme.secondaryContainer,
+                            uncheckedBorderColor = MaterialTheme.colorScheme.secondaryContainer
+                        )
+                    )
                 }
 
 
@@ -146,39 +161,64 @@ fun SettingsScreen(
                     )
 
                 ) {
-                    Text(text = stringResource(id = R.string.blocked_users))
+                    Text(
+                        text = stringResource(id = R.string.blocked_users),
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                Button(
-                    onClick = { showDeleteDialog = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(stringResource(R.string.delete_account), style = MaterialTheme.typography.titleLarge)
-                }
+                    Button(
+                        onClick = { showDeleteDialog = true },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(70.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) {
+                        Text(
+                            stringResource(R.string.delete_account),
+                            style = MaterialTheme.typography.titleMedium,
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.fillMaxWidth()
+                            )
+                    }
 
-                Spacer(modifier = Modifier.size(8.dp))
-
-                Button(
-                    onClick = { showLogoutDialog = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
-                    )
-                ) {
-                    Text(stringResource(R.string.log_out), style = MaterialTheme.typography.titleLarge)
+                    Button(
+                        onClick = { showLogoutDialog = true },
+                        modifier = Modifier
+                            .weight(2f)
+                            .height(70.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) {
+                        /*
+                        Text(
+                            stringResource(R.string.log_out),
+                            style = MaterialTheme.typography.titleLarge,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        */
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = stringResource(R.string.log_out),
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
                 }
             }
+
         }
         if (showBlockedDialog) {
             BlockedUsersDialog(onClose = { showBlockedDialog = false }, viewModel)
