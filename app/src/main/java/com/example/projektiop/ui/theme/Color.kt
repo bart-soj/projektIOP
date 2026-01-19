@@ -11,7 +11,7 @@ val SurfaceLight = Color(0xDDF5E7C6)
 val PrimaryLight = Color(0xBCEA651E)
 val OnPrimaryLight = Color(0xFF222222)
 
-val SecondaryLight = Color(0xFF555F7A)
+val SecondaryLight = Color(0xFF990000)
 val OnSecondaryLight = Color(0xFFFFFFFF)
 
 val PrimaryContainerLight = Color(0xBCFF6D1F)
@@ -38,8 +38,8 @@ val SurfaceDark = Color(0xFF1A222C) // containers background
 val PrimaryDark = Color(0xFF445A6B) // buttons
 val OnPrimaryDark = Color(0xFFDDE6ED) // text on buttons
 
-val SecondaryDark = Color(0xFFD29EAA)
-val OnSecondaryDark = Color(0xFFD29EAA)
+val SecondaryDark = Color(0xFF4c0000)
+val OnSecondaryDark = Color(0xFFDDE6ED)
 
 val PrimaryContainerDark = Color(0xFF526D82) // interests background
 val OnPrimaryContainerDark = Color(0xFFDDE6ED) // interests text

@@ -6,8 +6,7 @@ plugins {
     alias(libs.plugins.realm)
 }
 
-apply("realm_task.gradle.kts")
-
+//apply("realm_task.gradle.kts")
 android {
     namespace = "com.example.projektiop"
     compileSdk = 35
@@ -96,7 +95,6 @@ dependencies {
 
     // Coil for image loading (avatars in chat)
     implementation(libs.coil.compose)
-
     implementation(libs.library.base)
 
     // bouncycastle, both necessary
