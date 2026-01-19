@@ -43,7 +43,7 @@ fun FriendsListScreen(
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is FriendsUiEffect.NavigateToProfile -> navController.navigate(effect.route)
-                is FriendsUiEffect.NavigateToChat -> navController.navigate("chat_detail/chatId=${effect.chatId}?friendId=${effect.friendId}")
+                is FriendsUiEffect.NavigateToChat -> navController.navigate("chat_detail/${effect.chatId}?friendId=${effect.friendId}")
                 is FriendsUiEffect.ShowToast -> Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
                 is FriendsUiEffect.NavigateToReport -> {
                     val target = "report/${effect.friendId}"

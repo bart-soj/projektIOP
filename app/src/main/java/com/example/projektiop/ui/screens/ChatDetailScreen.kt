@@ -19,6 +19,7 @@ import androidx.compose.material3.ButtonDefaults.buttonColors
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -53,7 +54,7 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
     ObserveAsEvents(uiEventFlow) { event ->
         when(event) {
             is ChatDetailUIEvent.NavigateToReport -> {
-                val target = "report/${event.messageId}?messageId=${event.messageId}&content=${event.content}"
+                val target = "report/${event.friendId}?messageId=${event.messageId}&content=${event.content}"
                 navController.navigate(target)            }
             is ChatDetailUIEvent.ShowToast -> {}
         }
@@ -234,23 +235,27 @@ private fun MessageBubble(
             Spacer(Modifier.width(6.dp))
 
             Column(horizontalAlignment = Alignment.Start) {
-                Surface(
-                    color = bg,
-                    contentColor = contentColor,
-                    shape = shape,
-                    tonalElevation =  0.dp,
-                    shadowElevation = 0.dp,
-                    modifier =
-                        (if (groupedWithPrev) Modifier.padding(start = 32.dp) else Modifier)
-                            .combinedClickable(
-                                onClick = {},
-                                onLongClick = { showReportButton = true }
-                            )
-                ) {
-                    Column(Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
-                        Text(text = text, style = MaterialTheme.typography.bodyMedium)
+                Row {
+                    Surface(
+                        color = bg,
+                        contentColor = contentColor,
+                        shape = shape,
+                        tonalElevation = 0.dp,
+                        shadowElevation = 0.dp,
+                        modifier =
+                            (if (groupedWithPrev) Modifier.padding(start = 32.dp) else Modifier)
+                                .combinedClickable(
+                                    onClick = {},
+                                    onLongClick = { showReportButton = true }
+                                )
+                    ) {
+                        Box(Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
+                            Text(text = text, style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
+
                 }
+
                 Spacer(Modifier.height(2.dp))
                 if (timeText.isNotBlank()) {
                     Text(
@@ -273,20 +278,25 @@ private fun MessageBubble(
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
-                    IconButton(onClick = onReportClick) {
-                        Icon(
-                            imageVector = Icons.Outlined.Report,
-                            contentDescription = null
-                        )
-                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.alpha(0.6f)
+                    ) {
+                        IconButton(onClick = onReportClick) {
+                            Icon(
+                                imageVector = Icons.Outlined.Report,
+                                contentDescription = null,
+                            )
+                        }
 
-                    Spacer(Modifier.width(6.dp))
+                        Spacer(Modifier.width(4.dp))
 
-                    IconButton(onClick = { showReportButton = false }) {
-                        Icon(
-                            imageVector = Icons.Outlined.ChevronLeft,
-                            contentDescription = null
-                        )
+                        IconButton(onClick = { showReportButton = false }) {
+                            Icon(
+                                imageVector = Icons.Outlined.ChevronLeft,
+                                contentDescription = null
+                            )
+                        }
                     }
                 }
             }
@@ -357,4 +367,9 @@ private fun DateSeparator(date: String) {
             )
         }
     }
+}
+
+@Composable
+private fun ReportMessageButton() {
+
 }

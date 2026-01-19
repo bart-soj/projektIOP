@@ -29,7 +29,7 @@ import java.time.format.DateTimeFormatter
 
 sealed interface ChatDetailUIEvent{
     data class ShowToast(val message: String) : ChatDetailUIEvent
-    data class NavigateToReport(val messageId: String, val content: String) : ChatDetailUIEvent
+    data class NavigateToReport(val friendId: String, val messageId: String, val content: String) : ChatDetailUIEvent
 }
 
 
@@ -176,7 +176,7 @@ class ChatDetailViewModel(private val appContext: Context,
     fun onReportClick(messageId: String, content: String) {
         viewModelScope.launch {
             val encodedContent = Uri.encode(content)
-            _uiEventChannel.send(ChatDetailUIEvent.NavigateToReport(messageId, encodedContent))
+            _uiEventChannel.send(ChatDetailUIEvent.NavigateToReport(friendId, messageId, encodedContent))
         }
     }
 }

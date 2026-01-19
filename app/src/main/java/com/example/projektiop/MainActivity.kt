@@ -330,7 +330,7 @@ fun MainNavGraph() {
             FriendProfileScreen(navController, uid, uname, dname, avatar)
         }
         composable(
-            route = "report/{userId}?messageId={messageId}?content={content}",
+            route = "report/{userId}?messageId={messageId}&content={content}",
             arguments = listOf(
                 navArgument("userId") {nullable = false},
                 navArgument("messageId") {nullable = true; defaultValue = ""},

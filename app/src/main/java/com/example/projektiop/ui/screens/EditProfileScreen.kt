@@ -2,6 +2,7 @@ package com.example.projektiop.ui.screens
 
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -26,7 +27,9 @@ import androidx.compose.material.icons.filled.Clear
 import com.example.projektiop.domain.models.Gender
 import com.example.projektiop.domain.models.Interest
 import com.example.projektiop.ui.components.MultiSelectInterestsDropdown
+import com.example.projektiop.ui.components.ObserveAsEvents
 import com.example.projektiop.ui.components.UserAvatar
+import com.example.projektiop.ui.viewmodels.EditProfileUiEevent
 import com.example.projektiop.ui.viewmodels.EditProfileViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -53,7 +56,7 @@ fun EditProfileScreen(
     var gender by remember { mutableStateOf<Gender?>(myUser?.profile?.gender)}
     var description by remember { mutableStateOf(myUser?.profile?.bio ?: "") }
 
-    var selectedInterests by remember { mutableStateOf<Set<Interest>>(emptySet())}
+    var selectedInterests by remember { mutableStateOf<Set<Interest>>(myInterests?.map{it.interest}?.toSet() ?: emptySet())}
     var selectedDescriptions = remember { mutableStateMapOf<Interest, String>() }
     var interestsSaving by remember { mutableStateOf(false) }
     var broadcastMessage by remember { mutableStateOf("") }
@@ -62,6 +65,17 @@ fun EditProfileScreen(
     var avatarPreviewUri by remember { mutableStateOf<Uri?>(null) }
     var avatarPreviewBytes by remember { mutableStateOf<ByteArray?>(null) }
 
+    val uiEventFlow = viewModel.uiEvents
+
+    ObserveAsEvents(uiEventFlow) { event ->
+        when(event) {
+            is EditProfileUiEevent.ShowToast -> Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            EditProfileUiEevent.UpdateFailure -> {}
+            EditProfileUiEevent.UpdateSuccess -> {
+                navController.navigate("main")
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         // was fetching my profile and public interests
@@ -93,35 +107,6 @@ fun EditProfileScreen(
                     viewModel.onAvatarUpload(avatarPreviewBytes, avatarPreviewUri, context)
                     avatarPreviewBytes = null
                     avatarPreviewUri = null
-                    /*
-                    if (avatarPreviewUri == null || avatarPreviewBytes == null) return@AvatarPicker
-                    coroutineScope.launch {
-                        uploading = true
-                        uploadError = null
-
-                        val sizeOk = avatarPreviewBytes?.size ?: 0 <= 5 * 1024 * 1024
-                        if (!sizeOk) {
-                            uploading = false
-                            uploadError = context.getString(R.string.upload_error_file_too_large)
-                            return@launch
-                        }
-                        val result = userRepository.uploadAvatar(
-                            bytes = avatarPreviewBytes!!,
-                            originalFileName = name,
-                            mimeType = type
-                        )
-                        result.onSuccess {
-                            uploading = false
-                            avatarPreviewUri = null
-                            avatarPreviewBytes = null
-                            currentAvatarUrl = it.profile?.avatarUrl
-                            avatarVersionTag = it.updatedAt?.hashCode()?.toString()
-                        }.onFailure {
-                            uploading = false
-                            uploadError = it.message ?: context.getString(R.string.avatar_upload_error)
-                        }
-                    }
-                     */
                 },
                 uploading = uploading
             )
@@ -236,37 +221,6 @@ fun EditProfileScreen(
                         broadcastMessage, selectedInterests.associateWith { key ->
                             selectedDescriptions[key]?.takeIf { it.isNotBlank() }.toString()
                         })
-                    /*
-                    coroutineScope.launch {
-                        isLoading = true
-                        error = null
-                        userRepository.updateMyProfile(
-                            displayName = name,
-                            gender = gender,
-                            location = location,
-                            bio = description,
-                            birthDate = if (birthDate.isBlank()) null else birthDate,
-                            broadcastMessage = broadcastMessage
-                        ).onSuccess {
-                            // After base profile is saved, sync interests if changed
-                            interestsSaving = true
-                            val desired = selectedInterests.associateWith { nm ->
-                                selectedDescriptions[nm]?.takeIf { it.isNotBlank() }
-                            }
-                            val syncRes = userRepository.syncMyInterestsWithDescriptions(desired)
-                            interestsSaving = false
-                            isLoading = false
-                            syncRes.onSuccess {
-                                navController.popBackStack()
-                            }.onFailure { e ->
-                                error = e.message
-                            }
-                        }.onFailure {
-                            error = it.message
-                            isLoading = false
-                        }
-                    }
-                    */
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading && name.isNotBlank() && name.length in 1..50 && (birthDate.isBlank() || birthDate.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$")))

@@ -141,7 +141,7 @@ fun ScanStatus(isScanning: Boolean, isAdvertising: Boolean, modifier: Modifier =
             text = stringResource(R.string.ble_status_label),
             style = MaterialTheme.typography.bodyMedium
         )
-
+        Spacer(Modifier.width(4.dp))
         Text(
             text = statusText,
             style = MaterialTheme.typography.bodyMedium

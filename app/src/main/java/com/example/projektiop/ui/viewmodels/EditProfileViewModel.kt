@@ -10,10 +10,22 @@ import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.models.Gender
 import com.example.projektiop.domain.models.Interest
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+
+
+sealed interface EditProfileUiEevent {
+    object UpdateSuccess : EditProfileUiEevent
+    object UpdateFailure : EditProfileUiEevent
+    data class ShowToast(val message: String) : EditProfileUiEevent
+}
+
 
 class EditProfileViewModel(private val interestRepository: InterestRepository, private val userRepository: UserRepository): ViewModel() {
 
@@ -36,6 +48,9 @@ class EditProfileViewModel(private val interestRepository: InterestRepository, p
     private val _currentAvatarUrl = MutableStateFlow<String?>(myUser.value?.profile?.avatarUrl)
     val currentAvatarUrl = _currentAvatarUrl.asStateFlow()
 
+    private val _uiEvents = Channel<EditProfileUiEevent>()
+    val uiEvents = _uiEvents.receiveAsFlow()
+
     fun onUpdateClick(displayName: String?, gender: Gender?, location: String?,
                       bio: String?, birthDate: String?, broadcastMessage: String?,
                       interestsWithDescriptions: Map<Interest, String>
@@ -57,12 +72,13 @@ class EditProfileViewModel(private val interestRepository: InterestRepository, p
                 .onFailure { e ->
                     _errorMessage.value = errorMessage.value + e.message
                 }
-
+            if (errorMessage.value == null) {
+                _uiEvents.send(EditProfileUiEevent.UpdateSuccess)
+            }
             _loading.value = false
         }
     }
 
-    // TODO() probably shouldn't pass context and access string resources from viewModel
     fun onAvatarUpload(toUploadBytes: ByteArray?, toUploadUri: Uri?, context: Context) {
         if (toUploadUri == null || toUploadBytes == null) return
         _uploading.value = true
