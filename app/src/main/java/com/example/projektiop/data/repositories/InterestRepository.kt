@@ -3,13 +3,11 @@ package com.example.projektiop.data.repositories
 import android.util.Log
 import com.example.projektiop.data.api.InterestDto
 import com.example.projektiop.data.api.PublicInterestApi
-import com.example.projektiop.data.api.PublicInterestCategoryDto
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.db.realm.RealmDBRepository
 import com.example.projektiop.data.db.realm.objects.Interest
 import com.example.projektiop.data.db.realm.objects.InterestCategory
 import com.example.projektiop.data.mapping.toDomain
-import com.example.projektiop.data.mapping.toDto
 import com.example.projektiop.data.mapping.toRealm
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,10 +21,13 @@ import com.example.projektiop.domain.models.UserInterest as DomainUserInterest
 import com.example.projektiop.domain.models.InterestCategory as DomainInterestCategory
 
 class InterestRepository(private val publicInterestApi: PublicInterestApi,
-                         private val dbRepository: RealmDBRepository) {
+                         private val dbRepository: RealmDBRepository,
+                         private val languageRepository: LanguageRepository) {
 
     private val _publicInterests = MutableStateFlow<List<DomainInterest>>(emptyList())
     val publicInterests = _publicInterests.asStateFlow()
+
+    val language = languageRepository.language
 
     init {
         CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
@@ -37,7 +38,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
     suspend fun getPublicInterestCategories(): Result<List<DomainInterestCategory>> = withContext(
         Dispatchers.IO) {
         try {
-            val response = publicInterestApi.getCategories()
+            val response = publicInterestApi.getCategories(language.value.tag)
             if (response.isSuccessful){
                 val body = response.body()!!
                 val outList: MutableList<DomainInterestCategory> = mutableListOf()
@@ -75,7 +76,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
 
     suspend fun getPublicInterests(): Result<List<DomainInterest>> {
         try {
-            val response = publicInterestApi.getPublicInterests()
+            val response = publicInterestApi.getPublicInterests(language.value.tag)
             if (response.isSuccessful && response.body().orEmpty() != emptyList<InterestDto>()){
                 val body = response.body()!!
                 var domainList = emptyList<DomainInterest>()

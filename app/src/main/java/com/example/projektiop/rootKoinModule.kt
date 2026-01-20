@@ -18,7 +18,7 @@ import org.koin.dsl.module
 
 val rootKoinModule = module {
     single { UserRepository( get(), get(), get(), get() ) }
-    single { InterestRepository( get(), get() ) }
+    single { InterestRepository( get(), get(), get() ) }
     single { ThemePreference( get() ) }
     single { AuthRepository( get(), get(), get(), get() ) }
     single { ChatUpdateService }

@@ -10,12 +10,15 @@ import retrofit2.http.Query
 interface PublicInterestApi {
     @GET("public/interests")
     suspend fun getPublicInterests(
+        @Query("lang") lang: String? = null,
         @Query("categoryId") categoryId: String? = null,
         @Query("name") name: String? = null
     ): Response<List<PublicInterestDto>>
 
     @GET("public/interests/categories")
-    suspend fun getCategories(): Response<List<PublicInterestCategoryDto>>
+    suspend fun getCategories(
+        @Query("lang") lang: String? = null
+    ): Response<List<PublicInterestCategoryDto>>
 }
 
 data class PublicInterestDto(

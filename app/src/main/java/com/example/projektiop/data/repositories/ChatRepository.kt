@@ -93,7 +93,12 @@ class ChatRepository(private val chatApi: ChatApi,
                 var decrypted: String? = null
                 if (lastMessage != null) {
                     if (lastMessage.content != null) {
-                        chatKey = dbRepository.getChatById(chatId)?.chatKey!!
+                        chatKey = dbRepository.getChatById(chatId)?.chatKey
+                            ?: run {
+                                val pubResult = keyUtils.getPubKey(otherUserId)
+                                if (pubResult !is com.example.projektiop.domain.Result.Success) throw Exception("No pubkey")
+                                keyUtils.calculateChatKey(myUserId, pubResult.data)
+                            }
                         try {
                             val content = lastMessage.content
 
@@ -136,6 +141,7 @@ class ChatRepository(private val chatApi: ChatApi,
                         chatKey = keyUtils.calculateChatKey(myUserId, otherUserPub)
                     }
                     val realmChat = it.toRealm(chatKey)
+                    dbRepository.addChat(realmChat)
                     domainChat = realmChat.toDomain(myUserId, dbRepository)
                     domainList += domainChat
                 }

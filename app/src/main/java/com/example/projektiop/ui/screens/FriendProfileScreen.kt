@@ -45,7 +45,6 @@ fun FriendProfileScreen(
     val error by viewModel.errorMessage.collectAsState()
     val profile by viewModel.user.collectAsState()
 
-
     Scaffold(
         topBar = {
             TopAppBar(

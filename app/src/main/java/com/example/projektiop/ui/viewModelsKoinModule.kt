@@ -33,5 +33,5 @@ val viewModelsKoinModule = module {
     viewModel { BackupDialogViewModel(get(), get(), get()) }
     viewModel { ReportViewModel(androidApplication(), get(), get()) }
     viewModel { ResendEmailViewModel(androidApplication(), get()) }
-    viewModel { LanguageViewModel(get()) }
+    viewModel { LanguageViewModel(get(), get()) }
 }
