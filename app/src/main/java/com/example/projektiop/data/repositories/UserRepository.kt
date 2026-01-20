@@ -9,6 +9,7 @@ import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.api.UpdateProfileRequest
 import com.example.projektiop.data.api.ProfileDto
 import com.example.projektiop.data.api.AddUserInterestRequest
+import com.example.projektiop.data.api.UpdateUserInterestRequest
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UserApi
 import com.example.projektiop.data.api.UserSearchDto
@@ -380,30 +381,52 @@ class UserRepository(private val userApi: UserApi,
     }
 
     // TODO make it respond to individual failures not just all failing
-    suspend fun syncMyInterestsWithDescriptions(desired: Map<DomainInterest, String>): Result<Unit> {
-        val desiredSet = desired.toList().toSet()
-        val currentSet = MyUserInterests.value?.map { it.interest to it.customDescription }
-            ?.toSet() ?: emptySet()
+    suspend fun syncMyInterestsWithDescriptions(
+        desired: Map<DomainInterest, String>
+    ): Result<Unit> {
 
-        val toAdd = desiredSet.minus(currentSet)
-        val toRemove = currentSet.minus(desiredSet)
-        val toKeep = desiredSet.intersect(currentSet)
+        val current = MyUserInterests.value
+            ?.associateBy(
+                keySelector = { it.interest.id },
+                { Pair(it.customDescription, it.id) }
+            ) ?: emptyMap()
+
+        val desiredById = desired.entries.associate {
+            it.key.id to it.value.takeIf(String::isNotBlank)
+        }
+
+        val toAdd = desiredById.keys - current.keys
+        val toRemove = current.keys - desiredById.keys
+        val toUpdate = desiredById.keys intersect current.keys
 
         var success = true
 
-        toAdd.forEach() { (interest, description) ->
-            val request =
-                AddUserInterestRequest(interest.id, description.takeIf { it.isNotBlank() })
-            val resp = userApi.addUserInterest(request)
-            if (!resp.isSuccessful) success = false
+        toAdd.forEach { id ->
+            if (!userApi.addUserInterest(
+                    AddUserInterestRequest(id, desiredById[id])
+                ).isSuccessful
+            ) success = false
         }
 
-        toRemove.forEach() { (interest, description) ->
-            val resp = userApi.removeUserInterest(interest.id)
-            if (!resp.isSuccessful) success = false
+        toRemove.forEach { id ->
+            if (!userApi.removeUserInterest(id).isSuccessful)
+                success = false
         }
-        return if (success) Result.success(Unit) else Result.failure(Exception())
+
+        toUpdate.forEach { id ->
+            if (current[id]?.first != desiredById[id]) {
+                if (!userApi.updateUserInterest(
+                        current[id]?.second ?: return@forEach,
+                        UpdateUserInterestRequest(desiredById[id])
+                    ).isSuccessful
+                ) success = false
+            }
+        }
+
+        return if (success) Result.success(Unit)
+        else Result.failure(Exception("Failed to sync interests"))
     }
+
 
     suspend fun deleteMyAccount(): Result<Unit> {
         try {

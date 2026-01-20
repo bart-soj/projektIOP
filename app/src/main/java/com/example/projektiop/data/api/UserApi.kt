@@ -43,7 +43,7 @@ interface UserApi {
     suspend fun updateUserInterest(
         @Path("userInterestId") userInterestId: String,
         @Body body: UpdateUserInterestRequest
-    ): Response<UserProfileResponse>
+    ): Response<UserInterestDto>
 
     @DELETE("users/profile/interests/{userInterestId}")
     suspend fun removeUserInterest(@Path("userInterestId") userInterestId: String): Response<UserProfileResponse>
