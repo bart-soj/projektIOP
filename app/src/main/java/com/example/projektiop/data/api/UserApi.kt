@@ -25,7 +25,7 @@ interface UserApi {
     // Upload avatar image as multipart/form-data with field name 'avatarImage'
     @Multipart
     @PUT("users/profile/avatar")
-    suspend fun uploadAvatar(@Part avatarImage: MultipartBody.Part): Response<UserProfileResponse>
+    suspend fun uploadAvatar(@Part avatarImage: MultipartBody.Part): Response<UploadAvatarResponse>
 
     // Profil innego użytkownika po ID: GET /api/users/{id}
     @GET("users/{id}")
@@ -77,6 +77,12 @@ data class UserProfileResponse(
         get() = profile?.bio
 }
 
+
+data class UploadAvatarResponse(
+    val message: String?,
+    val avatarUrl: String?,
+    val user: UserProfileResponse
+)
 
 
 data class UserInterestDto(

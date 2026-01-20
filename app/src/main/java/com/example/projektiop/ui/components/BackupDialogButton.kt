@@ -10,12 +10,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.LockPerson
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.projektiop.R
 import com.example.projektiop.ui.viewmodels.BackupDialogUiEvent
@@ -38,7 +43,7 @@ import com.example.projektiop.ui.viewmodels.BackupDialogViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun BackupDialogButton(modifier: Modifier = Modifier) {
+fun BackupDialogButton(modifier: Modifier = Modifier, content: (@Composable (enabled: Boolean, onClick: () -> Unit) -> Unit)? = null) {
 
     val viewModel = koinViewModel<BackupDialogViewModel>()
     var expanded by remember{mutableStateOf(false)}
@@ -57,23 +62,41 @@ fun BackupDialogButton(modifier: Modifier = Modifier) {
             BackupDialog(viewModel, onClose = {expanded = false})
         }
         false -> {
-            Button(
-                onClick = { expanded = true },
-                modifier = modifier,
-                enabled = !viewModel.isBackedUp,
-                shape = RoundedCornerShape(4.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = Color(0xFFFFFFFF),
-                    disabledContainerColor = Color(0xFF3c8c40),
-                    disabledContentColor = Color(0xFFFFFFFF),
-                )
-            ) {
-                Text(
-                    text = if (viewModel.isBackedUp) stringResource(R.string.backed_up)
-                    else stringResource(R.string.create_backup),
-                    fontWeight = FontWeight.Bold
-                )
+            val onClick = { expanded = true }
+            val enabled = !viewModel.isBackedUp
+            if (content != null) {
+                content(enabled, onClick)
+            } else {
+                Row(
+                    modifier = modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = if (!enabled) stringResource(R.string.backed_up)
+                        else stringResource(R.string.create_backup),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    IconButton(
+                        onClick = onClick,
+                        enabled = enabled,
+                        shape = RoundedCornerShape(4.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = Color(0xFFFFFFFF),
+                            disabledContainerColor = Color(0xFF3c8c40),
+                            disabledContentColor = Color(0xFFFFFFFF),
+                        )
+                    ) {
+                        Icon(
+                            if (enabled) Icons.Filled.Backup
+                            else Icons.Filled.CloudDone,
+                            contentDescription = null
+                        )
+                    }
+                }
             }
         }
     }
@@ -175,5 +198,43 @@ fun BackupDialog(viewModel: BackupDialogViewModel, onClose: () -> Unit) {
                 }
             }
         }
+    }
+}
+
+
+@Preview
+@Composable
+fun Prev() {
+    val onClick = { }
+    val enabled = true
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = if (!enabled) stringResource(R.string.backed_up)
+            else stringResource(R.string.create_backup),
+            fontWeight = FontWeight.Bold
+        )
+
+        IconButton(
+            onClick = onClick,
+            enabled = enabled,
+            shape = RoundedCornerShape(4.dp),
+            colors = IconButtonDefaults.iconButtonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = Color(0xFFFFFFFF),
+                disabledContainerColor = Color(0xFF3c8c40),
+                disabledContentColor = Color(0xFFFFFFFF),
+            )
+        ) {
+            Icon(
+                if (enabled) Icons.Filled.Backup
+                else Icons.Filled.CloudDone,
+                contentDescription = null
+            )
+        }
+
     }
 }

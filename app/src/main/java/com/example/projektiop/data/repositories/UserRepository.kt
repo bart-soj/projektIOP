@@ -79,7 +79,10 @@ class UserRepository(private val userApi: UserApi,
 
     suspend fun getMyProfile(): Result<DomainUser> {
         val local = dbRepository.getUserById(id)
-        if (local != null) return Result.success(local.toDomain())
+        if (local != null) {
+            _myUser.value = local.toDomain()
+            return Result.success(local.toDomain())
+        }
 
         try {
             val response = userApi.getMyProfile()
@@ -330,8 +333,8 @@ class UserRepository(private val userApi: UserApi,
         bytes: ByteArray,
         originalFileName: String? = null,
         mimeType: String? = null
-    ): Result<UserProfileResponse> = withContext(Dispatchers.IO) {
-        try {
+    ): Result<String> {
+        return try {
             val safeMime = (mimeType ?: "image/jpeg").toMediaTypeOrNull()
             val requestBody: RequestBody = bytes.toRequestBody(safeMime)
             val fileName =
@@ -345,18 +348,20 @@ class UserRepository(private val userApi: UserApi,
             val response = userApi.uploadAvatar(part)
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
+                val newUrl = body.avatarUrl
 
-                // Try to persist locally, but don't fail the whole operation if local save has issues
+                if(newUrl == null) throw IllegalArgumentException("no avatar url")
+
                 try {
-                    dbRepository.addUser(body.toRealm())
+                    dbRepository.updateUserAvatar(id, newUrl)
                 } catch (e: Exception) {
                     Log.w(
-                        "UserRepository",
-                        "uploadAvatar: failed to persist locally, will continue. ${e.message}"
+                        "AVATAR",
+                        "uploadAvatar: failed to save avatar to db, will continue. ${e.message}"
                     )
                 }
 
-                Result.success(body)
+                Result.success(newUrl)
             } else {
                 val errBody = try {
                     response.errorBody()?.string()

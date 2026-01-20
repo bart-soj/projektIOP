@@ -137,6 +137,14 @@ class RealmDBRepository(private val realm: Realm) {
         }
     }
 
+    fun updateUserAvatar(userId: String, newUrl: String) {
+        val objectId = ObjectId(userId)
+        realm.writeBlocking {
+            val old = this.query<User>(User::class, "_id == $0", objectId).first().find()
+            old?.profile?.avatarUrl = newUrl
+        }
+    }
+
     fun savePubKey(userId: String, pubKey: base64) {
         val objectId = ObjectId(userId)
         realm.writeBlocking {

@@ -9,8 +9,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.LockPerson
+import androidx.compose.material.icons.filled.PlaylistRemove
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.material3.ButtonDefaults.buttonColors
+import androidx.compose.material3.IconButtonDefaults.iconButtonColors
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +22,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -80,7 +85,11 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(stringResource(R.string.language), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(R.string.language),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                     val languageViewModel = koinViewModel<LanguageViewModel>()
                     LanguageButton(languageViewModel)
                 }
@@ -91,7 +100,11 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(stringResource(id = R.string.dark_mode_label), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(id = R.string.dark_mode_label),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                     Switch(
                         checked = darkMode,
                         onCheckedChange = { viewModel.onToggleDark() },
@@ -131,8 +144,11 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(stringResource(R.string.remember_me),
-                        style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(R.string.remember_me),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                     Switch(
                         checked = rememberMe,
                         onCheckedChange = { viewModel.rememberMe() },
@@ -148,56 +164,69 @@ fun SettingsScreen(
                     )
                 }
 
-
-                // Backup
-                BackupDialogButton(modifier = Modifier.fillMaxWidth())
-
-                Button(
-                    onClick = { showBlockedDialog = true },
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(4.dp),
-                    colors = buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = stringResource(id = R.string.blocked_users),
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
+
+                    IconButton(
+                        onClick = { showBlockedDialog = true },
+                    ) {
+                        Icon(
+                            Icons.Filled.LockPerson,
+                            contentDescription = null
+                        )
+                    }
                 }
+
+                // Backup
+                BackupDialogButton(modifier = Modifier.fillMaxWidth())
 
                 Spacer(modifier = Modifier.weight(1f))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Button(
+                    Text(
+                        stringResource(R.string.delete_account),
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    IconButton(
                         onClick = { showDeleteDialog = true },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(70.dp),
-                        colors = ButtonDefaults.buttonColors(
+                        shape = RoundedCornerShape(4.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
                             containerColor = MaterialTheme.colorScheme.error,
                             contentColor = MaterialTheme.colorScheme.onError
                         )
                     ) {
-                        Text(
-                            stringResource(R.string.delete_account),
-                            style = MaterialTheme.typography.titleMedium,
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.fillMaxWidth()
-                            )
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = null
+                        )
                     }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+
 
                     Button(
                         onClick = { showLogoutDialog = true },
-                        modifier = Modifier
-                            .weight(2f)
-                            .height(70.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(4.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.error,
                             contentColor = MaterialTheme.colorScheme.onError
@@ -320,3 +349,4 @@ private fun BlockedUsersDialog(
         }
     )
 }
+
