@@ -57,6 +57,7 @@ import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.AppState
 import com.example.projektiop.domain.AppStateEvent
 import com.example.projektiop.domain.AppStateRepository
+import com.example.projektiop.ui.screens.BackupScreen
 import com.example.projektiop.ui.screens.KeyLoadingScreen
 import com.example.projektiop.ui.screens.ReportScreen
 import com.example.projektiop.ui.screens.ResendEmailScreen
@@ -341,6 +342,9 @@ fun MainNavGraph() {
             val messageId = backStack.arguments?.getString("messageId")
             val content = backStack.arguments?.getString("content")
             ReportScreen(navController, userId, messageId, content)
+        }
+        composable(route = "backup") { backStack ->
+            BackupScreen(navController)
         }
     }
 }

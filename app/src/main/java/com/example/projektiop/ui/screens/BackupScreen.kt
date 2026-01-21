@@ -1,6 +1,7 @@
-package com.example.projektiop.ui.components
+package com.example.projektiop.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,18 +9,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.CloudDone
-import androidx.compose.material.icons.filled.LockPerson
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,79 +27,33 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.projektiop.R
+import com.example.projektiop.ui.components.ObserveAsEvents
+import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
 import com.example.projektiop.ui.viewmodels.BackupDialogUiEvent
-import com.example.projektiop.ui.viewmodels.BackupDialogViewModel
+import com.example.projektiop.ui.viewmodels.BackupViewModel
 import org.koin.androidx.compose.koinViewModel
 
-@Composable
-fun BackupDialogButton(modifier: Modifier = Modifier, content: (@Composable (enabled: Boolean, onClick: () -> Unit) -> Unit)? = null) {
 
-    val viewModel = koinViewModel<BackupDialogViewModel>()
-    var expanded by remember{mutableStateOf(false)}
+@Composable
+fun BackupScreen(navController: NavController) {
+
+    val viewModel = koinViewModel<BackupViewModel>()
     val uiEvents = viewModel.uiEvents
+    val goBack = { navController.popBackStack() }
 
     ObserveAsEvents(uiEvents) { event ->
         when (event) {
-            is BackupDialogUiEvent.BackupSuccess -> expanded = false
+            is BackupDialogUiEvent.BackupSuccess -> goBack()
             is BackupDialogUiEvent.BackupError -> {}
             is BackupDialogUiEvent.ShowToast -> {}
         }
     }
 
-    when(expanded) {
-        true -> {
-            BackupDialog(viewModel, onClose = {expanded = false})
-        }
-        false -> {
-            val onClick = { expanded = true }
-            val enabled = !viewModel.isBackedUp
-            if (content != null) {
-                content(enabled, onClick)
-            } else {
-                Row(
-                    modifier = modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = if (!enabled) stringResource(R.string.backed_up)
-                        else stringResource(R.string.create_backup),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    IconButton(
-                        onClick = onClick,
-                        enabled = enabled,
-                        shape = RoundedCornerShape(4.dp),
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = Color(0xFFFFFFFF),
-                            disabledContainerColor = Color(0xFF3c8c40),
-                            disabledContentColor = Color(0xFFFFFFFF),
-                        )
-                    ) {
-                        Icon(
-                            if (enabled) Icons.Filled.Backup
-                            else Icons.Filled.CloudDone,
-                            contentDescription = null
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun BackupDialog(viewModel: BackupDialogViewModel, onClose: () -> Unit) {
     var password by remember { mutableStateOf("") }
     var password_repeated by remember { mutableStateOf("") }
 
@@ -116,7 +66,7 @@ fun BackupDialog(viewModel: BackupDialogViewModel, onClose: () -> Unit) {
         color = MaterialTheme.colorScheme.background
     ) {
         when(loading) {
-            true -> CircularProgressIndicator()
+            true -> Box(contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             false -> {
                 Column(
                     modifier = Modifier
@@ -151,8 +101,19 @@ fun BackupDialog(viewModel: BackupDialogViewModel, onClose: () -> Unit) {
                         }
 
                         IconButton(
-                            onClick = onClose
+                            onClick = { goBack() }
                         ) { Icon(imageVector = Icons.Filled.ChevronLeft, contentDescription = null) }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (errorMessage != null) {
+                        Text(
+                            text = errorMessage ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -184,57 +145,8 @@ fun BackupDialog(viewModel: BackupDialogViewModel, onClose: () -> Unit) {
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = PasswordVisualTransformation()
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    if (errorMessage != null) {
-                        Text(
-                            text = errorMessage ?: "",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                        )
-                    }
                 }
             }
         }
-    }
-}
-
-
-@Preview
-@Composable
-fun Prev() {
-    val onClick = { }
-    val enabled = true
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = if (!enabled) stringResource(R.string.backed_up)
-            else stringResource(R.string.create_backup),
-            fontWeight = FontWeight.Bold
-        )
-
-        IconButton(
-            onClick = onClick,
-            enabled = enabled,
-            shape = RoundedCornerShape(4.dp),
-            colors = IconButtonDefaults.iconButtonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color(0xFFFFFFFF),
-                disabledContainerColor = Color(0xFF3c8c40),
-                disabledContentColor = Color(0xFFFFFFFF),
-            )
-        ) {
-            Icon(
-                if (enabled) Icons.Filled.Backup
-                else Icons.Filled.CloudDone,
-                contentDescription = null
-            )
-        }
-
     }
 }

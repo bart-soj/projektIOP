@@ -7,31 +7,29 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.LockPerson
-import androidx.compose.material.icons.filled.PlaylistRemove
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
-import androidx.compose.material3.ButtonDefaults.buttonColors
-import androidx.compose.material3.IconButtonDefaults.iconButtonColors
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.R
 import com.example.projektiop.screens.components.FriendCard
-import com.example.projektiop.ui.components.BackupDialogButton
 import com.example.projektiop.ui.components.BottomNavigationBar
 import com.example.projektiop.ui.components.LanguageButton
-import com.example.projektiop.ui.viewmodels.BackupDialogViewModel
+import com.example.projektiop.ui.viewmodels.BackupViewModel
 import com.example.projektiop.ui.viewmodels.LanguageViewModel
 import com.example.projektiop.ui.viewmodels.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -40,7 +38,7 @@ import org.koin.androidx.compose.koinViewModel
 fun SettingsScreen(
     navController: NavController
 ) {
-    val backupDialogViewModel = koinViewModel<BackupDialogViewModel>()
+    val backupViewModel = koinViewModel<BackupViewModel>()
     val viewModel = koinViewModel<SettingsViewModel>()
     var animationPlayed by remember { mutableStateOf(false) }
     val alphaAnimation = animateFloatAsState(
@@ -186,7 +184,37 @@ fun SettingsScreen(
                 }
 
                 // Backup
-                BackupDialogButton(modifier = Modifier.fillMaxWidth())
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    val isBackedUp = backupViewModel.isBackedUp
+                    Text(
+                        text = if (isBackedUp) stringResource(R.string.backed_up)
+                        else stringResource(R.string.create_backup),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    IconButton(
+                        onClick = { navController.navigate("backup") },
+                        enabled = !isBackedUp,
+                        shape = RoundedCornerShape(4.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = Color(0xFFFFFFFF),
+                            disabledContainerColor = Color(0xFF3c8c40),
+                            disabledContentColor = Color(0xFFFFFFFF),
+                        )
+                    ) {
+                        Icon(
+                            if (!isBackedUp) Icons.Filled.Backup
+                            else Icons.Filled.CloudDone,
+                            contentDescription = null
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.weight(1f))
 
@@ -258,7 +286,7 @@ fun SettingsScreen(
             onDismissRequest = { showLogoutDialog = false },
             title = { Text(stringResource(R.string.confirmation)) },
             text = {
-                if (backupDialogViewModel.isBackedUp) {
+                if (backupViewModel.isBackedUp) {
                     Text(stringResource(R.string.logout_confirm_message))
                 } else {
                     Text(stringResource(R.string.logout_confirm_message)

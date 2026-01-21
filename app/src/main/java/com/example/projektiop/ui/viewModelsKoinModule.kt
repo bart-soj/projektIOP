@@ -2,7 +2,7 @@ package com.example.projektiop.ui
 
 import com.example.projektiop.screens.friends.FriendsViewModel
 import com.example.projektiop.ui.viewmodels.AuthViewModel
-import com.example.projektiop.ui.viewmodels.BackupDialogViewModel
+import com.example.projektiop.ui.viewmodels.BackupViewModel
 import com.example.projektiop.ui.viewmodels.ChatDetailViewModel
 import com.example.projektiop.ui.viewmodels.ChatsViewModel
 import com.example.projektiop.ui.viewmodels.EditProfileViewModel
@@ -30,7 +30,7 @@ val viewModelsKoinModule = module {
     viewModel { (chatId: String, friendId: String) -> ChatDetailViewModel(androidApplication(), chatId, friendId, get(), get(), get(), get()) }
     viewModel { KeyLoadingViewModel(androidApplication(), get(), get(), get()) }
     viewModel { EditProfileViewModel(get(), get()) }
-    viewModel { BackupDialogViewModel(get(), get(), get()) }
+    viewModel { BackupViewModel(androidApplication(), get(), get(), get()) }
     viewModel { ReportViewModel(androidApplication(), get(), get()) }
     viewModel { ResendEmailViewModel(androidApplication(), get()) }
     viewModel { LanguageViewModel(get(), get()) }

@@ -233,7 +233,7 @@
     <string name="name_label">Name</string>
     <string name="chats_screen_title">Chats</string>
     <string name="new_friend_request">New friend request</string>
-    <string name="error_backup_password_too_short">must be at 12 characters long</string>
+    <string name="error_backup_password_too_short">must be at least 12 characters long</string>
     <string name="password_repeated_label">Repeated Password</string>
     <string name="backed_up">Account Backed-Up</string>
     <string name="create_backup">Create a backup</string>
