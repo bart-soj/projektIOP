@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Instant
 import kotlin.collections.filter
 import com.example.projektiop.domain.models.Chat as DomainChat
 
@@ -28,22 +29,51 @@ class ChatsViewModel(
     val searchText: StateFlow<String> = _searchText.asStateFlow()
 
     private val _chats = MutableStateFlow<List<DomainChat>>(emptyList())
-    private val _chatListItems = MutableStateFlow<List<ChatListItem>>(emptyList())
 
     val filteredChats: StateFlow<List<ChatListItem>> =
-        combine(_chatListItems, searchText) { chats, searchText ->
+        combine(_chats, searchText) { chats, searchText ->
         if (searchText.isNotBlank()) {
             chats.filter {
                 (it.title.contains(searchText, ignoreCase = true) ||
-                it.lastMessage.contains(searchText, ignoreCase = true))
+                        (it.lastMessage?.content?:"").contains(searchText, ignoreCase = true))
+            }.sortedByDescending { it.lastMessage?.createdAt ?: Instant.MIN }.map {
+                ChatListItem(
+                    id = it.id,
+                    title = it.title,
+                    lastMessage = it.lastMessage?.content ?: "" ,
+                    lastMessageTime = it.lastMessage?.createdAt.toString(),
+                    friendId = it.otherUserId,
+                    avatarUrl = it.participants.first{ user ->  user.id == it.otherUserId }.profile.avatarUrl,
+                    unread = it.unread
+                )
             }
         } else {
-            chats
+            chats.sortedByDescending { it.lastMessage?.createdAt ?: Instant.MIN }.map {
+                ChatListItem(
+                    id = it.id,
+                    title = it.title,
+                    lastMessage = it.lastMessage?.content ?: "" ,
+                    lastMessageTime = it.lastMessage?.createdAt.toString(),
+                    friendId = it.otherUserId,
+                    avatarUrl = it.participants.first{ user ->  user.id == it.otherUserId }.profile.avatarUrl,
+                    unread = it.unread
+                )
+            }
         }
     }.stateIn (
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = _chatListItems.value
+        initialValue = _chats.value.sortedByDescending { it.lastMessage?.createdAt ?: Instant.MIN }.map {
+            ChatListItem(
+                id = it.id,
+                title = it.title,
+                lastMessage = it.lastMessage?.content ?: "" ,
+                lastMessageTime = it.lastMessage?.createdAt.toString(),
+                friendId = it.otherUserId,
+                avatarUrl = it.participants.first{ user ->  user.id == it.otherUserId }.profile.avatarUrl,
+                unread = it.unread
+            )
+        }
     )
 
     private val _error = MutableStateFlow<String?>(null)
@@ -58,17 +88,6 @@ class ChatsViewModel(
         viewModelScope.launch {
             chatRepository.chats.flatMapLatest{it}.collect { newList ->
                 _chats.value = newList
-                _chatListItems.value = newList.map {
-                    ChatListItem(
-                        id = it.id,
-                        title = it.title,
-                        lastMessage = it.lastMessage?.content ?: "" ,
-                        lastMessageTime = it.lastMessage?.createdAt.toString(),
-                        friendId = it.otherUserId,
-                        avatarUrl = it.participants.first{ user ->  user.id == it.otherUserId }.profile.avatarUrl,
-                        unread = it.unread
-                    )
-                }
             }
         }
         refreshAll()
@@ -97,17 +116,6 @@ class ChatsViewModel(
                 }
                 is Result.Success -> {
                     _chats.value = result.data
-                    _chatListItems.value = result.data.map {
-                        ChatListItem(
-                            id = it.id,
-                            title = it.title,
-                            lastMessage = it.lastMessage?.content ?: "",
-                            lastMessageTime = it.lastMessage?.createdAt.toString(),
-                            friendId = it.otherUserId,
-                            avatarUrl = it.participants.first { user -> user.id == it.otherUserId }.profile.avatarUrl,
-                            unread = it.unread
-                        )
-                    }
                 }
             }
             _loading.value = false
