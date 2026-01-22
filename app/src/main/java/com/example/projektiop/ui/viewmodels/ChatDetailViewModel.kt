@@ -59,7 +59,7 @@ class ChatDetailViewModel(private val appContext: Context,
     private val _typing = MutableStateFlow(false)
     val typing: StateFlow<Boolean> = _typing.asStateFlow()
 
-    val myId = userRepository.myUser.value!!.id
+    val myUser = userRepository.myUser
     private val _chat = MutableStateFlow<Chat?>(null)
     //private val _chatListItem = MutableStateFlow<ChatListItem?>(null)
     val chat: StateFlow<Chat?> = _chat.asStateFlow()
@@ -108,7 +108,7 @@ class ChatDetailViewModel(private val appContext: Context,
 
     fun ensureChat() {
         viewModelScope.launch {
-            val ensureResult = chatRepository.ensureChatWithUser(friendId, myId)
+            val ensureResult = chatRepository.ensureChatWithUser(friendId, myUser.value!!.id)
             when (ensureResult) {
                 is Result.Error -> {
                     _errorMessage.value = appContext.getString(ensureResult.error.toStringRes())
@@ -132,7 +132,7 @@ class ChatDetailViewModel(private val appContext: Context,
                 is Result.Error -> _errorMessage.value = appContext.getString(result.error.toStringRes())
                 is Result.Success -> friendship = result.data
             }
-            val blockedByMe = friendship?.blockedBy == myId
+            val blockedByMe = friendship?.blockedBy == myUser.value!!.id
             _blockInfo.value = BlockInfo(
                 isBlocked = true,
                 blockedByMe = blockedByMe

@@ -6,6 +6,7 @@ import com.example.projektiop.data.repositories.ChatUpdateService
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.data.repositories.LanguageRepository
+import com.example.projektiop.data.repositories.OtherUserRepository
 import com.example.projektiop.data.repositories.SearchProfileRepository
 import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.data.repositories.ThemePreference
@@ -29,4 +30,7 @@ val rootKoinModule = module {
     single { KeyUtils( get(), get(), get(), get() ) }
     single { AppStateRepository() }
     single { LanguageRepository( get() ) }
+    factory { (id: String) ->
+        OtherUserRepository.ensureRepository(id, get(), get(), get())
+    }
 }

@@ -46,6 +46,7 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
     val timeFormatter = viewModel.timeFormatter
 
     val typing by viewModel.typing.collectAsState()
+    val myUser by viewModel.myUser.collectAsState()
 
     var input by remember { mutableStateOf("") }
 
@@ -134,7 +135,7 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                                         text = m.content,
                                         incoming = isIncoming,
                                         groupedWithPrev = prevSame,
-                                        avatarUrl = if (isIncoming && !prevSame) url else null,
+                                        avatarUrl = if (isIncoming && !prevSame) url else myUser!!.profile.avatarUrl,
                                         timeText = if (showTime) timeFormatter.format(m.createdAt) else "",
                                         onReportClick = { if (isIncoming)  viewModel.onReportClick(m.id, m.content) }
                                     )
@@ -145,7 +146,9 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
             }
             if(typing) {
                 MessageBubble(text = stringResource(R.string.typing), incoming = true,
-                    groupedWithPrev = false, avatarUrl = null, timeText = "")
+                    groupedWithPrev = false,
+                    avatarUrl = chat!!.participants.firstOrNull { user -> user.id != myUser!!.id}?.profile?.avatarUrl,
+                    timeText = "")
             }
 
             val isBlocked = blockInfo != null

@@ -5,38 +5,42 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.BluetoothLE.BluetoothRepository
-import com.example.projektiop.data.api.UserProfileResponse
 import com.example.projektiop.data.db.realm.objects.User
-import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.repositories.FriendshipRepository
 import com.example.projektiop.data.repositories.InterestRepository
+import com.example.projektiop.data.repositories.OtherUserRepository
 import com.example.projektiop.data.repositories.SearchProfileRepository
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.models.FriendshipStatus
 import com.example.projektiop.domain.models.Interest
 import com.example.projektiop.domain.models.SearchProfile
 import com.example.projektiop.domain.models.UserInterest
-import com.example.projektiop.domain.DataError
 import com.example.projektiop.domain.Result
 import com.example.projektiop.domain.cosineSimilarity
 import com.example.projektiop.ui.toStringRes
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.collections.contains
+import org.koin.core.parameter.parametersOf
+import org.koin.java.KoinJavaComponent.inject
 import kotlin.collections.mapNotNull
 import kotlin.collections.plus
+import com.example.projektiop.domain.models.User as DomainUser
 
 
 private const val ID: String = "_id"
 
 
-data class UserWithStatus(val user: User, val status: FriendshipStatus)
+data class UserWithStatus(val user: DomainUser, val status: FriendshipStatus)
 data class UserWithInfo(val user: User, val status: FriendshipStatus, val friendId: String?)
 
 
@@ -47,7 +51,6 @@ class ScannerViewModel(application: Application,
                        private val searchProfileRepository: SearchProfileRepository,
                        private val interestRepository: InterestRepository) : AndroidViewModel(application) {
 
-    // Publiczne StateFlow do obserwowania w UI
     val isScanning: StateFlow<Boolean> = bleManager.isScanning
     val isAdvertising: StateFlow<Boolean> = bleManager.isAdvertising
     // val foundDeviceStatus: StateFlow<String> = bleManager.foundDeviceStatus
@@ -104,52 +107,48 @@ class ScannerViewModel(application: Application,
         chosen ?: default
     }.stateIn(viewModelScope,started = SharingStarted.WhileSubscribed(5000), initialValue = _defaultSearchProfile.value)
 
-    /*
     private val _userRepositories = MutableStateFlow<List<OtherUserRepository>>(emptyList())
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val _userFlows: Flow<List<Pair<User, List<UserInterestDto>?>>> = _userRepositories.flatMapLatest { repositories ->
-        if (_userRepositories == emptyList<OtherUserRepository>()) {
-            emptyFlow()
-        } else {
-            val pairs = repositories.map { repository ->
-                combine(repository.UserInterests, repository.userFlow) { interests, user ->
-                    assert(user != null)
-                    Pair(user!!, interests)
+    private val _usersWithInterests =
+        _userRepositories.flatMapLatest { repoList ->
+            if (repoList.isEmpty()) {
+                flowOf(emptyList())
+            } else {
+                combine(
+                    repoList.map { repo ->
+                        combine(
+                            repo.Profile,
+                            repo.UserInterests.map { ui ->
+                                ui?.map { it.interest } ?: emptyList()
+                            }
+                        ) { profile, interests ->
+                            profile to interests
+                        }
+                    }
+                ) { pairs ->
+                    pairs.toList()
                 }
             }
-            combine (pairs) { arr ->
-                arr.toList()
-            }
         }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
-     */
-    /*
+
     val usersFromRepo: StateFlow<List<UserWithStatus>> = combine (
-        myInterests,
-        _userFlows,
+        searchProfile,
+        _usersWithInterests,
         combinedIds
-    ) { mi, uf, ids ->
+    ) { sp, uwi, ids ->
         val friendsSet: Set<String> = ids.first.toSet()
         val pendingSet = ids.second.toSet()
         val blockedSet = ids.third.toSet()
 
-        val myInterestsNames = mi?.mapNotNull{ userInterest ->
-            userInterest.interest.name
-        }
+        val myInterests = sp.interests.map {it.id}
 
-        val sorted = uf.sortedByDescending { pair ->
-            val interests = pair.second?.mapNotNull { userInterest ->
-                userInterest.interest.name
-            }
-            cosineSimilarity(interests?.toSet() ?: emptySet(), myInterestsNames?.toSet() ?: emptySet())
+        val sorted = uwi.sortedByDescending { pair ->
+            val interests = pair.second.map { it.id }
+            cosineSimilarity(interests.toSet(), myInterests.toSet())
         }
-        sorted.map { pair ->
+        sorted.mapNotNull { pair ->
             val user = pair.first
-            val status: FriendshipStatus = when (user._id.toHexString()) {
+            val status: FriendshipStatus = when (user?.id ?: return@mapNotNull null) {
                 in friendsSet -> FriendshipStatus.ACCEPTED
                 in pendingSet -> FriendshipStatus.PENDING
                 in blockedSet -> FriendshipStatus.BLOCKED
@@ -163,40 +162,6 @@ class ScannerViewModel(application: Application,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
-     */
-
-    private val _userProfiles = MutableStateFlow<List<UserProfileResponse>>(emptyList())
-    val users: StateFlow<List<UserWithStatus>> = combine(
-        _userProfiles,
-        searchProfile,
-        friendsIds,
-        pendingIds,
-        blockedIds
-    ) {
-        val friendsSet = friendsIds.value.toSet()
-        val pendingSet = pendingIds.value.toSet()
-        val blockedSet = blockedIds.value.toSet()
-
-        val myInterestsNames = searchProfile.value.interests.map { interest ->
-            interest.name
-        }
-        val sortedProfiles = _userProfiles.value.sortedByDescending { profile ->
-            val profileInterests = profile.interests?.mapNotNull { userInterest ->
-                userInterest.interest.name
-            }
-            cosineSimilarity(profileInterests?.toSet() ?: emptySet(), myInterestsNames?.toSet() ?: emptySet()) // sorts by this
-        }
-        sortedProfiles.map { profile ->
-            val status: FriendshipStatus = when (profile._id) {
-                in friendsSet -> FriendshipStatus.ACCEPTED
-                in pendingSet -> FriendshipStatus.PENDING
-                in blockedSet -> FriendshipStatus.BLOCKED
-                else -> { FriendshipStatus.NOT_FRIENDS }
-            }
-            UserWithStatus(profile.toRealm(), status)
-        }// returns this
-
-    }.stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = emptyList<UserWithStatus>())
 
     init {
         viewModelScope.launch {
@@ -204,46 +169,27 @@ class ScannerViewModel(application: Application,
                 _defaultSearchProfile.value = searchProfileRepository.getDefaultSearchProfile()
             }
         }
+
         viewModelScope.launch {
             foundDeviceIds.collect { currentIds ->
-                val existingProfileIds = _userProfiles.value.map { it._id }.toSet()
+                val existingProfileIds = _userRepositories.value.map { it.id }.toSet()
                 val idsToFetch = currentIds.filter { it !in existingProfileIds }
                 if (idsToFetch.isNotEmpty()) {
                     val newProfiles = idsToFetch.map { id ->
-                        userRepository.fetchUserById(id)
-                    }.mapNotNull { result -> result.getOrNull() }
-                    _userProfiles.update { oldProfiles ->
-                        val updatedOldProfiles = oldProfiles.filter { it._id in currentIds }
-                        updatedOldProfiles + newProfiles
+                        val otherUserRepository: OtherUserRepository by inject(OtherUserRepository::class.java) { parametersOf(id) }
+                        otherUserRepository
                     }
-                } else {
-                    _userProfiles.update { oldProfiles ->
-                        oldProfiles.filter { it._id in currentIds }
-                    }
-                }
-            }
-        }
-        /*
-        viewModelScope.launch {
-            foundDeviceIds.collect { currentIds ->
-                val existingProfileIds = _userRepositories.value.map { it.getId() }.toSet()
-                val idsToFetch = currentIds.filter { it !in existingProfileIds }
-                if (idsToFetch.isNotEmpty()) {
-                    val newProfiles = idsToFetch.map { id ->
-                        userRepository.ensureRepository(id)
-                    }.mapNotNull { result -> result.getOrNull() }
                     _userRepositories.update { oldProfiles ->
-                        val updatedOldProfiles = oldProfiles.filter { it.getId() in currentIds }
+                        val updatedOldProfiles = oldProfiles.filter { it.id in currentIds }
                         updatedOldProfiles + newProfiles
                     }
                 } else {
                     _userRepositories.update { oldProfiles ->
-                        oldProfiles.filter { it.getId() in currentIds }
+                        oldProfiles.filter { it.id in currentIds }
                     }
                 }
             }
         }
-         */
     }
 
     fun addFriend(userId: String): Unit {

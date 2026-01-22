@@ -16,6 +16,7 @@ import com.example.projektiop.ui.viewmodels.ScannerViewModel
 import com.example.projektiop.ui.viewmodels.SettingsViewModel
 import org.koin.android.ext.koin.androidApplication
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
 
 val viewModelsKoinModule = module {
@@ -26,7 +27,7 @@ val viewModelsKoinModule = module {
     viewModel { FriendsViewModel(androidApplication(), get(), get(), get() ) }
     viewModel { ChatsViewModel(get(), get()) }
     viewModel { (userId: String, uname: String, dname: String, avatar: String) ->
-        FriendProfileViewModel(userId, uname, dname, avatar, get()) }
+        FriendProfileViewModel(userId, uname, dname, avatar, get{ parametersOf(userId) }) }
     viewModel { (chatId: String, friendId: String) -> ChatDetailViewModel(androidApplication(), chatId, friendId, get(), get(), get(), get()) }
     viewModel { KeyLoadingViewModel(androidApplication(), get(), get(), get()) }
     viewModel { EditProfileViewModel(get(), get()) }

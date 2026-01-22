@@ -1,5 +1,6 @@
 package com.example.projektiop.ui.screens
 
+import android.widget.Space
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -13,15 +14,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.projektiop.R
-import com.example.projektiop.data.api.UserProfileResponse
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.ui.res.stringResource
-import com.example.projektiop.data.api.ProfileDto
+import com.example.projektiop.domain.models.Gender
 import com.example.projektiop.ui.components.GlassPanel
 import com.example.projektiop.ui.components.InterestTag
 import com.example.projektiop.ui.components.UserAvatar
@@ -43,16 +42,20 @@ fun FriendProfileScreen(
         parameters = { parametersOf(userId, usernamePrefill, displayNamePrefill, avatarUrlPrefill) })
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.errorMessage.collectAsState()
-    val profile by viewModel.user.collectAsState()
+    val user by viewModel.profile.collectAsState()
+    val interests by viewModel.interests.collectAsState()
+
+    val effectiveDisplayName = user.profile.displayName
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = profile?.effectiveDisplayName ?: stringResource(R.string.profile))
+                    Text(text = if (effectiveDisplayName.isNotBlank()) effectiveDisplayName
+                    else stringResource(R.string.profile))
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.ArrowBack, contentDescription = "Wstecz") }
+                    IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back)) }
                 }
             )
         }
@@ -61,10 +64,10 @@ fun FriendProfileScreen(
             Box(Modifier.fillMaxSize().padding(paddingValues)) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
         } else if (error != null) {
             Box(Modifier.fillMaxSize().padding(paddingValues)) { Text(error ?: stringResource(R.string.error), color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.Center)) }
-        } else if (profile == null) {
+        } else if (user == null) {
             Box(Modifier.fillMaxSize().padding(paddingValues)) { Text(stringResource(R.string.no_data), modifier = Modifier.align(Alignment.Center)) }
         } else {
-                val p = profile!!
+                val p = user
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -75,18 +78,17 @@ fun FriendProfileScreen(
                 ) {
                     GlassPanel {
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            val rawUrl = (p.profile?.avatarUrl
-                                ?: avatarUrlPrefill)?.takeIf { !it.isNullOrBlank() }
+                            val rawUrl = p.profile.avatarUrl.takeIf { it.isNotBlank() }
                             UserAvatar(rawUrl, modifier = Modifier.size(90.dp))
                             Spacer(Modifier.width(16.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(
-                                    text = p.effectiveDisplayName ?: p.username
-                                    ?: stringResource(R.string.no_name),
+                                    text = if(effectiveDisplayName.isNotBlank()) effectiveDisplayName
+                                           else stringResource(R.string.no_name),
                                     style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.Bold
                                 )
-                                val age = p.profile?.birthDate?.let { bd ->
+                                val age = p.profile.birthDate?.let { bd ->
                                     val datePart = bd.take(10)
                                     try {
                                         val ld = LocalDate.parse(
@@ -100,14 +102,14 @@ fun FriendProfileScreen(
                                         null
                                     }
                                 }
-                                val gender = when (p.profile?.gender) {
-                                    "male" -> stringResource(R.string.gender_male)
-                                    "female" -> stringResource(R.string.gender_female)
-                                    "other" -> stringResource(R.string.gender_other)
-                                    "prefer_not_to_say" -> stringResource(R.string.gender_prefer_not_to_say)
+                                val gender = when (p.profile.gender) {
+                                    Gender.MALE -> stringResource(R.string.gender_male)
+                                    Gender.FEMALE -> stringResource(R.string.gender_female)
+                                    Gender.OTHER -> stringResource(R.string.gender_other)
+                                    Gender.PREFER_NOT_TO_SAY -> stringResource(R.string.gender_prefer_not_to_say)
                                     else -> null
                                 }
-                                val location = p.profile?.location
+                                val location = p.profile.location
                                 val infoLine =
                                     listOfNotNull(gender, location, age?.let { "$it l." }).joinToString(
                                         " • "
@@ -119,10 +121,11 @@ fun FriendProfileScreen(
                                 )
                             }
                         }
-                        if (!p.effectiveDescription.isNullOrBlank()) {
-                            Text(p.effectiveDescription!!, style = MaterialTheme.typography.bodyMedium)
+                        if (p.profile.bio.isNotBlank()) {
+                            Text(p.profile.bio, style = MaterialTheme.typography.bodyMedium)
                         }
-                        if (!p.interests.isNullOrEmpty()) {
+                        Spacer(Modifier.height(4.dp))
+                        if (!interests.isNullOrEmpty()) {
                             Column {
                                 Text(
                                     text = stringResource(R.string.interests),
@@ -134,11 +137,10 @@ fun FriendProfileScreen(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    p.interests.forEach { ui ->
-                                        assert(ui.interest.name != null)
-                                        val rawBase = ui.interest.name!!.ifBlank { stringResource(R.string.profile_unknown_interest) }
+                                    interests!!.forEach { ui ->
+                                        val rawBase = ui.interest.name.ifBlank { stringResource(R.string.profile_unknown_interest) }
                                         val translatedBase = translateInterestName(rawBase)
-                                        val label = if (!ui.customDescription.isNullOrBlank()) ui.customDescription else ""
+                                        val label = if( ui.customDescription == "null" ) "" else ui.customDescription
                                         InterestTag(base = translatedBase, label = label)
                                     }
                                 }

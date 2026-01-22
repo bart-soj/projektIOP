@@ -131,6 +131,7 @@ fun ActiveHandshakeButton(
                 ) {
                    Button (
                         onClick = {viewModel.onGreenClick(context)},
+                       shape = RoundedCornerShape(4.dp),
                         colors = ButtonDefaults.buttonColors(
                             contentColor = Color.Green
                         ),
@@ -145,6 +146,7 @@ fun ActiveHandshakeButton(
                     }
                     Button (
                         onClick = {viewModel.onBlueClick(context)},
+                        shape = RoundedCornerShape(4.dp),
                         colors = ButtonDefaults.buttonColors(
                             contentColor = Color.Blue
                         ),

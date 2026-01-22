@@ -22,6 +22,7 @@ import com.example.projektiop.data.util.KeyUtils
 import com.example.projektiop.domain.DataError
 import com.example.projektiop.util.NotificationHelper
 import com.example.projektiop.data.util.apiExceptionToDataError
+import com.example.projektiop.domain.models.User
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,6 +31,9 @@ import kotlinx.coroutines.flow.flowOf
 import org.bouncycastle.crypto.InvalidCipherTextException
 import retrofit2.HttpException
 import com.example.projektiop.domain.models.Chat as DomainChat
+import org.koin.core.parameter.parametersOf
+import org.koin.java.KoinJavaComponent.inject
+
 
 private const val BASE_URL_KEY: String = "BASE_URL"
 
@@ -77,11 +81,12 @@ class ChatRepository(private val chatApi: ChatApi,
                 require(chatId != null)
                 val otherUserId = it.participants?.firstOrNull { id -> id != myUserId }
                 require(otherUserId != null)
-                var otherUser = dbRepository.getUserById(otherUserId)
+                val otherUserRepository: OtherUserRepository by inject(OtherUserRepository::class.java) { parametersOf(otherUserId) }
+                var otherUser: User? = otherUserRepository.Profile.value
                 if (otherUser == null) {
-                    val result = userRepository.fetchUserById(otherUserId)
+                    val result = otherUserRepository.fetchProfile()
                     if (result.isSuccess) {
-                        otherUser = result.getOrNull()!!.toRealm()
+                        otherUser = result.getOrNull()
                     }
                 }
                 if (otherUser == null) throw Exception("otherUser not found")

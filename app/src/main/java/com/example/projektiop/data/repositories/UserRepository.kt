@@ -40,9 +40,7 @@ class UserRepository(private val userApi: UserApi,
     private val _MyUserInterests = MutableStateFlow<List<DomainUserInterest>?>(null)
     val MyUserInterests: StateFlow<List<DomainUserInterest>?> = _MyUserInterests.asStateFlow()
 
-    private val _repositoryCache = MutableStateFlow<Map<String, OtherUserRepository>>(emptyMap())
-    val repositoryCache: StateFlow<Map<String, OtherUserRepository>> =
-        _repositoryCache.asStateFlow()
+
 
     private val _myUser = MutableStateFlow<DomainUser?>(null)
     val myUser = _myUser.asStateFlow()
@@ -58,24 +56,7 @@ class UserRepository(private val userApi: UserApi,
         }
     }
 
-    suspend fun ensureRepository(id: String): Result<OtherUserRepository> =
-        withContext(Dispatchers.IO) {
-            if (id in repositoryCache.value) {
-                return@withContext Result.success(repositoryCache.value[id]!!)
-            } else {
-                fetchUserById(id).onSuccess {
-                    val tmpRep = OtherUserRepository(
-                        id,
-                        userApi,
-                        dbRepository,
-                        interestRepository
-                    )
-                    _repositoryCache.value += Pair(id, tmpRep)
-                    return@withContext Result.success(repositoryCache.value[id]!!)
-                }.onFailure { res -> return@withContext Result.failure(res) }
-                return@withContext Result.failure(Exception("Can't ensure repository"))
-            }
-        }
+
 
 
     suspend fun getMyProfile(): Result<DomainUser> {
