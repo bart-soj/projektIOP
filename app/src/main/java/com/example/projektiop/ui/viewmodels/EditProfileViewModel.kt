@@ -60,7 +60,7 @@ class EditProfileViewModel(private val interestRepository: InterestRepository, p
         viewModelScope.launch {
             userRepository.updateMyProfile(
                 displayName = displayName,
-                gender = gender?.name,
+                gender = gender?.name?.lowercase(),
                 location = location,
                 bio = bio,
                 birthDate = birthDate,
