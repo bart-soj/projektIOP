@@ -47,6 +47,7 @@ class ChatUpdateService(): Service() {
 
     companion object {
         private const val POLL_INTERVAL_MS = 5000L
+        const val ACTION_STOP = "com.example.projektiop.ChatUpdateService.action.STOP"
     }
 
     // Klasa LocalBinder zwraca instancję serwisu
@@ -72,6 +73,13 @@ class ChatUpdateService(): Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d("ChatUpdateService", "Service Started")
+
+        if (intent?.action == ACTION_STOP) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        return super.onStartCommand(intent, flags, startId)
+
         return START_STICKY // Serwis będzie ponownie uruchamiany, jeśli zostanie zabity
     }
 
@@ -168,6 +176,6 @@ class ChatUpdateService(): Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d("ChatUpdateService", "Service Destroyed")
-        scope.cancel() // Anuluj wszystkie korutyny
+        scope.cancel()
     }
 }

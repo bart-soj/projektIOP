@@ -142,11 +142,15 @@ class MainActivity : AppCompatActivity() {
                         }
                         is AppStateEvent.OnLogout -> {
                             socketManager.disconnect()
-                            if (isBound) {
-                                unbindService(serviceConnection)
-                                isBound = false
-                            }
-                            stopService(Intent(this@MainActivity, ChatUpdateService::class.java))
+                            try {
+                                if (isBound) {
+                                    unbindService(serviceConnection)
+                                    isBound = false
+                                }
+                                val intent = Intent(this@MainActivity, ChatUpdateService::class.java)
+                                intent.action = ChatUpdateService.ACTION_STOP
+                                startService(intent)
+                            } catch(e: Exception) {}
                         }
                         is AppStateEvent.OnAuthorization -> {}
                     }
