@@ -10,7 +10,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.projektiop.HelloBeaconApp
 import com.example.projektiop.R
-import com.example.projektiop.data.repositories.SharedDataSource
+import com.example.projektiop.data.SharedDataSource
 import com.example.projektiop.util.NotificationHelper.CHANNEL_BLE
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

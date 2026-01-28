@@ -4,11 +4,11 @@ import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.os.Build
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.projektiop.R
+import com.example.projektiop.domain.models.FriendshipStatus
 
 object NotificationHelper {
     val CHANNEL_FRIEND = "friend_events"
@@ -31,6 +31,24 @@ object NotificationHelper {
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(context.getString(R.string.new_friend_request))
             .setContentText(fromUser)
+            .setAutoCancel(true)
+            .build()
+        NotificationManagerCompat.from(context).notify((System.currentTimeMillis() % 100000).toInt(), notif)
+    }
+
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
+    fun notifyFriendshipStatus(context: Context, fromUser: String, status: FriendshipStatus) {
+        val content = when(status) {
+            FriendshipStatus.ACCEPTED -> context.getString(R.string.friendship_accepted)
+            FriendshipStatus.REJECTED -> context.getString(R.string.friendship_rejected)
+            FriendshipStatus.BLOCKED -> context.getString(R.string.friendship_blocked)
+            FriendshipStatus.NOT_FRIENDS -> context.getString(R.string.friendship_removed)
+            else -> { return }
+        }
+        val notif = NotificationCompat.Builder(context, CHANNEL_FRIEND)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle(fromUser)
+            .setContentText(content)
             .setAutoCancel(true)
             .build()
         NotificationManagerCompat.from(context).notify((System.currentTimeMillis() % 100000).toInt(), notif)

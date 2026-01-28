@@ -1,7 +1,7 @@
 package com.example.projektiop.data.api.websocket
 
 import android.util.Log
-import com.example.projektiop.data.repositories.SharedDataSource
+import com.example.projektiop.data.SharedDataSource
 import com.example.projektiop.domain.AppEvent
 import com.example.projektiop.domain.ChatEvent
 import com.example.projektiop.domain.models.Message
@@ -100,7 +100,41 @@ class SocketManager(private val url: String, private val sharedDataSource: Share
                     }
                 }
 
-                on(SocketEvent.Error) { args -> Log.e("SOCC", "Socket Error: $args") }
+                on("failed_auth") { errorMessage ->
+                    scope.launch {
+                        Log.d("SOCC", "in failed auth man $errorMessage")
+                    }
+                }
+
+                on("accept_invite") { friendshipId ->
+                    scope.launch {
+                        Log.d("SOCC", "in invite accepted man")
+                        _appEventFlow.emit(AppEvent.InviteAccepted(friendshipId))
+                    }
+                }
+
+                on("reject_invite") { friendshipId ->
+                    scope.launch {
+                        Log.d("SOCC", "in invite rejected man")
+                        _appEventFlow.emit(AppEvent.InviteRejected(friendshipId))
+                    }
+                }
+
+                on("friendship_invite") { userId ->
+                    scope.launch {
+                        Log.d("SOCC", "in invite man")
+                        _appEventFlow.emit(AppEvent.Invite(userId))
+                    }
+                }
+
+                on("unfriend") { friendshipId ->
+                    scope.launch {
+                        Log.d("SOCC", "in unfriend man")
+                        _appEventFlow.emit(AppEvent.FriendshipEnded(friendshipId))
+                    }
+                }
+
+                on(SocketEvent.Error) { args -> Log.e("SOCC", "Socket Error: ${args.toString()}") }
                 on(SocketEvent.Reconnect) { args -> Log.e("SOCC", "Reconnect") }
                 on(SocketEvent.Connect) { Log.d("SOCC", "Connected") }
                 on(SocketEvent.Disconnect) { Log.d("SOCC", "Disconnected") }

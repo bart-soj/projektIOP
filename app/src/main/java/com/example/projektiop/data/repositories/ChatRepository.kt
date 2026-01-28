@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.content.Context
 import android.util.Log
+import com.example.projektiop.data.SharedDataSource
 import com.example.projektiop.data.api.AccesChatRequest
 import com.example.projektiop.data.api.ChatApi
 import com.example.projektiop.data.api.ChatDto
@@ -13,7 +14,7 @@ import com.example.projektiop.data.api.MessagesPageDto
 import com.example.projektiop.data.api.SendMessageRequest
 import com.example.projektiop.domain.ChatEvent
 import com.example.projektiop.data.api.websocket.SocketManager
-import com.example.projektiop.data.db.realm.RealmDBRepository
+import com.example.projektiop.data.db.realm.RealmDataSource
 import com.example.projektiop.data.mapping.toDomain
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.domain.models.Message
@@ -50,10 +51,9 @@ data class ChatListItem(
 
 class ChatRepository(private val chatApi: ChatApi,
                      private val sharedDataSource: SharedDataSource,
-                     private val dbRepository: RealmDBRepository,
+                     private val dbRepository: RealmDataSource,
                      private val keyUtils: KeyUtils,
-                     private val socketManager: SocketManager,
-                     private val userRepository: UserRepository
+                     private val socketManager: SocketManager
 ) {
 
     private val _chats = MutableStateFlow<Flow<List<DomainChat>>>(flowOf(emptyList()))

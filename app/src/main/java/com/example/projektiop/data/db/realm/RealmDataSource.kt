@@ -20,7 +20,7 @@ import io.realm.kotlin.types.RealmInstant
 import org.mongodb.kbson.ObjectId
 import com.example.projektiop.domain.models.SearchProfile as DomainSearchProfile
 
-class RealmDBRepository(private val realm: Realm) {
+class RealmDataSource(private val realm: Realm) {
 
     suspend fun deleteContents() {
         realm.write{

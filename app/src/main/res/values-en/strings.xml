@@ -176,7 +176,7 @@
 
     <!-- Chat Detail Screen -->
     <string name="blocked_by_me">You have blocked this user. Unlock to send a message.</string>
-    <string name="blocked_by_other">You cannot send a message – you have been blocked by this user.</string>
+    <string name="blocked_by_other">You have been blocked by this user.</string>
     <string name="sending_unavailable">Sending unavailable</string>
     <string name="write_message">Write a message…</string>
     <string name="send">Send</string>
@@ -268,4 +268,10 @@
     <string name="error_invalid_email_password">Email or Password invalid</string>
     <string name="location_count">%1$d/100</string>
     <string name="language">Language</string>
+    <string name="error_invalid_token">Invalid Token</string>
+    <string name="friendship_accepted">Accepted your friendship invite!</string>
+    <string name="friendship_rejected">Rejected your friendship invite!</string>
+    <string name="friendship_removed">Friendship ended!</string>
+    <string name="friendship_blocked">You have been blocked!</string>
+    <string name="date_picker">Choose a date</string>
 </resources>

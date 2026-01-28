@@ -31,7 +31,7 @@ fun UserProfileResponse.toRealm(): User {
             ?.takeIf { it.isNotBlank() }
             ?.uppercase()
             ?.let { runCatching { Gender.valueOf(it) }.getOrNull() }
-        birthDate = this.birthDate
+        birthDate = this@toRealm.profile?.birthDate
         location = this@toRealm.profile?.location.orEmpty()
         bio = this@toRealm.profile?.bio.orEmpty()
         broadcastMessage = this@toRealm.profile?.broadcastMessage.orEmpty()
@@ -57,9 +57,9 @@ fun UserProfileResponse.toRealm(): User {
         isBanned = this.isBanned ?: false,
         banReason = this.banReason,
         bannedAt = mongoTimestampToRealmInstant(this.bannedAt),
-        isTestAccount = this.isTestAccount ?: false,
-        isEmailVerified = this.isEmailVerified ?: false,
-        isDeleted = this.isDeleted ?: false,
+        isTestAccount = this.isTestAccount == true,
+        isEmailVerified = this.isEmailVerified == true,
+        isDeleted = this.isDeleted == true,
         deletedAt = mongoTimestampToRealmInstant(this.deletedAt),
         createdAt = mongoTimestampToRealmInstant(this.createdAt),
         updatedAt = RealmInstant.now()

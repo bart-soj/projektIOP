@@ -1,22 +1,31 @@
 package com.example.projektiop.data.repositories
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.core.app.ActivityCompat
+import com.example.projektiop.data.SharedDataSource
 import com.example.projektiop.data.api.FriendRequest
 import com.example.projektiop.data.api.FriendshipApi
-import com.example.projektiop.data.db.realm.RealmDBRepository
+import com.example.projektiop.data.db.realm.RealmDataSource
 import com.example.projektiop.data.mapping.toDomain
 import com.example.projektiop.data.mapping.toFriendItem
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.domain.models.Friendship
 import com.example.projektiop.domain.models.FriendshipStatus
 import com.example.projektiop.domain.DataError
+import com.example.projektiop.util.NotificationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import org.koin.core.parameter.parametersOf
+import org.koin.java.KoinJavaComponent.inject
 import kotlin.Result
+import kotlin.getValue
 
 data class FriendItem(
     val id: String,
@@ -33,7 +42,7 @@ data class BlockInfo(
 )
 
 class FriendshipRepository(private val friendshipApi: FriendshipApi,
-                           private val dbRepository: RealmDBRepository,
+                           private val databaseDataSource: RealmDataSource,
                            private val sharedDataSource: SharedDataSource) {
 
     private val _friendsIds = MutableStateFlow<List<String>>(emptyList())
@@ -63,24 +72,24 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
                     runCatching {
                         val myId = sharedDataSource.get("_id", "")
                         assert(myId.isNotBlank())
-                        dbRepository.addFriendship(dto.toRealm(myId))
+                        databaseDataSource.addFriendship(dto.toRealm(myId))
                         val tmpUser = dto.user?.toRealm()
-                        if (tmpUser != null) dbRepository.addUser(tmpUser)
+                        if (tmpUser != null) databaseDataSource.addUser(tmpUser)
                     }.onFailure { e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 }
                 _friendsIds.value = all.map{ it.user?._id.toString() }
                 Result.success(all.mapNotNull { it.toFriendItem() })
             } else {
-                val localAccepted = dbRepository.getFriendshipsByStatus(FriendshipStatus.ACCEPTED)
+                val localAccepted = databaseDataSource.getFriendshipsByStatus(FriendshipStatus.ACCEPTED)
                 if (localAccepted.isNotEmpty()) {
-                    Result.success(localAccepted.map { it.toFriendItem(dbRepository.getUserById(it._id.toString())) })
+                    Result.success(localAccepted.map { it.toFriendItem(databaseDataSource.getUserById(it._id.toHexString())) })
                 }
                 Result.failure(Exception("Nie udało się pobrać listy (${response.code()})"))
             }
         } catch (e: Exception) {
-            val localAccepted = dbRepository.getFriendshipsByStatus(FriendshipStatus.ACCEPTED)
+            val localAccepted = databaseDataSource.getFriendshipsByStatus(FriendshipStatus.ACCEPTED)
             if (localAccepted.isNotEmpty()) {
-                Result.success(localAccepted.map { it.toFriendItem(dbRepository.getUserById(it._id.toString())) })
+                Result.success(localAccepted.map { it.toFriendItem(databaseDataSource.getUserById(it._id.toHexString())) })
             }
             Result.failure(e)
         }
@@ -93,18 +102,18 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
             val items = resp.body().orEmpty().filter { it.isPendingRecipient == true || it.status == "pending" }
             for (dto in items) {
                 runCatching {
-                    dbRepository.addFriendship(dto.toRealm(sharedDataSource.get("_id", "")))
+                    databaseDataSource.addFriendship(dto.toRealm(sharedDataSource.get("_id", "")))
                     val tmpUser = dto.user?.toRealm()
-                    if (tmpUser != null) dbRepository.addUser(tmpUser)
+                    if (tmpUser != null) databaseDataSource.addUser(tmpUser)
                     val tmpId = dto.user?._id.toString()
                 }.onFailure { e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
             }
             _pendingIds.value = items.map { it.user?._id.toString() }
             Result.success(items.mapNotNull { it.toFriendItem() })
         } catch (e: Exception) {
-            val local = dbRepository.getFriendshipsByStatus(FriendshipStatus.PENDING) // TODO() direction
+            val local = databaseDataSource.getFriendshipsByStatus(FriendshipStatus.PENDING) // TODO() direction
             if (local.isNotEmpty()) {
-                Result.success(local.map { it.toFriendItem(dbRepository.getUserById(it._id.toString())) })
+                Result.success(local.map { it.toFriendItem(databaseDataSource.getUserById(it._id.toHexString())) })
             }
             Result.failure(e)
         }
@@ -118,9 +127,9 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
             var tmpBlockedIds = emptyList<String>()
             for (dto in items) {
                 runCatching {
-                    dbRepository.addFriendship(dto.toRealm(sharedDataSource.get("_id", "")))
+                    databaseDataSource.addFriendship(dto.toRealm(sharedDataSource.get("_id", "")))
                     val tmpUser = dto.user?.toRealm()
-                    if (tmpUser != null) dbRepository.addUser(tmpUser)
+                    if (tmpUser != null) databaseDataSource.addUser(tmpUser)
                     val tmpId = dto.user?._id.toString()
                     tmpBlockedIds += tmpId
                 }.onFailure { e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
@@ -128,9 +137,9 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
             }
             Result.success(items.mapNotNull { it.toFriendItem() })
         } catch (e: Exception) {
-            val local = dbRepository.getFriendshipsByStatus(FriendshipStatus.BLOCKED)
+            val local = databaseDataSource.getFriendshipsByStatus(FriendshipStatus.BLOCKED)
             if (local.isNotEmpty()) {
-                Result.success(local.map { it.toFriendItem(dbRepository.getUserById(it._id.toString())) })
+                Result.success(local.map { it.toFriendItem(databaseDataSource.getUserById(it._id.toHexString())) })
             }
             Result.failure(e)
         }
@@ -140,8 +149,8 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
         try {
             val r = friendshipApi.acceptRequest(friendshipId)
             if (r.isSuccessful) {
-                val friendId = dbRepository.getFriendshipById(friendshipId)!!.user2Id
-                runCatching { dbRepository.changeFriendshipStatus(friendshipId, FriendshipStatus.ACCEPTED)
+                val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
+                runCatching { databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.ACCEPTED)
                 }.onFailure {} //e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 _friendsIds.update { list ->
                     list + friendId.toString()
@@ -158,8 +167,8 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
         try {
             val r = friendshipApi.rejectRequest(friendshipId)
             if (r.isSuccessful) {
-                val friendId = dbRepository.getFriendshipById(friendshipId)!!.user2Id
-                runCatching { dbRepository.changeFriendshipStatus(friendshipId, FriendshipStatus.REJECTED)
+                val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
+                runCatching { databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.REJECTED)
                 }.onFailure {} //e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 _pendingIds.update { list ->
                     list - friendId.toString()
@@ -186,7 +195,7 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
         try {
             val resp = friendshipApi.removeFriendship(friendshipId)
             if (resp.isSuccessful) {
-                runCatching { dbRepository.deleteFriendshipById(friendshipId) }
+                runCatching { databaseDataSource.deleteFriendshipById(friendshipId) }
                 Result.success(Unit)
             } else Result.failure(Exception("Błąd usuwania (${resp.code()})"))
         } catch (e: Exception) { Result.failure(e) }
@@ -196,10 +205,10 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
         try {
             val resp = friendshipApi.blockFriendship(friendshipId)
             if (resp.isSuccessful) {
-                val friendId = dbRepository.getFriendshipById(friendshipId)?.user2Id
+                val friendId = databaseDataSource.getFriendshipById(friendshipId)?.user2Id
                 val blockedBy = resp.body()?.friendship?.blockedBy
                 assert(blockedBy != null && friendId != null)
-                dbRepository.blockFriendship(friendshipId, blockedBy!!)
+                databaseDataSource.blockFriendship(friendshipId, blockedBy!!)
                 _blockedIds.update { list ->
                     list + friendId!!
                 }
@@ -220,21 +229,15 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
     }
 
     suspend fun getBlocked(friendId: String) {
-        dbRepository.getBlocked(friendId)
+        databaseDataSource.getBlocked(friendId)
     }
 
-    /*
-    TODO() serverside, what does blocking a friendship mean?
-        probably should be possible at any friendship state
-        should just delete the friendship entry upon unblocking, since we don't save prior state
-        implemented as is serverside right now
-     */
     suspend fun unblockFriendship(friendshipId: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val resp = friendshipApi.unblockFriendship(friendshipId)
             if (resp.isSuccessful) {
-                val friendId = dbRepository.getFriendshipById(friendshipId)!!.user2Id
-                dbRepository.unblockFriendship(friendshipId)
+                val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
+                databaseDataSource.unblockFriendship(friendshipId)
                 _friendsIds.update { list ->
                     list + friendId.toString()
                 }
@@ -247,14 +250,14 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
     }
 
     suspend fun getUnblocked(friendId: String) {
-        dbRepository.getUnblocked(friendId)
+        databaseDataSource.getUnblocked(friendId)
     }
 
     fun getLocalFriendItemByFriendId(friendId: String): com.example.projektiop.domain.Result<FriendItem, DataError.Local> {
         try {
-            val friendship = dbRepository.getFriendshipByFriendId(friendId)
+            val friendship = databaseDataSource.getFriendshipByFriendId(friendId)
             if (friendship == null) return com.example.projektiop.domain.Result.Error(DataError.Local.NO_DATA)
-            val friendItem = friendship.toFriendItem(dbRepository.getUserById(friendId))
+            val friendItem = friendship.toFriendItem(databaseDataSource.getUserById(friendId))
             return com.example.projektiop.domain.Result.Success(friendItem)
         } catch(e: Exception) {
             return com.example.projektiop.domain.Result.Error(DataError.Local.DB_ERROR)
@@ -263,13 +266,76 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
 
     fun getLocalFriendship(friendId: String): com.example.projektiop.domain.Result<Friendship, DataError.Local> {
         try {
-            val friendship = dbRepository.getFriendshipByFriendId(friendId)
-            val friend = dbRepository.getUserById(friendId)?.toDomain()
+            val friendship = databaseDataSource.getFriendshipByFriendId(friendId)
+            val friend = databaseDataSource.getUserById(friendId)?.toDomain()
             if (friendship == null || friend == null) return com.example.projektiop.domain.Result.Error(DataError.Local.NO_DATA)
             val friendItem = friendship.toDomain(friend)
             return com.example.projektiop.domain.Result.Success(friendItem)
         } catch(e: Exception) {
             return com.example.projektiop.domain.Result.Error(DataError.Local.DB_ERROR)
         }
+    }
+
+    suspend fun onInviteAccepted(friendshipId: String, appContext: Context) {
+        val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
+        databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.ACCEPTED)
+        _pendingIds.update { list ->
+            list - friendId.toString()
+        }
+        _friendsIds.update { list ->
+            list + friendId.toString()
+        }
+        val otherUserRepository: OtherUserRepository by inject(OtherUserRepository::class.java) { parametersOf(friendId) }
+        otherUserRepository.fetchProfile()
+        val displayName = otherUserRepository.Profile.value?.profile?.displayName ?:
+        otherUserRepository.Profile.value?.username
+        if (ActivityCompat.checkSelfPermission(
+                appContext,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        NotificationHelper.notifyFriendshipStatus(appContext, displayName.toString(), FriendshipStatus.ACCEPTED)
+    }
+
+    suspend fun onInviteRejected(friendshipId: String, appContext: Context ) {
+        val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
+        databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.REJECTED)
+        _pendingIds.update { list ->
+            list - friendId.toString()
+        }
+        val otherUserRepository: OtherUserRepository by inject(OtherUserRepository::class.java) { parametersOf(friendId) }
+        otherUserRepository.fetchProfile()
+        val displayName = otherUserRepository.Profile.value?.profile?.displayName ?:
+        otherUserRepository.Profile.value?.username
+        if (ActivityCompat.checkSelfPermission(
+                appContext,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        NotificationHelper.notifyFriendshipStatus(appContext, displayName.toString(), FriendshipStatus.REJECTED)
+    }
+
+    suspend fun onFriendshipEnded(friendshipId: String, appContext: Context ) {
+        val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
+        databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.NOT_FRIENDS)
+        _pendingIds.update { list ->
+            list - friendId.toString()
+        }
+        val otherUserRepository: OtherUserRepository by inject(OtherUserRepository::class.java) { parametersOf(friendId) }
+        otherUserRepository.fetchProfile()
+        val displayName = otherUserRepository.Profile.value?.profile?.displayName ?:
+        otherUserRepository.Profile.value?.username
+        if (ActivityCompat.checkSelfPermission(
+                appContext,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        NotificationHelper.notifyFriendshipStatus(appContext, displayName.toString(), FriendshipStatus.NOT_FRIENDS)
     }
 }

@@ -1,8 +1,8 @@
 package com.example.projektiop.data.api
 
 
+import com.example.projektiop.data.SharedDataSource
 import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.data.api.websocket.SocketManager
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor

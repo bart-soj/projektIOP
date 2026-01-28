@@ -1,7 +1,7 @@
 package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.ChatDto
-import com.example.projektiop.data.db.realm.RealmDBRepository
+import com.example.projektiop.data.db.realm.RealmDataSource
 import com.example.projektiop.data.db.realm.objects.Chat
 import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.domain.models.base64
@@ -34,7 +34,7 @@ fun ChatDto.toRealm(chatKey: base64): Chat {
 }
 
 
-fun Chat.toDomain(myUserId: String, dbRepository: RealmDBRepository, message: DomainMessage? = null): DomainChat {
+fun Chat.toDomain(myUserId: String, dbRepository: RealmDataSource, message: DomainMessage? = null): DomainChat {
     /*
     var lastMessage: Message? = null
     if (this.lastMessageId != null) {

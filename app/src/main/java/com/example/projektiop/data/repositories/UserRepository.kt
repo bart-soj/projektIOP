@@ -1,6 +1,7 @@
 package com.example.projektiop.data.repositories
 
 import android.util.Log
+import com.example.projektiop.data.SharedDataSource
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -13,7 +14,7 @@ import com.example.projektiop.data.api.UpdateUserInterestRequest
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.api.UserApi
 import com.example.projektiop.data.api.UserSearchDto
-import com.example.projektiop.data.db.realm.RealmDBRepository
+import com.example.projektiop.data.db.realm.RealmDataSource
 import com.example.projektiop.data.mapping.toDomain
 import com.example.projektiop.data.mapping.toRealm
 import com.example.projektiop.data.mapping.toUserProfileResponse
@@ -33,7 +34,7 @@ private const val ID = "_id"
 
 
 class UserRepository(private val userApi: UserApi,
-                     private val dbRepository: RealmDBRepository,
+                     private val dbRepository: RealmDataSource,
                      private val sharedDataSource: SharedDataSource,
                      private val interestRepository: InterestRepository) {
     private lateinit var id: String
@@ -55,8 +56,6 @@ class UserRepository(private val userApi: UserApi,
             id = tmpId
         }
     }
-
-
 
 
     suspend fun getMyProfile(): Result<DomainUser> {
@@ -108,6 +107,7 @@ class UserRepository(private val userApi: UserApi,
                 try {
                     dbRepository.addUser(body.toRealm())
                 } catch (e: Exception) {
+                    Log.d("USR", "failed to save to db $e")
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving user to database: $e")
                     )
@@ -186,15 +186,15 @@ class UserRepository(private val userApi: UserApi,
             )
             val response = userApi.updateMyProfile(body)
             if (response.isSuccessful && response.body() != null) {
-                val body = response.body()!!
+                val body = response.body()
                 val userInterests: List<UserInterestDto> =
-                    body.interests.orEmpty().filterNotNull().filter { it.interest != null }
-                val tmpId: String? = body._id
-
+                    body?.interests.orEmpty().filterNotNull().filter { it.interest != null }
+                if (body == null) throw Exception()
                 // Save user in DB
                 try {
                     dbRepository.addUser(body.toRealm())
                 } catch (e: Exception) {
+                    Log.d("USR", "failed to save to db $e")
                     return@withContext Result.failure<UserProfileResponse>(
                         Exception("Error saving to database: $e")
                     )
@@ -204,7 +204,7 @@ class UserRepository(private val userApi: UserApi,
                 try {
                     interestRepository.resolveIncomingUserInterests(
                         userInterests,
-                        tmpId!!,
+                        id,
                         _MyUserInterests
                     )
                 } catch (e: Exception) {

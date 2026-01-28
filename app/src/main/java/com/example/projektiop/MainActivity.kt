@@ -53,6 +53,7 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.LanguageRepository
+import com.example.projektiop.data.repositories.OtherUserRepository
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.AppState
 import com.example.projektiop.domain.AppStateEvent
@@ -61,8 +62,12 @@ import com.example.projektiop.ui.screens.BackupScreen
 import com.example.projektiop.ui.screens.KeyLoadingScreen
 import com.example.projektiop.ui.screens.ReportScreen
 import com.example.projektiop.ui.screens.ResendEmailScreen
+import com.example.projektiop.util.NotificationHelper
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
+import org.koin.java.KoinJavaComponent
+import kotlin.getValue
 
 class MainActivity : AppCompatActivity() {
 
@@ -116,11 +121,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val perm = Manifest.permission.POST_NOTIFICATIONS
-            if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
-                notificationPermissionLauncher.launch(perm)
-            }
+        val perm = Manifest.permission.POST_NOTIFICATIONS
+        if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
+            notificationPermissionLauncher.launch(perm)
         }
 
         lifecycleScope.launch {
@@ -170,6 +173,23 @@ class MainActivity : AppCompatActivity() {
                     }
                     is AppEvent.Receive -> {
                         chatRepository.receiveMessage(event.message, this@MainActivity)
+                    }
+                    is AppEvent.Invite -> {
+                        val otherUserRepository: OtherUserRepository by inject{ parametersOf(event.userId) }
+                        otherUserRepository.fetchProfile()
+                        val displayName = otherUserRepository.Profile.value?.profile?.displayName ?:
+                            otherUserRepository.Profile.value?.username
+                        NotificationHelper.notifyFriendRequest(this@MainActivity, displayName.toString())
+                    }
+                    is AppEvent.InviteAccepted -> {
+                        friendshipRepository.onInviteAccepted(event.friendshipId, this@MainActivity)
+                    }
+                    is AppEvent.InviteRejected -> {
+                        friendshipRepository.onInviteRejected(event.friendshipId, this@MainActivity)
+                    }
+
+                    is AppEvent.FriendshipEnded -> {
+                        friendshipRepository.onFriendshipEnded(event.friendshipId, this@MainActivity)
                     }
                 }
             }

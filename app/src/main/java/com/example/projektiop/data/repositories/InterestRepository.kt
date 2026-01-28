@@ -4,7 +4,7 @@ import android.util.Log
 import com.example.projektiop.data.api.InterestDto
 import com.example.projektiop.data.api.PublicInterestApi
 import com.example.projektiop.data.api.UserInterestDto
-import com.example.projektiop.data.db.realm.RealmDBRepository
+import com.example.projektiop.data.db.realm.RealmDataSource
 import com.example.projektiop.data.db.realm.objects.Interest
 import com.example.projektiop.data.db.realm.objects.InterestCategory
 import com.example.projektiop.data.mapping.toDomain
@@ -21,7 +21,7 @@ import com.example.projektiop.domain.models.UserInterest as DomainUserInterest
 import com.example.projektiop.domain.models.InterestCategory as DomainInterestCategory
 
 class InterestRepository(private val publicInterestApi: PublicInterestApi,
-                         private val dbRepository: RealmDBRepository,
+                         private val databaseDataSource: RealmDataSource,
                          private val languageRepository: LanguageRepository) {
 
     private val _publicInterests = MutableStateFlow<List<DomainInterest>>(emptyList())
@@ -47,7 +47,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
                     try {
                         val realmCategory = category.toRealm()
                         val domainCategory = realmCategory.toDomain()
-                        dbRepository.addInterestCategory(realmCategory)
+                        databaseDataSource.addInterestCategory(realmCategory)
                         outList.add(domainCategory)
                     } catch (e: Exception) {
                         return@withContext Result.failure(Exception("Error saving user to database: $e"))
@@ -57,7 +57,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
                 return@withContext Result.success(outList)
 
             } else {
-                val local = dbRepository.getInterestCategories()
+                val local = databaseDataSource.getInterestCategories()
                 if (local != emptyList<InterestCategory>()){
                     return@withContext Result.success(local.map{it.toDomain()})
                 } else {
@@ -65,7 +65,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
                 }
             }
         } catch (e: Exception) {
-            val local = dbRepository.getInterestCategories()
+            val local = databaseDataSource.getInterestCategories()
             if (local != emptyList<InterestCategory>()){
                 return@withContext Result.success(local.map{it.toDomain()})
             } else {
@@ -95,11 +95,11 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
                     try {
                         val realmCategory = publicInterestCategoryDto?.toRealm()
                         if (realmCategory != null) {
-                            dbRepository.addInterestCategory(realmCategory)
+                            databaseDataSource.addInterestCategory(realmCategory)
                         }
-                        val realmInterest = interestDto.toRealm(dbRepository)
+                        val realmInterest = interestDto.toRealm(databaseDataSource)
                         val domainInterest = realmInterest.toDomain()
-                        dbRepository.addInterest(realmInterest)
+                        databaseDataSource.addInterest(realmInterest)
                         domainList += domainInterest
                     } catch (e: Exception) {
                         return Result.failure(Exception("Error saving public interest to database: $e"))
@@ -109,7 +109,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
                 _publicInterests.value = domainList
                 return Result.success(domainList)
             } else {
-                val local = dbRepository.getInterests()
+                val local = databaseDataSource.getInterests()
                 if (local.orEmpty() != emptyList<Interest>()){
                     val localDomain = local!!.map{it.toDomain()}
                     _publicInterests.value = localDomain
@@ -119,7 +119,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
                 }
             }
         } catch (e: Exception) {
-            val local = dbRepository.getInterests()
+            val local = databaseDataSource.getInterests()
             if (local.orEmpty() != emptyList<Interest>()){
                 val localDomain = local!!.map{it.toDomain()}
                 _publicInterests.value = localDomain
@@ -147,7 +147,7 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
     }
 
     suspend fun resolveIncomingUserInterests(userInterests: List<UserInterestDto>, userId: String, flowToUpdate: MutableStateFlow<List<DomainUserInterest>?>) {
-        var localInterestCategories: List<String> = dbRepository.getInterestCategories()
+        var localInterestCategories: List<String> = databaseDataSource.getInterestCategories()
             .map{ it._id.toHexString() }
 
         if (localInterestCategories == emptyList<String>()) {
@@ -170,21 +170,21 @@ class InterestRepository(private val publicInterestApi: PublicInterestApi,
                     }
                 }
                 // second add interest
-                val interestRealm = userInterestDto.interest.toRealm(dbRepository)
-                dbRepository.addInterest(interestRealm)
+                val interestRealm = userInterestDto.interest.toRealm(databaseDataSource)
+                databaseDataSource.addInterest(interestRealm)
                 // only then add userInterest
-                val userInterestRealm = userInterestDto.toRealm(userId, dbRepository)
-                dbRepository.addUserInterest(userInterestRealm)
+                val userInterestRealm = userInterestDto.toRealm(userId, databaseDataSource)
+                databaseDataSource.addUserInterest(userInterestRealm)
             }.onFailure { e ->
                 Log.d("INT", "UserInterest resolution failed", e)
             }
         }
 
-        flowToUpdate.value = dbRepository.getUserInterestsByUserId(userId).map{it.toDomain()}
+        flowToUpdate.value = databaseDataSource.getUserInterestsByUserId(userId).map{it.toDomain()}
     }
 
     suspend fun getInterestByName(name: String): DomainInterest? {
-        val result =  dbRepository.getInterestByName(name)
+        val result =  databaseDataSource.getInterestByName(name)
         return result?.toDomain()
     }
 }

@@ -24,8 +24,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import com.example.projektiop.data.util.isoDateStringToMillis
 import com.example.projektiop.domain.models.Gender
 import com.example.projektiop.domain.models.Interest
+import com.example.projektiop.ui.components.DatePickerDocked
 import com.example.projektiop.ui.components.MultiSelectInterestsDropdown
 import com.example.projektiop.ui.components.ObserveAsEvents
 import com.example.projektiop.ui.components.UserAvatar
@@ -52,7 +54,7 @@ fun EditProfileScreen(
     var name by remember { mutableStateOf(myUser?.profile?.displayName ?: "")}
     var location by remember { mutableStateOf(myUser?.profile?.location ?: "")}
     var birthDate by remember { mutableStateOf(
-        myUser?.profile?.birthDate ?: "")}
+        myUser?.profile?.birthDate?.let{ isoDateStringToMillis(it) })}
     var gender by remember { mutableStateOf<Gender?>(myUser?.profile?.gender)}
     var description by remember { mutableStateOf(myUser?.profile?.bio ?: "") }
 
@@ -132,15 +134,7 @@ fun EditProfileScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
-                value = birthDate,
-                onValueChange = {
-                    if (it.length <= 10 && it.matches(Regex("^\\d{0,4}-?\\d{0,2}-?\\d{0,2}$"))) birthDate = it
-                },
-                label = { Text(stringResource(id = R.string.birthdate_label)) },
-                isError = birthDate.isNotBlank() && !birthDate.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$")),
-                modifier = Modifier.fillMaxWidth()
-            )
+            DatePickerDocked(birthDate, onDateSelected = { millis -> birthDate = millis })
             Spacer(Modifier.height(8.dp))
             GenderDropdown(gender = gender, onGenderChange = { gender = it })
             Spacer(Modifier.height(8.dp))
@@ -223,7 +217,7 @@ fun EditProfileScreen(
                         })
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading && name.isNotBlank() && name.length in 1..50 && (birthDate.isBlank() || birthDate.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$")))
+                enabled = !isLoading && name.isNotBlank() && name.length in 1..50
             ) {
                 val label = when {
                     isLoading && interestsSaving -> stringResource(id = R.string.saving_interests)

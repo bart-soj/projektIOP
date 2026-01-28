@@ -10,11 +10,10 @@ import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.models.Gender
 import com.example.projektiop.domain.models.Interest
+import com.example.projektiop.ui.components.millisToDisplayDate
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -52,7 +51,7 @@ class EditProfileViewModel(private val interestRepository: InterestRepository, p
     val uiEvents = _uiEvents.receiveAsFlow()
 
     fun onUpdateClick(displayName: String?, gender: Gender?, location: String?,
-                      bio: String?, birthDate: String?, broadcastMessage: String?,
+                      bio: String?, birthDate: Long?, broadcastMessage: String?,
                       interestsWithDescriptions: Map<Interest, String>
                       ) {
         _loading.value = true
@@ -63,7 +62,7 @@ class EditProfileViewModel(private val interestRepository: InterestRepository, p
                 gender = gender?.name?.lowercase(),
                 location = location,
                 bio = bio,
-                birthDate = birthDate,
+                birthDate = birthDate?.let{ millisToDisplayDate(it) },
                 broadcastMessage = broadcastMessage
             ).onFailure { e ->
                 _errorMessage.value = e.message
@@ -72,7 +71,7 @@ class EditProfileViewModel(private val interestRepository: InterestRepository, p
                 .onFailure { e ->
                     _errorMessage.value = errorMessage.value + e.message
                 }
-            if (errorMessage.value == null) {
+            if (_errorMessage.value == null) {
                 _uiEvents.send(EditProfileUiEevent.UpdateSuccess)
             }
             _loading.value = false

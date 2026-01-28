@@ -22,18 +22,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.nio.charset.Charset
 import java.util.UUID
 
-private val SERVICE_UUID: UUID = UUID.fromString("0000DDDD-0000-1000-8000-00805F9B34FB") // temporary
+private val SERVICE_UUID: UUID = UUID.fromString("0000DDDD-0000-1000-8000-00805F9B34FB")
 
-// Tagi do filtrowania logów w Logcat
 private const val TAG_SCAN = "BLE_SCAN_DEBUG"
 private const val TAG_ADVERTISE = "BLE_ADVERTISE_DEBUG"
-private const val TAG_LOCATION = "BLE_LOCATION_CHECK"
-private const val TAG_PERMISSIONS = "BLE_PERMISSIONS"
 
-private const val ID: String = "_id"
 
 class BluetoothRepository(private val context: Context) {
     private val bluetoothManager: BluetoothManager by lazy {
@@ -81,7 +76,6 @@ class BluetoothRepository(private val context: Context) {
                         try {
                             val foundUserId = bytesToUserId(serviceData)
 
-                            // Sprawdzamy, czy ID jest niepuste i czy jest nowe
                             if (foundUserId.isNotEmpty() && !_foundDeviceIds.value.contains(foundUserId)) {
                                 Log.i(TAG_SCAN, ">>> NOWE URZĄDZENIE: Znaleziono ID: $foundUserId (MAC: $deviceAddress) <<<")
                                 _foundDeviceStatus.value = "Status: Znaleziono $foundUserId"
@@ -92,39 +86,30 @@ class BluetoothRepository(private val context: Context) {
                                 // ID już znane w tej sesji skanowania
                                 Log.v(TAG_SCAN, "onScanResult: Ponownie wykryto urządzenie z ID: $foundUserId (MAC: $deviceAddress)")
                             } else {
-                                // Otrzymano puste dane
                                 Log.w(TAG_SCAN, "onScanResult: Otrzymano puste ID od urządzenia $deviceAddress")
                             }
                         } catch (e: Exception) {
                             Log.e(TAG_SCAN, "Błąd dekodowania danych usługi dla $deviceAddress", e)
-                            // decoding failed
                         }
-                    } else {
-                        // UUID pasuje, ale brak danych (ServiceData)
                     }
-                } else {
-                    // UUID nie pasuje (inne urządzenie BLE)
                 }
-            } ?: run {
-                // empty result
             }
         }
 
         override fun onScanFailed(errorCode: Int) {
             super.onScanFailed(errorCode)
-            Log.e(TAG_SCAN, "Skanowanie nie powiodło się, kod błędu: $errorCode")
             _isScanning.value = false
             val errorText = when (errorCode) {
                 SCAN_FAILED_ALREADY_STARTED -> "Scan Failed: Already Started"
                 SCAN_FAILED_APPLICATION_REGISTRATION_FAILED -> "Scan Failed: App Registration Failed (Check Manifest?)"
                 SCAN_FAILED_INTERNAL_ERROR -> "Scan Failed: Internal Error"
                 SCAN_FAILED_FEATURE_UNSUPPORTED -> "Scan Failed: Feature Unsupported (BLE Scan not supported?)"
-                // Można dodać kody z API 31+ jeśli targetSDK >= 31
-                // ScanCallback.SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES -> "Scan Failed: Out of Hardware Resources"
-                // ScanCallback.SCAN_FAILED_SCANNING_TOO_FREQUENTLY -> "Scan Failed: Scanning Too Frequently"
+                SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES -> "Scan Failed: Out of Hardware Resources"
+                SCAN_FAILED_SCANNING_TOO_FREQUENTLY -> "Scan Failed: Scanning Too Frequently"
                 else -> "Scan Failed: Unknown error code $errorCode"
             }
             _foundDeviceStatus.value = "Status: Błąd skan. ($errorCode)"
+            Log.e(TAG_SCAN, "Skanowanie nie powiodło się, kod błędu: $errorCode")
             Log.e(TAG_SCAN, errorText)
         }
     }
@@ -194,7 +179,7 @@ class BluetoothRepository(private val context: Context) {
         val scanSettings = ScanSettings.Builder()
             .setLegacy(true) // false for extended packets
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-            // .setReportDelay(0) // Domyślnie 0 - raportuj natychmiast
+            // .setReportDelay(0)
             .build()
 
         try {
@@ -218,10 +203,6 @@ class BluetoothRepository(private val context: Context) {
         if (!_isScanning.value) {
             return
         }
-
-        /*
-        if (!hasPermissions(getRequiredPermissionsScan())) {
-        } */
 
         if (bluetoothLeScanner == null) {
             _isScanning.value = false
@@ -292,12 +273,9 @@ class BluetoothRepository(private val context: Context) {
             .addServiceData(parcelUuid, serviceData)
             .build()
 
-        // 8. Rozpoczęcie rozgłaszania
         try {
             bluetoothLeAdvertiser?.startAdvertisingSet(settings, data, null, null, null, advertiseSetCallback)
-            // Stan _isAdvertising zostanie ustawiony na true w callbacku onStartSuccess
-            // Można ustawić status tymczasowy:
-            // _foundDeviceStatus.value = "Status: Uruchamianie rozgł..."
+
         } catch (e: SecurityException) {
             _foundDeviceStatus.value = "Status: Błąd uprawnień kryt."
             _isAdvertising.value = false
@@ -315,9 +293,6 @@ class BluetoothRepository(private val context: Context) {
         if (!_isAdvertising.value) {
             return
         }
-        /*
-        if (!hasPermissions(getRequiredPermissionsAdvertise())) {
-        } */
 
         if (bluetoothLeAdvertiser == null) {
             _isAdvertising.value = false

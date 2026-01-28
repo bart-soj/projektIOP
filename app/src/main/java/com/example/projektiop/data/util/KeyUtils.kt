@@ -4,8 +4,8 @@ import android.util.Log
 import com.example.projektiop.data.api.BackupApi
 import com.example.projektiop.data.api.PublicKeyApi
 import com.example.projektiop.data.api.PublishPublicKeyRequest
-import com.example.projektiop.data.db.realm.RealmDBRepository
-import com.example.projektiop.data.repositories.SharedDataSource
+import com.example.projektiop.data.db.realm.RealmDataSource
+import com.example.projektiop.data.SharedDataSource
 import com.example.projektiop.domain.BackupError
 import com.example.projektiop.domain.DataError
 import com.example.projektiop.domain.models.AlgorithmParams
@@ -50,8 +50,7 @@ import javax.crypto.spec.SecretKeySpec
 class KeyUtils(private val pubKeyApi: PublicKeyApi,
                private val backupApi: BackupApi,
                private val sharedDataSource: SharedDataSource,
-               private val dbRepository: RealmDBRepository
-)
+               private val databaseDataSource: RealmDataSource)
 {
 
     val provider = BouncyCastleProvider()
@@ -515,7 +514,7 @@ class KeyUtils(private val pubKeyApi: PublicKeyApi,
             val body = result.body()
             val key = body?.publicKey
             require(key != null)
-            dbRepository.savePubKey(userId, key)
+            databaseDataSource.savePubKey(userId, key)
             return Result.Success(key)
         } catch(e: Exception) {
             return apiExceptionToDataError<base64>(e)
@@ -526,7 +525,7 @@ class KeyUtils(private val pubKeyApi: PublicKeyApi,
         try {
             val result = pubKeyApi.publishPublicKey(PublishPublicKeyRequest(myPubKey))
             if (!result.isSuccessful) throw HttpException(result)
-            dbRepository.savePubKey(myUserId, myPubKey)
+            databaseDataSource.savePubKey(myUserId, myPubKey)
             return Result.Success(Unit)
         } catch(e: Exception) {
             return apiExceptionToDataError<Unit>(e)

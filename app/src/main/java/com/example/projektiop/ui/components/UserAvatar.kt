@@ -11,7 +11,7 @@ import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.projektiop.R
-import com.example.projektiop.data.repositories.SharedDataSource
+import com.example.projektiop.data.SharedDataSource
 import org.koin.compose.koinInject
 
 

@@ -4,11 +4,10 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.R
+import com.example.projektiop.data.SharedDataSource
 import com.example.projektiop.data.api.CreateReportRequest
 import com.example.projektiop.data.api.ReportApi
-import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.domain.ReportType
-import com.example.projektiop.domain.DataError
 import com.example.projektiop.data.util.apiExceptionToDataError
 import com.example.projektiop.ui.toStringRes
 import kotlinx.coroutines.channels.Channel

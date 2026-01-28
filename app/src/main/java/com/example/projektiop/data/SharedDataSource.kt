@@ -1,4 +1,4 @@
-package com.example.projektiop.data.repositories
+package com.example.projektiop.data
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -39,7 +39,7 @@ class SharedDataSource(private val appContext: Context) {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
-    fun <T> set(key: String, value: T, context: Context  = this.getAppContext()) {
+    fun <T> set(key: String, value: T, context: Context = this.getAppContext()) {
         with(prefs.edit()) {
             when (value) {
                 is String -> putString(key, value)
@@ -133,4 +133,3 @@ class SharedDataSource(private val appContext: Context) {
         return decrypt(encrypted)
     }
 }
-

@@ -1,10 +1,11 @@
 package com.example.projektiop.data.repositories
 
+import com.example.projektiop.data.SharedDataSource
 import com.example.projektiop.data.api.AuthApi
 import com.example.projektiop.data.api.RegisterRequest
 import com.example.projektiop.data.api.LoginRequest
 import com.example.projektiop.data.api.TokenProvider
-import com.example.projektiop.data.db.realm.RealmDBRepository
+import com.example.projektiop.data.db.realm.RealmDataSource
 import com.example.projektiop.domain.AppStateRepository
 import com.example.projektiop.domain.DataError
 import com.example.projektiop.domain.Result
@@ -31,7 +32,7 @@ sealed interface AuthState {
 class AuthRepository(private val authApi: AuthApi,
                      private val sharedDataSource: SharedDataSource,
                      private val appStateRepository: AppStateRepository,
-                     private val dbRepository: RealmDBRepository): TokenProvider {
+                     private val databaseDataSource: RealmDataSource): TokenProvider {
     private val KEY_TOKEN = "auth_token"
     private val KEY_EMAIL = "my_email"
     private val KEY_REMEMBER = "remember_me"
@@ -144,7 +145,7 @@ class AuthRepository(private val authApi: AuthApi,
     }
 
     suspend fun onLogoutCleanup() {
-        dbRepository.deleteContents()
+        databaseDataSource.deleteContents()
         token = null
         sharedDataSource.set(KEY_REMEMBER, false)
         sharedDataSource.remove(KEY_TOKEN)

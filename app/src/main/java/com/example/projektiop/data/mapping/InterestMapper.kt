@@ -2,13 +2,13 @@ package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.InterestDto
 import com.example.projektiop.data.db.realm.objects.Interest
-import com.example.projektiop.data.db.realm.RealmDBRepository
+import com.example.projektiop.data.db.realm.RealmDataSource
 import com.example.projektiop.domain.models.InterestCategory as DomainInterestCategory
 import com.example.projektiop.data.util.mongoTimestampToRealmInstant
 import com.example.projektiop.data.util.realmInstantToMongoTimestamp
 import com.example.projektiop.domain.models.Interest as DomainInterest
 
-fun InterestDto.toRealm(dbRepository: RealmDBRepository): Interest {
+fun InterestDto.toRealm(dbRepository: RealmDataSource): Interest {
     require(!this._id.isNullOrBlank()) {"Missing interest id"}
     val id = this._id
     require(!this.name.isNullOrBlank()) {"Missing interest name"}
@@ -33,7 +33,7 @@ fun InterestDto.toRealm(dbRepository: RealmDBRepository): Interest {
     )
 }
 
-fun InterestDto.toDomain(dbRepository: RealmDBRepository): DomainInterest {
+fun InterestDto.toDomain(dbRepository: RealmDataSource): DomainInterest {
     return this.toRealm(dbRepository).toDomain()
 }
 

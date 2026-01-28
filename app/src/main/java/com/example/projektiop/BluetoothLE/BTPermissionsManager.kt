@@ -5,16 +5,12 @@ import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
-import android.os.Build
-import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.app.ActivityCompat
-import androidx.core.app.ComponentActivity
 import androidx.core.location.LocationManagerCompat
 import com.example.projektiop.R
 
@@ -30,7 +26,6 @@ class BTPermissionsManager(private val context: Context) {
         context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
 
-    private val TAG_LOCATION = "BLE_LOCATION_CHECK"
     private val TAG_PERMISSIONS = "BLE_PERMISSIONS"
 
     fun isLocationEnabled(): Boolean {
@@ -42,7 +37,7 @@ class BTPermissionsManager(private val context: Context) {
     }
 
     fun showBluetoothLocationSnackbar(context: Context) {
-        var text: String = ""
+        var text = ""
         if (!isBluetoothEnabled())
             text += context.getString(R.string.enable_bluetooth) + " "
 
@@ -50,42 +45,24 @@ class BTPermissionsManager(private val context: Context) {
             text += context.getString(R.string.enable_location)
 
         if (text.isNotBlank())
-            Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, text, Toast.LENGTH_LONG).show()
     }
 
     fun getRequiredPermissions(): Array<String> {
         val permissions = mutableListOf<String>()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+
-            permissions.add(Manifest.permission.BLUETOOTH_SCAN)
-            permissions.add(Manifest.permission.BLUETOOTH_ADVERTISE)
-            permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
-            // ACCESS_FINE_LOCATION jest nadal zalecane dla pełnej funkcjonalności skanowania
-            permissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
-        } else { // Poniżej Androida 12
-            permissions.add(Manifest.permission.BLUETOOTH)
-            permissions.add(Manifest.permission.BLUETOOTH_ADMIN)
-            // ACCESS_FINE_LOCATION jest kluczowe do skanowania BLE poniżej A12
-            permissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
+        permissions.add(Manifest.permission.BLUETOOTH_SCAN)
+        permissions.add(Manifest.permission.BLUETOOTH_ADVERTISE)
+        permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
+        permissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
         return permissions.toTypedArray()
     }
 
     fun getRequiredPermissionsScan(): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.ACCESS_FINE_LOCATION)
-        } else {
-            // BLUETOOTH_ADMIN jest potrzebny do start/stopScan poniżej A12
-            arrayOf(Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.ACCESS_FINE_LOCATION)
-        }
+        return arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     fun getRequiredPermissionsAdvertise(): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            arrayOf(Manifest.permission.BLUETOOTH_ADVERTISE)
-        } else {
-            // BLUETOOTH_ADMIN jest potrzebny do start/stopAdvertising poniżej A12
-            arrayOf(Manifest.permission.BLUETOOTH_ADMIN)
-        }
+        return arrayOf(Manifest.permission.BLUETOOTH_ADVERTISE)
     }
 
     fun hasPermissions(permissions: Array<String>): Boolean {
@@ -114,20 +91,6 @@ class BTPermissionsManager(private val context: Context) {
             launcher.launch(missingPermissions)
         } else {
             Log.d(TAG_PERMISSIONS, "Wszystkie wymagane uprawnienia (${allRequiredPermissions.joinToString()}) są już przyznane.")
-        }
-    }
-
-    fun showPermissionDeniedMessage(context: Context, permission: String) {
-        Toast.makeText(context, "Odmówiono uprawnienia: $permission", Toast.LENGTH_SHORT).show()
-    }
-
-    fun openLocationSettings(context: Context) {
-        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-        // Sprawdź, czy jest aktywność obsługująca ten intent
-        if (intent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(intent)
-        } else {
-            Toast.makeText(context, "Nie można otworzyć ustawień lokalizacji.", Toast.LENGTH_SHORT).show()
         }
     }
 }

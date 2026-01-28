@@ -3,8 +3,8 @@ package com.example.projektiop.ui.viewmodels
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.projektiop.data.SharedDataSource
 import com.example.projektiop.data.api.BackupApi
-import com.example.projektiop.data.repositories.SharedDataSource
 import com.example.projektiop.data.util.KeyUtils
 import com.example.projektiop.data.util.apiExceptionToDataError
 import com.example.projektiop.domain.backupPasswordValidator

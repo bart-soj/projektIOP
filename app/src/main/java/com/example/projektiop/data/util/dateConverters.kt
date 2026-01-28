@@ -1,8 +1,10 @@
 package com.example.projektiop.data.util
 
 import io.realm.kotlin.types.RealmInstant
+import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.OffsetDateTime
+import java.util.Locale
 
 
 // Convert MongoDB timestamp string (ISO-8601 with Z or offset) -> RealmInstant
@@ -34,3 +36,18 @@ fun RealmInstant.toJavaInstant(): Instant {
         this.nanosecondsOfSecond.toLong()
     )
 }
+
+
+fun isoDateStringToMillis(date: String): Long {
+    val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    return formatter.parse(date)?.time ?: 0L
+}
+
+
+fun isoToDisplayDate(isoDate: String): String {
+    val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val outputFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+    val date = inputFormat.parse(isoDate)
+    return outputFormat.format(date!!)
+}
+

@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.api.AuthApi
 import com.example.projektiop.data.api.EmailRequest
-import com.example.projektiop.domain.DataError
 import com.example.projektiop.data.util.apiExceptionToDataError
 import com.example.projektiop.util.emailValidator
 import com.example.projektiop.ui.mapToResource

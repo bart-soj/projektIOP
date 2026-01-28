@@ -2,10 +2,10 @@ package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.UserInterestDto
 import com.example.projektiop.data.db.realm.objects.UserInterest
-import com.example.projektiop.data.db.realm.RealmDBRepository
+import com.example.projektiop.data.db.realm.RealmDataSource
 import com.example.projektiop.domain.models.UserInterest as DomainUserInterest
 
-fun UserInterestDto.toRealm(userId: String, dbRepository: RealmDBRepository): UserInterest {
+fun UserInterestDto.toRealm(userId: String, dbRepository: RealmDataSource): UserInterest {
 
     require(!this.userInterestId.isNullOrBlank()) { "Missing user interest id" }
     val id = this.userInterestId

@@ -2,24 +2,14 @@ package com.example.projektiop.data.repositories
 
 import com.example.projektiop.data.api.UserApi
 import com.example.projektiop.data.api.UserInterestDto
-import com.example.projektiop.data.api.UserProfileResponse
-import com.example.projektiop.data.db.realm.RealmDBRepository
+import com.example.projektiop.data.db.realm.RealmDataSource
 import com.example.projektiop.data.mapping.toDomain
 import com.example.projektiop.data.mapping.toRealm
-import com.example.projektiop.data.mapping.toUserProfileResponse
 import com.example.projektiop.data.util.checkDataFreshness
 import com.example.projektiop.domain.models.User
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import kotlin.collections.filterNotNull
 import kotlin.collections.orEmpty
 import java.time.Duration
@@ -29,7 +19,7 @@ private val userFreshnessTimeout: Duration = Duration.ofMinutes(5)
 
 class OtherUserRepository(val id: String,
                           private val userApi: UserApi,
-                          private val dbRepository: RealmDBRepository,
+                          private val databaseDataSource: RealmDataSource,
                           private val interestRepository: InterestRepository) {
 
     companion object {
@@ -39,7 +29,7 @@ class OtherUserRepository(val id: String,
             _repositoryCache.asStateFlow()
 
         fun ensureRepository (
-            id: String, userApi: UserApi, dbRepository: RealmDBRepository,
+            id: String, userApi: UserApi, dbRepository: RealmDataSource,
             interestRepository: InterestRepository
         ): OtherUserRepository {
             if (id !in repositoryCache.value) {
@@ -62,7 +52,7 @@ class OtherUserRepository(val id: String,
 
 
     suspend fun fetchProfile(): Result<User> {
-        val localUser = dbRepository.getUserById(id)
+        val localUser = databaseDataSource.getUserById(id)
         val updatedAt = localUser?.updatedAt
         if (localUser != null && updatedAt != null) {
             if (checkDataFreshness(updatedAt, userFreshnessTimeout)) {
@@ -85,7 +75,7 @@ class OtherUserRepository(val id: String,
 
                 // Save user in DB, mapper ensures mandatory fields present
                 try {
-                    dbRepository.addUser(body.toRealm())
+                    databaseDataSource.addUser(body.toRealm())
                 } catch (e: Exception) {
                     return Result.failure<User>(
                         Exception("Error saving user to database: $e")
@@ -106,7 +96,7 @@ class OtherUserRepository(val id: String,
                 return Result.success(domainUser)
             } else {
 
-                val localUser = dbRepository.getUserById(id)
+                val localUser = databaseDataSource.getUserById(id)
                 if (localUser != null) {
                     val userProfile = localUser.toDomain()
                     _Profile.value = userProfile
@@ -115,7 +105,7 @@ class OtherUserRepository(val id: String,
                 return Result.failure(Exception("API failed and no local data available"))
             }
         } catch (e: Exception) {
-            val localUser = dbRepository.getUserById(id)
+            val localUser = databaseDataSource.getUserById(id)
             if (localUser != null) {
                 val userProfile = localUser.toDomain()
                 _Profile.value = userProfile

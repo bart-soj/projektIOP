@@ -99,7 +99,7 @@ fun ScannerScreen( navController: NavController) {
                         },
                     )
 
-                    ActiveHandshakeButton { }
+                    // ActiveHandshakeButton { }
                 }
             }
 

@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.R
-import com.example.projektiop.data.repositories.SharedDataSource
+import com.example.projektiop.data.SharedDataSource
 import com.example.projektiop.domain.AppStateRepository
 import com.example.projektiop.domain.BackupError
 import com.example.projektiop.data.util.KeyUtils
