@@ -127,12 +127,12 @@
     <string name="profile_settings_button_desc">Profile settings</string>
 
     <!-- Scanner Screen -->
-    <string name="scanner_screen_title">BLE Scanner</string>
+    <string name="scanner_screen_title">Beacon BLE</string>
     <string name="scanner_your_identifier_label">Your identifier: %s</string>
-    <string name="scanner_start_scanning">Start scanning</string>
+    <string name="scanner_start_scanning">Scan for nearby users</string>
     <string name="scanner_stop_scanning">Stop scanning</string>
-    <string name="scanner_start_advertising">Start advertising</string>
-    <string name="scanner_stop_advertising">Stop advertising</string>
+    <string name="scanner_start_advertising">Beacon your profile</string>
+    <string name="scanner_stop_advertising">Stop beaconing</string>
     <string name="ble_status_label">BLE status:</string>
     <string name="ble_status_scanning_and_advertising">Scanning and advertising active</string>
     <string name="ble_status_scanning">Scanning for nearby users…</string>

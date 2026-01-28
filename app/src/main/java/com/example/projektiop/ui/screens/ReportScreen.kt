@@ -1,7 +1,10 @@
 package com.example.projektiop.ui.screens
 
 import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,11 +31,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.projektiop.R
 import com.example.projektiop.domain.ReportType
+import com.example.projektiop.ui.components.GlassPanel
 import com.example.projektiop.ui.components.ObserveAsEvents
 import com.example.projektiop.ui.viewmodels.ReportUiEvent
 import com.example.projektiop.ui.viewmodels.ReportViewModel
@@ -67,75 +73,106 @@ fun ReportScreen(navController: NavController,
             true -> Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                 CircularProgressIndicator(modifier = Modifier.size(64.dp)) }
             false -> {
-                Column(
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                        .background(MaterialTheme.colorScheme.background)
                 ) {
-                    Text(
-                        text = stringResource(R.string.report_dialog_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(bottom = 24.dp)
+                    /*
+                    Image(
+                        painter = painterResource(id = R.drawable.start_background2),
+                        contentDescription = stringResource(R.string.background_image_description),
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Button(
-                        onClick = {
-                            viewModel.onReportClick(userId, messageId, content, type!!, reason)
-                        },
+                     */
+                    Column(
                         modifier = Modifier
-                            .padding(start = 8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(
-                                alpha = 0.3f
-                            )
-                        ),
-                        enabled = reason.isNotBlank() && type != null
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp, vertical = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Text(
-                            if (loading) stringResource(R.string.reporting) else stringResource(
-                                R.string.report
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    if (errorMessage != null) {
-                        Text(
-                            text = errorMessage ?: "",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedTextField(
-                        value = reason,
-                        onValueChange = { if (it.length <= 1000) reason = it },
-                        label = { Text(stringResource(R.string.reason)) },
-                        supportingText = {
-                            val color = if (reason.length < 10) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                        Spacer(modifier = Modifier.weight(1f))
+                        GlassPanel {
                             Text(
-                                text = stringResource(R.string.report_count, reason.length, 1000),
-                                color = color
+                                text = stringResource(R.string.report_dialog_title),
+                                style = MaterialTheme.typography.headlineMedium,
+                                modifier = Modifier.padding(bottom = 24.dp)
                             )
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                    ReportDropDown(type, {type = it})
+                            Button(
+                                onClick = {
+                                    viewModel.onReportClick(
+                                        userId,
+                                        messageId,
+                                        content,
+                                        type!!,
+                                        reason
+                                    )
+                                },
+                                modifier = Modifier
+                                    .padding(start = 8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(
+                                        alpha = 0.3f
+                                    )
+                                ),
+                                enabled = reason.isNotBlank() && type != null
+                            ) {
+                                Text(
+                                    if (loading) stringResource(R.string.reporting) else stringResource(
+                                        R.string.report
+                                    )
+                                )
+                            }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            if (errorMessage != null) {
+                                Text(
+                                    text = errorMessage ?: "",
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 8.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            OutlinedTextField(
+                                value = reason,
+                                onValueChange = { if (it.length <= 1000) reason = it },
+                                label = { Text(stringResource(R.string.reason)) },
+                                supportingText = {
+                                    val color =
+                                        if (reason.length < 10) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                                    Text(
+                                        text = stringResource(
+                                            R.string.report_count,
+                                            reason.length,
+                                            1000
+                                        ),
+                                        color = color
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            ReportDropDown(type, { type = it })
+
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
             }
         }
@@ -168,7 +205,9 @@ fun ReportDropDown(type: ReportType?, onTypeChange: (ReportType?) -> Unit) {
             readOnly = true,
             label = { Text(stringResource(id = R.string.report_type_label)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor().fillMaxWidth()
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
         )
         ExposedDropdownMenu(
             expanded = expanded,

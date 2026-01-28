@@ -126,11 +126,11 @@
     <string name="profile_settings_button_desc">Ustawienia profilu</string>
 
     <!-- Scanner Screen -->
-    <string name="scanner_screen_title">Skaner BLE</string>
+    <string name="scanner_screen_title">Beacon BLE</string>
     <string name="scanner_your_identifier_label">Twój identyfikator: %s</string>
-    <string name="scanner_start_scanning">Rozpocznij Skanowanie</string>
-    <string name="scanner_stop_scanning">Zatrzymaj Skanowanie</string>
-    <string name="scanner_start_advertising">Rozpocznij Rozgłaszanie</string>
+    <string name="scanner_start_scanning">Znajduj pobliskich użytkowników</string>
+    <string name="scanner_stop_scanning">Zatrzymaj znajdywanie</string>
+    <string name="scanner_start_advertising">Rozgłoś swój profil</string>
     <string name="scanner_stop_advertising">Zatrzymaj Rozgłaszanie</string>
     <string name="ble_status_label">Status BLE:</string>
     <string name="ble_status_scanning_and_advertising">Skanowanie i Rozgłaszanie aktywne</string>
@@ -259,7 +259,7 @@
     <string name="forget_confirm_message">Czy na pewno chcesz stracić historię chatów?</string>
     <string name="forget_confirm_yes">Tak, usuń historię!</string>
     <string name="forget">Zaloguj bez backupu</string>
-    <string name="search_profile">Profil Skanowania</string>
+    <string name="search_profile">Profil Dopasowywania</string>
     <string name="error_db_error">Błąd lokalnej bazy danych</string>
     <string name="error_no_data">Brak lokalnych danych</string>
     <string name="error_email_username_taken">Email lub nazwa użytkownika zajęte</string>

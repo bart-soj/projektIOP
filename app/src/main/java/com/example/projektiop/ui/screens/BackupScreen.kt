@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.projektiop.R
+import com.example.projektiop.ui.components.GlassPanel
 import com.example.projektiop.ui.components.ObserveAsEvents
 import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
 import com.example.projektiop.ui.viewmodels.BackupDialogUiEvent
@@ -75,76 +76,91 @@ fun BackupScreen(navController: NavController) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(
-                        text = stringResource(R.string.backup_dialog_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(bottom = 24.dp)
-                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    GlassPanel {
+                        Text(
+                            text = stringResource(R.string.backup_dialog_title),
+                            style = MaterialTheme.typography.headlineMedium,
+                            modifier = Modifier.padding(bottom = 24.dp)
+                        )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
-                        Button(
-                            onClick = {
-                                viewModel.onSetClick(password)
-                            },
-                            modifier = Modifier
-                                .padding(start = 8.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary,
-                                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                            ),
-                            enabled = passwordErrors.isEmpty() && password == password_repeated
-                        ) {
-                            Text(if (loading) stringResource(R.string.saving) else stringResource(R.string.add))
+                        Row(horizontalArrangement = Arrangement.SpaceEvenly) {
+                            Button(
+                                onClick = {
+                                    viewModel.onSetClick(password)
+                                },
+                                modifier = Modifier
+                                    .padding(start = 8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(
+                                        alpha = 0.3f
+                                    )
+                                ),
+                                enabled = passwordErrors.isEmpty() && password == password_repeated
+                            ) {
+                                Text(
+                                    if (loading) stringResource(R.string.saving) else stringResource(
+                                        R.string.add
+                                    )
+                                )
+                            }
+
+                            IconButton(
+                                onClick = { goBack() }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.ChevronLeft,
+                                    contentDescription = null
+                                )
+                            }
                         }
 
-                        IconButton(
-                            onClick = { goBack() }
-                        ) { Icon(imageVector = Icons.Filled.ChevronLeft, contentDescription = null) }
-                    }
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        if (errorMessage != null) {
+                            Text(
+                                text = errorMessage ?: "",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                            )
+                        }
 
-                    if (errorMessage != null) {
-                        Text(
-                            text = errorMessage ?: "",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedTextFieldWithClearAndError(
+                            value = password,
+                            onValueChange = {
+                                viewModel.onPasswordChange(it)
+                                password = it
+                            },
+                            label = stringResource(R.string.password_label),
+                            errorList = passwordErrors.map { stringResource(it) },
+                            isError = passwordErrors.isNotEmpty(),
+                            modifier = Modifier.fillMaxWidth(),
+                            visualTransformation = PasswordVisualTransformation()
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedTextFieldWithClearAndError(
+                            value = password_repeated,
+                            onValueChange = {
+                                viewModel.onPasswordChange(it)
+                                password_repeated = it
+                            },
+                            label = stringResource(R.string.password_repeated_label),
+                            errorList = emptyList(),
+                            isError = password != password_repeated,
+                            modifier = Modifier.fillMaxWidth(),
+                            visualTransformation = PasswordVisualTransformation()
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedTextFieldWithClearAndError(
-                        value = password,
-                        onValueChange = {
-                            viewModel.onPasswordChange(it)
-                            password = it
-                        },
-                        label = stringResource(R.string.password_label),
-                        errorList = passwordErrors.map { stringResource(it) },
-                        isError = passwordErrors.isNotEmpty(),
-                        modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = PasswordVisualTransformation()
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedTextFieldWithClearAndError(
-                        value = password_repeated,
-                        onValueChange = {
-                            viewModel.onPasswordChange(it)
-                            password_repeated = it
-                        },
-                        label = stringResource(R.string.password_repeated_label),
-                        errorList = emptyList(),
-                        isError = password != password_repeated,
-                        modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = PasswordVisualTransformation()
-                    )
+                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
         }

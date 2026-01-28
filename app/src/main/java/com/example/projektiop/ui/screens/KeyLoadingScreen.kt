@@ -11,10 +11,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.projektiop.ui.components.GlassPanel
 import com.example.projektiop.ui.components.OutlinedTextFieldWithClearAndError
 import com.example.projektiop.ui.viewmodels.AuthViewModel
 
@@ -90,58 +95,61 @@ fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifie
             verticalArrangement = Arrangement.Center
         ) {
             Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = stringResource(R.string.restore_backup_title),
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextFieldWithClearAndError(
-                value = password,
-                onValueChange = {
-                    viewModel.onPasswordChange(it)
-                    password = it
-                },
-                label = stringResource(R.string.password_label),
-                errorList = passwordErrors.map{ stringResource(it) },
-                modifier = Modifier.fillMaxWidth(),
-                isError = passwordErrors.isNotEmpty(),
-                visualTransformation = PasswordVisualTransformation(),
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            if (errorMessage != null) {
+            GlassPanel {
                 Text(
-                    text = errorMessage ?: "",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                    text = stringResource(R.string.restore_backup_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(bottom = 24.dp)
                 )
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Button(
-                onClick = {
-                    viewModel.onBackupClick(password)
-                },
-                modifier = Modifier
-                    .padding(start = 8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                ),
-                enabled = passwordErrors.isEmpty() && !loading && password.isNotBlank()
-            ) {
-                Text(if (loading) stringResource(R.string.getting_backup) else stringResource(R.string.get_backup))
+                OutlinedTextFieldWithClearAndError(
+                    value = password,
+                    onValueChange = {
+                        viewModel.onPasswordChange(it)
+                        password = it
+                    },
+                    label = stringResource(R.string.password_label),
+                    errorList = passwordErrors.map { stringResource(it) },
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = passwordErrors.isNotEmpty(),
+                    visualTransformation = PasswordVisualTransformation(),
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = {
+                        viewModel.onBackupClick(password)
+                    },
+                    modifier = Modifier
+                        .padding(start = 8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                    ),
+                    enabled = passwordErrors.isEmpty() && !loading && password.isNotBlank()
+                ) {
+                    Text(if (loading) stringResource(R.string.getting_backup) else stringResource(R.string.get_backup))
+                }
             }
             Spacer(modifier = Modifier.weight(1f))
             Button(
                 onClick = { showForgetDialog = true },
+                shape = RoundedCornerShape(4.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp),
@@ -155,6 +163,7 @@ fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifie
             Spacer(modifier = Modifier.size(8.dp))
             Button(
                 onClick = { showLogoutDialog = true },
+                shape = RoundedCornerShape(4.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp),
@@ -163,7 +172,11 @@ fun GetBackupDialog(viewModel: KeyLoadingViewModel, modifier: Modifier = Modifie
                     contentColor = MaterialTheme.colorScheme.onError
                 )
             ) {
-                Text(stringResource(R.string.log_out), style = MaterialTheme.typography.titleLarge)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = stringResource(R.string.log_out),
+                    modifier = Modifier.size(32.dp)
+                )
             }
             if (showForgetDialog) {
                 AlertDialog(

@@ -55,20 +55,20 @@ fun SettingsScreen(
     }
 
     Scaffold(
-        bottomBar = { BottomNavigationBar(navController = navController, currentRoute = currentRoute) }
+        bottomBar = {
+            BottomNavigationBar(
+                navController = navController,
+                currentRoute = currentRoute
+            )
+        }
     ) { paddingValues ->
-
         var showLogoutDialog by remember { mutableStateOf(false) }
         var showBlockedDialog by remember { mutableStateOf(false) }
         var showDeleteDialog by remember { mutableStateOf(false) }
         val rememberMe by viewModel.rememberMe.collectAsState()
 
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            color = MaterialTheme.colorScheme.background
-        ) {
+        Box(modifier = Modifier.padding(paddingValues)) {
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -261,13 +261,13 @@ fun SettingsScreen(
                         )
                     ) {
                         /*
-                        Text(
-                            stringResource(R.string.log_out),
-                            style = MaterialTheme.typography.titleLarge,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        */
+                    Text(
+                        stringResource(R.string.log_out),
+                        style = MaterialTheme.typography.titleLarge,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    */
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Logout,
                             contentDescription = stringResource(R.string.log_out),
@@ -277,55 +277,59 @@ fun SettingsScreen(
                 }
             }
 
-        }
-        if (showBlockedDialog) {
-            BlockedUsersDialog(onClose = { showBlockedDialog = false }, viewModel)
-        }
-        if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            title = { Text(stringResource(R.string.confirmation)) },
-            text = {
-                if (backupViewModel.isBackedUp) {
-                    Text(stringResource(R.string.logout_confirm_message))
-                } else {
-                    Text(stringResource(R.string.logout_confirm_message)
-                            + "\n" + stringResource(R.string.no_backup),
-                        color = MaterialTheme.colorScheme.error )
-                }},
-            confirmButton = {
-                Button(onClick = {
-                    showLogoutDialog = false
-                    viewModel.logout()
-                }) {
-                    Text(stringResource(R.string.logout_confirm_yes))
-                }
-            },
-            dismissButton = {
-                Button(onClick = { showLogoutDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
+            if (showBlockedDialog) {
+                BlockedUsersDialog(onClose = { showBlockedDialog = false }, viewModel)
             }
-        )}
-        if (showDeleteDialog) {
-            AlertDialog(
-                onDismissRequest = { showDeleteDialog = false },
-                title = { Text(stringResource(R.string.confirmation)) },
-                text = { Text(stringResource(R.string.delete_account_warning)) },
-                confirmButton = {
-                    Button(onClick = {
-                        showDeleteDialog = false
-                        viewModel.onDeleteAccountClick()
-                    }) {
-                        Text(stringResource(R.string.delete_confirm_yes))
+            if (showLogoutDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLogoutDialog = false },
+                    title = { Text(stringResource(R.string.confirmation)) },
+                    text = {
+                        if (backupViewModel.isBackedUp) {
+                            Text(stringResource(R.string.logout_confirm_message))
+                        } else {
+                            Text(
+                                stringResource(R.string.logout_confirm_message)
+                                        + "\n" + stringResource(R.string.no_backup),
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(onClick = {
+                            showLogoutDialog = false
+                            viewModel.logout()
+                        }) {
+                            Text(stringResource(R.string.logout_confirm_yes))
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = { showLogoutDialog = false }) {
+                            Text(stringResource(R.string.cancel))
+                        }
                     }
-                },
-                dismissButton = {
-                    Button(onClick = { showDeleteDialog = false }) {
-                        Text(stringResource(R.string.cancel))
+                )
+            }
+            if (showDeleteDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteDialog = false },
+                    title = { Text(stringResource(R.string.confirmation)) },
+                    text = { Text(stringResource(R.string.delete_account_warning)) },
+                    confirmButton = {
+                        Button(onClick = {
+                            showDeleteDialog = false
+                            viewModel.onDeleteAccountClick()
+                        }) {
+                            Text(stringResource(R.string.delete_confirm_yes))
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = { showDeleteDialog = false }) {
+                            Text(stringResource(R.string.cancel))
+                        }
                     }
-                }
-            )
+                )
+            }
         }
     }
 }

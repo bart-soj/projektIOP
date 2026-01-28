@@ -48,6 +48,15 @@ fun ScannerScreen( navController: NavController) {
     val users by viewModel.usersFromRepo.collectAsState()
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(
+                    text = stringResource(R.string.scanner_screen_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(16.dp)
+                )}
+            )
+        },
         bottomBar = {
             BottomNavigationBar(navController = navController, currentRoute = currentRoute)
         }
@@ -59,11 +68,6 @@ fun ScannerScreen( navController: NavController) {
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally // Wycentruj elementy
         ) {
-            Text(
-                text = stringResource(R.string.scanner_screen_title),
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(16.dp)
-            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
