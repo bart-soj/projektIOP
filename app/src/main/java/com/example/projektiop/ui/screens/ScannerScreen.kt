@@ -1,17 +1,13 @@
 package com.example.projektiop.ui.screens
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -32,7 +27,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.ui.viewmodels.ScannerViewModel
 import com.example.projektiop.ui.viewmodels.UserWithStatus
 import com.example.projektiop.R
-import com.example.projektiop.activeHandshake.NFC.ActiveHandshakeButton
 import com.example.projektiop.domain.models.FriendshipStatus
 import com.example.projektiop.domain.models.SearchProfile
 import com.example.projektiop.domain.models.User
@@ -40,10 +34,6 @@ import com.example.projektiop.ui.components.BottomNavigationBar
 import com.example.projektiop.ui.components.UserAvatar
 import org.koin.androidx.compose.koinViewModel
 import com.example.projektiop.ui.components.SearchProfileDialog
-
-
-private const val ID: String = "_id"
-private const val BASE_URL_KEY: String = "BASE_URL"
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -327,7 +317,7 @@ fun ScannedUserRow( // TODO() just use friend card
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(user.profile?.displayName ?: user.username.toString(), style = MaterialTheme.typography.titleMedium)
+                Text(user.profile.displayName, style = MaterialTheme.typography.titleMedium)
                 Text(user.username.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 Text(user.email.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
             }
@@ -371,76 +361,3 @@ fun ScannedUsersList(
     }
 }
 
-
-@Composable
-fun SearchProfileItem(
-    searchProfile: SearchProfile,
-    modifier: Modifier = Modifier,
-    // Added to allow proper Card tinting while keeping the shape
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
-    onDeleteClick: (() -> Unit)? = null,
-    onChooseClick: (() -> Unit)? = null
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .animateContentSize(),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = containerColor
-        ),
-        onClick = { expanded = !expanded }
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp)
-        ) {
-            // --- Header (Name + Actions) ---
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = searchProfile.name,
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (onChooseClick != null) {
-                        IconButton(onClick = onChooseClick) {
-                            Icon(imageVector = Icons.Filled.Wifi, contentDescription = null)
-                        }
-                    }
-                    if (onDeleteClick != null) {
-                        IconButton(onClick = onDeleteClick) {
-                            Icon(imageVector = Icons.Filled.Delete, contentDescription = null)
-                        }
-                    }
-                    // Visual cue for expansion
-                    Icon(
-                        imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                        contentDescription = null,
-                        modifier = Modifier.alpha(0.5f)
-                    )
-                }
-            }
-
-            // --- Expanded Content (Text below content) ---
-            if (expanded) {
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                Column {
-                    searchProfile.interests.forEach { item ->
-                        Text(
-                            text = item.name,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 2.dp),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            }
-        }
-    }
-}

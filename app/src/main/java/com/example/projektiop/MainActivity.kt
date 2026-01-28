@@ -146,7 +146,7 @@ class MainActivity : AppCompatActivity() {
                                 unbindService(serviceConnection)
                                 isBound = false
                             }
-                            stopService(Intent(Intent(this@MainActivity, ChatUpdateService::class.java)))
+                            stopService(Intent(this@MainActivity, ChatUpdateService::class.java))
                         }
                         is AppStateEvent.OnAuthorization -> {}
                     }
@@ -207,30 +207,43 @@ class MainActivity : AppCompatActivity() {
                     BLEActions.START_SCAN -> {
                         localBTPermissionsManager.requestBluetoothPermissions(this@MainActivity, permissionsLauncher)
                         localBTPermissionsManager.showBluetoothLocationSnackbar(this@MainActivity)
-                        val intent = Intent(this@MainActivity, BLEService::class.java).apply {
-                            action = BLEActions.START_SCAN.toString()
+                        if (localBTPermissionsManager.hasPermissions(localBTPermissionsManager.getRequiredPermissionsScan())) {
+                            try {
+                                val intent = Intent(this@MainActivity, BLEService::class.java).apply {
+                                    action = BLEActions.START_SCAN.toString()
+                                }
+                                startService(intent)
+                            } catch(e: Exception) {}
                         }
-                        startService(intent)
                     }
                     BLEActions.STOP_SCAN -> {
-                        val intent = Intent(this@MainActivity, BLEService::class.java).apply {
-                            action = BLEActions.STOP_SCAN.toString()
-                        }
-                        startService(intent)
+                        try {
+                            val intent = Intent(this@MainActivity, BLEService::class.java).apply {
+                                action = BLEActions.STOP_SCAN.toString()
+                            }
+                            startService(intent)
+                        } catch(e: Exception) {}
                     }
                     BLEActions.START_ADVERTISE -> {
                         localBTPermissionsManager.requestBluetoothPermissions(this@MainActivity, permissionsLauncher)
                         localBTPermissionsManager.showBluetoothLocationSnackbar(this@MainActivity)
-                        val intent = Intent(this@MainActivity, BLEService::class.java).apply {
-                            action = BLEActions.START_ADVERTISE.toString()
+                        if (localBTPermissionsManager.hasPermissions(localBTPermissionsManager.getRequiredPermissionsAdvertise())) {
+                            try {
+                                val intent = Intent(this@MainActivity, BLEService::class.java).apply {
+                                    action = BLEActions.START_ADVERTISE.toString()
+                                }
+                                startService(intent)
+                            } catch(e: Exception) {}
                         }
-                        startService(intent)
+
                     }
                     BLEActions.STOP_ADVERTISE -> {
-                        val intent = Intent(this@MainActivity, BLEService::class.java).apply {
-                            action = BLEActions.STOP_ADVERTISE.toString()
-                        }
-                        startService(intent)
+                        try {
+                            val intent = Intent(this@MainActivity, BLEService::class.java).apply {
+                                action = BLEActions.STOP_ADVERTISE.toString()
+                            }
+                            startService(intent)
+                        } catch(e: Exception) {}
                     }
                 }
             }

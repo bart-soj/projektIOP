@@ -39,10 +39,12 @@ class BTPermissionsManager(private val context: Context) {
     fun showBluetoothLocationSnackbar(context: Context) {
         var text = ""
         if (!isBluetoothEnabled())
-            text += context.getString(R.string.enable_bluetooth) + " "
+            text += context.getString(R.string.enable_bluetooth) // + " "
 
+        /*
         if (!isLocationEnabled())
             text += context.getString(R.string.enable_location)
+         */
 
         if (text.isNotBlank())
             Toast.makeText(context, text, Toast.LENGTH_LONG).show()
@@ -53,12 +55,12 @@ class BTPermissionsManager(private val context: Context) {
         permissions.add(Manifest.permission.BLUETOOTH_SCAN)
         permissions.add(Manifest.permission.BLUETOOTH_ADVERTISE)
         permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
-        permissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
+        // permissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
         return permissions.toTypedArray()
     }
 
     fun getRequiredPermissionsScan(): Array<String> {
-        return arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.ACCESS_FINE_LOCATION)
+        return arrayOf(Manifest.permission.BLUETOOTH_SCAN, /*Manifest.permission.ACCESS_FINE_LOCATION*/)
     }
 
     fun getRequiredPermissionsAdvertise(): Array<String> {
