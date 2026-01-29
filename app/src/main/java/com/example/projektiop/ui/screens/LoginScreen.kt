@@ -94,7 +94,8 @@ fun LoginScreen(navController: NavController) {
                 SwitchWithText(
                     checked = rememberMe,
                     text = stringResource(R.string.remember_me),
-                    onCheckedChange = { viewModel.rememberMe() }
+                    onCheckedChange = { viewModel.rememberMe()
+                    }
                 )
             }
 

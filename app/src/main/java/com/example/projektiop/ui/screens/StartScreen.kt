@@ -23,6 +23,7 @@ import com.example.projektiop.ui.components.GlassPanel
 import com.example.projektiop.ui.viewmodels.AuthViewModel
 import org.koin.androidx.compose.koinViewModel
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.Color
 import com.example.projektiop.ui.components.LanguageButton
 import com.example.projektiop.ui.viewmodels.LanguageViewModel
 
@@ -66,10 +67,11 @@ fun StartScreen(navController: NavController) {
                 Text(
                     text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = MaterialTheme.colorScheme.onSecondary,
+                    modifier = Modifier.padding(top = 16.dp)
                 )
 
-                Spacer(modifier = Modifier.height(96.dp)) // Odstęp między tytułem a przyciskami
+                Spacer(modifier = Modifier.height(52.dp)) // Odstęp między tytułem a przyciskami
 
                 when (loading) {
                     true -> { CircularProgressIndicator() }
@@ -81,7 +83,11 @@ fun StartScreen(navController: NavController) {
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(50.dp)
+                                .height(50.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor =  MaterialTheme.colorScheme.onSecondary,
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
                         ) {
                             Text(text = stringResource(R.string.start_screen_login_button))
                         }
@@ -95,7 +101,10 @@ fun StartScreen(navController: NavController) {
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(50.dp)
+                                .height(50.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor =  MaterialTheme.colorScheme.onSecondary
+                            )
                         ) {
                             Text(text = stringResource(R.string.start_screen_register_button))
                         }

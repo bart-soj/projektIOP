@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.Report
 import androidx.compose.material3.ButtonDefaults.buttonColors
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -162,7 +163,9 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                     Text(msg, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.padding(12.dp))
                 }
             }
-            Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = input,
                     onValueChange = {
@@ -174,16 +177,27 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                         input = it },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
+                    shape = RoundedCornerShape(28.dp),
                     placeholder = {
                         Text(
                             if (isBlocked) stringResource(R.string.sending_unavailable)
                             else stringResource(R.string.write_message)
                         )
                     },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colorScheme.primary,
+                        unfocusedBorderColor = colorScheme.onSurface.copy(alpha = 0.4f),
+                        errorBorderColor = colorScheme.error,
+                        focusedLabelColor = colorScheme.primary,
+                        unfocusedContainerColor = colorScheme.surface.copy(alpha = 0.5f),
+                        focusedContainerColor = colorScheme.surface.copy(alpha = 0.8f),
+                        errorContainerColor = colorScheme.surface.copy(alpha = 0.5f)
+                    ),
                     enabled = !isBlocked
                 )
                 Spacer(Modifier.width(8.dp))
                 Button(
+                    modifier = Modifier.width(100.dp).height(48.dp),
                     onClick = {
                         viewModel.onSendClick(input)
                         input = "" },
