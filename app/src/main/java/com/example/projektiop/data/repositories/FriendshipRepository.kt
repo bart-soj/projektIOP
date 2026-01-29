@@ -123,20 +123,25 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
         try {
             val resp = friendshipApi.getFriendships(status = "blocked")
             if (!resp.isSuccessful) throw(Exception("Api failed to fetch blocked (${resp.code()})"))
-            val items = resp.body().orEmpty().filter { it.status == "blocked" }
-            var tmpBlockedIds = emptyList<String>()
+            val items = resp.body().orEmpty()
+            val tmpBlockedIds = emptyList<String>().toMutableList()
             for (dto in items) {
                 runCatching {
-                    databaseDataSource.addFriendship(dto.toRealm(sharedDataSource.get("_id", "")))
+                    val friendship = dto.toRealm(sharedDataSource.get("_id", ""))
+                    databaseDataSource.addFriendship(friendship)
                     val tmpUser = dto.user?.toRealm()
                     if (tmpUser != null) databaseDataSource.addUser(tmpUser)
                     val tmpId = dto.user?._id.toString()
                     tmpBlockedIds += tmpId
-                }.onFailure { e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
+                }.onFailure { e ->
+                    Log.d("BLOCKED", "caught exception when saving to db", e)
+                    Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
+                Log.d("BLOCKED", tmpBlockedIds.toString())
                 _blockedIds.value = tmpBlockedIds
             }
             Result.success(items.mapNotNull { it.toFriendItem() })
         } catch (e: Exception) {
+            Log.d("BLOCKED", "caught exception when fetching", e)
             val local = databaseDataSource.getFriendshipsByStatus(FriendshipStatus.BLOCKED)
             if (local.isNotEmpty()) {
                 Result.success(local.map { it.toFriendItem(databaseDataSource.getUserById(it._id.toHexString())) })
@@ -223,7 +228,7 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
                 Result.failure(Exception("Błąd blokowania (${resp.code()})"))
             }
         } catch (e: Exception) {
-            Log.d("block", "failed block $e")
+            Log.d("BLOCKED", "failed block $e")
             Result.failure(e)
         }
     }

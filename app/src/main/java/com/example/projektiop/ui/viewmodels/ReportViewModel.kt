@@ -55,7 +55,7 @@ class ReportViewModel(private val appContext: Context,
                 reportedMessageId = messageId.takeIf { it?.isNotBlank() == true },
                 reportType = reportType.name.lowercase(),
                 reason = if (!content.isNullOrBlank()) {
-                    "<content>${content}</content>" + reason
+                    "$content\n----------\n$reason"
                 } else {
                     reason
                 }

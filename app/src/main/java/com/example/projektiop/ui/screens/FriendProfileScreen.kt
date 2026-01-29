@@ -1,6 +1,5 @@
 package com.example.projektiop.ui.screens
 
-import android.widget.Space
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,23 +9,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.projektiop.R
-import java.time.LocalDate
-import java.time.Period
-import java.time.format.DateTimeFormatter
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.ui.res.stringResource
-import com.example.projektiop.data.util.isoToDisplayDate
-import com.example.projektiop.domain.models.Gender
-import com.example.projektiop.ui.components.GlassPanel
-import com.example.projektiop.ui.components.InterestTag
 import com.example.projektiop.ui.components.ProfileCard
-import com.example.projektiop.ui.components.UserAvatar
-import com.example.projektiop.util.translateInterestName
 import com.example.projektiop.ui.viewmodels.FriendProfileViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf

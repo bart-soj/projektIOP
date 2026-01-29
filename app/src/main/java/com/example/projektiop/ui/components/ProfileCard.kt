@@ -24,22 +24,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
 import com.example.projektiop.R
 import com.example.projektiop.data.util.isoToDisplayDate
 import com.example.projektiop.domain.models.Gender
 import com.example.projektiop.domain.models.User
 import com.example.projektiop.domain.models.UserInterest
 import com.example.projektiop.ui.screens.InfoItem
-import com.example.projektiop.util.translateInterestName
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -139,10 +134,9 @@ fun ProfileCard(user: User?, interests: List<UserInterest>?, loading: Boolean, e
                     InterestTag(base = stringResource(R.string.profile_no_interests), label = "")
                 } else {
                     interests.forEach { ui ->
-                        val rawBase = ui.interest.name.ifBlank { stringResource(R.string.profile_unknown_interest) }
-                        val translatedBase = translateInterestName(rawBase)
+                        val name = ui.interest.name.ifBlank { stringResource(R.string.profile_unknown_interest) }
                         val label = if (ui.customDescription.isNotBlank() && ui.customDescription != "null") ui.customDescription else ""
-                        InterestTag(base = translatedBase, label = label)
+                        InterestTag(base = name, label = label)
                     }
                 }
             }

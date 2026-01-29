@@ -1,6 +1,7 @@
 package com.example.projektiop.ui.viewmodels
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.repositories.AuthRepository
@@ -26,14 +27,29 @@ class SettingsViewModel(private val appContext: Context,
     private val _darkMode = MutableStateFlow<Boolean>(themePreference.isDark())
     val darkMode = _darkMode.asStateFlow()
 
-    private val _blockedFriendItems: MutableStateFlow<List<FriendItem>> = MutableStateFlow(emptyList())
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private val _blockedFriendItems: MutableStateFlow<List<FriendItem>> = MutableStateFlow(
+        friendshipRepository.blockedIds.value.mapNotNull { blockedId ->
+            val result = friendshipRepository.getLocalFriendItemByFriendId(blockedId)
+            when (result) {
+                is Result.Error -> {
+                    _errorMessage.value = appContext.getString(result.error.toStringRes())
+                    Log.d("BLOCKED", "failed getting friendItem")
+                    return@mapNotNull null
+                }
+
+                is Result.Success -> {
+                    result.data
+                }
+            }
+        }
+    )
     val blockedFriendItems: StateFlow<List<FriendItem>> = _blockedFriendItems.asStateFlow()
 
     private val _myUserId = MutableStateFlow<String?>(null)
     val myUserId: StateFlow<String?> = _myUserId.asStateFlow()
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     private val _processingIds = MutableStateFlow<List<String>>(emptyList())
     val processingIds: StateFlow<List<String>> = _processingIds.asStateFlow()
@@ -53,6 +69,7 @@ class SettingsViewModel(private val appContext: Context,
                     when (result) {
                         is Result.Error -> {
                                 _errorMessage.value = appContext.getString(result.error.toStringRes())
+                                Log.d("BLOCKED", "failed getting friendItem")
                                 return@mapNotNull null
                         }
                         is Result.Success -> {

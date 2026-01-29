@@ -40,7 +40,7 @@ class RealmProvider(private val sharedDataSource: SharedDataSource) {
 
 
             .deleteRealmIfMigrationNeeded() // deletes db when it changes, only for development
-            .encryptionKey(Base64.decode(sharedDataSource.getOrCreateDBKey(), Base64.NO_WRAP))
+             //.encryptionKey(Base64.decode(sharedDataSource.getOrCreateDBKey(), Base64.NO_WRAP))
             .schemaVersion(1)
             .build()
 
