@@ -28,9 +28,6 @@ class HelloBeaconApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        RealmProvider.init(this)
-        NotificationHelper.initChannels(this)
-
         startKoin {
             androidLogger()
             androidContext(this@HelloBeaconApp)
@@ -39,15 +36,21 @@ class HelloBeaconApp : Application() {
             )
         }
 
+        NotificationHelper.initChannels(this)
+
         // initializes language before MainActivity is created
         getKoin().get<LanguageRepository>()
+
+        val realmProvider by inject<RealmProvider>()
+        realmProvider.init(this)
     }
 
 
     override fun onTerminate() {
         super.onTerminate()
         val authRepository by inject<AuthRepository>()
-        RealmProvider.close()
+        val realmProvider by inject<RealmProvider>()
+        realmProvider.close()
         MainScope().launch {
             authRepository.onTerminate()
         }

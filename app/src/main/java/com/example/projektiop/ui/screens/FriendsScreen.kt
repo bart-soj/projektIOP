@@ -64,6 +64,10 @@ fun FriendsListScreen(
         lastIncomingIds = newIds
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.refreshAll()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(

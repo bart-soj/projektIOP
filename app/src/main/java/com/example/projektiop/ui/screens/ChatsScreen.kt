@@ -34,6 +34,10 @@ fun ChatsScreen(navController: NavController) {
     val error by viewModel.error.collectAsState()
     val searchText by viewModel.searchText.collectAsState()
 
+    LaunchedEffect(Unit) {
+        viewModel.refreshAll()
+    }
+
     Scaffold(
         bottomBar = {
             BottomNavigationBar(navController = navController, currentRoute = currentRoute)

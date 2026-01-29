@@ -1,11 +1,12 @@
 package com.example.projektiop.data.db.realm
 
 import android.content.Context
+import android.util.Base64
+import com.example.projektiop.data.SharedDataSource
 import com.example.projektiop.data.db.realm.objects.Chat
 import com.example.projektiop.data.db.realm.objects.Friendship
 import com.example.projektiop.data.db.realm.objects.Interest
 import com.example.projektiop.data.db.realm.objects.InterestCategory
-import com.example.projektiop.data.db.realm.objects.Message
 import com.example.projektiop.data.db.realm.objects.SearchProfile
 import com.example.projektiop.data.db.realm.objects.User
 import com.example.projektiop.data.db.realm.objects.UserInterest
@@ -15,8 +16,9 @@ import io.realm.kotlin.RealmConfiguration
 
 // TODO() use RealmSetTypes in RealmObject definition to represent relationships
 
-object RealmProvider {
+class RealmProvider(private val sharedDataSource: SharedDataSource) {
     private lateinit var realmInstance: Realm
+    private val DB_KEY_ALIAS = "hellobeacon_database_key"
 
     fun init(context: Context) {
         if (::realmInstance.isInitialized) return // Prevent re-initialization
@@ -35,7 +37,10 @@ object RealmProvider {
                 Chat::class
             )
         )
+
+
             .deleteRealmIfMigrationNeeded() // deletes db when it changes, only for development
+            .encryptionKey(Base64.decode(sharedDataSource.getOrCreateDBKey(), Base64.NO_WRAP))
             .schemaVersion(1)
             .build()
 

@@ -7,6 +7,7 @@ import android.security.keystore.KeyProperties
 import androidx.core.content.edit
 import com.example.projektiop.domain.models.base64
 import java.security.KeyStore
+import java.security.SecureRandom
 import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -14,18 +15,20 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 class SharedDataSource(private val appContext: Context) {
-    private val PREFS_NAME = "HelloBeaconSharedPrefs"
+    companion object {
+        private const val PREFS_NAME = "HelloBeaconSharedPrefs"
+        private const val BASE_URL_KEY: String = "BASE_URL"
+        //private const val BASE_URL = "https://hellobeacon.onrender.com" // Ujednolicona baza – auth i user pod jednym URL
+        private const val BASE_URL = "http://192.168.1.13:3000" // 10.0.2.2 is bound to lo of local machine
+        private const val DB_KEY_ALIAS = "hellobeacon_database_key"
+        private const val AES_KEY_ALIAS = "hellobeacon_encryption_key"
+        private const val AES_KEY_SIZE = 256
+        private const val ANDROID_KEYSTORE = "AndroidKeyStore"
+        private const val AES_TRANSFORMATION = "AES/GCM/NoPadding"
+        private const val GCM_IV_SIZE = 12
+    }
+
     private val prefs = getPreferences(appContext)
-
-    private val BASE_URL_KEY: String = "BASE_URL"
-    //private val BASE_URL = "https://hellobeacon.onrender.com" // Ujednolicona baza – auth i user pod jednym URL
-    private val BASE_URL = "http://192.168.1.13:3000" // 10.0.2.2 is bound to lo of local machine
-
-    private val AES_KEY_ALIAS = "hellobeacon_encryption_key"
-    private val AES_KEY_SIZE = 256
-    private val ANDROID_KEYSTORE = "AndroidKeyStore"
-    private val AES_TRANSFORMATION = "AES/GCM/NoPadding"
-    private val GCM_IV_SIZE = 12
 
     init {
         this.set(BASE_URL_KEY, BASE_URL)
@@ -88,6 +91,18 @@ class SharedDataSource(private val appContext: Context) {
 
         keyGenerator.init(spec)
         return keyGenerator.generateKey()
+    }
+
+    fun getOrCreateDBKey(): base64 {
+        val existing = getEncryptedBase64(DB_KEY_ALIAS)
+        if (existing != null) {
+            return existing
+        } else {
+            val keyBytes = ByteArray(64).also { SecureRandom().nextBytes(it) }
+            val newDBKey =  Base64.getEncoder().encodeToString(keyBytes)
+            setEncryptedBase64(DB_KEY_ALIAS, newDBKey)
+            return newDBKey
+        }
     }
 
     private fun encrypt(valueBase64: base64): base64 {
