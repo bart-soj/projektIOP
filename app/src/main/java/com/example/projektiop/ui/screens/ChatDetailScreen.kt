@@ -188,10 +188,7 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                         focusedBorderColor = colorScheme.primary,
                         unfocusedBorderColor = colorScheme.onSurface.copy(alpha = 0.4f),
                         errorBorderColor = colorScheme.error,
-                        focusedLabelColor = colorScheme.primary,
-                        unfocusedContainerColor = colorScheme.surface.copy(alpha = 0.5f),
-                        focusedContainerColor = colorScheme.surface.copy(alpha = 0.8f),
-                        errorContainerColor = colorScheme.surface.copy(alpha = 0.5f)
+                        focusedLabelColor = colorScheme.primary
                     ),
                     enabled = !isBlocked
                 )
