@@ -131,7 +131,7 @@ fun SwitchWithText(
 
                 uncheckedThumbColor = colorScheme.onSecondaryContainer,
                 uncheckedTrackColor = colorScheme.secondaryContainer,
-                uncheckedBorderColor = colorScheme.onSecondaryContainer,
+                uncheckedBorderColor = colorScheme.secondaryContainer,
 
             )
             )
