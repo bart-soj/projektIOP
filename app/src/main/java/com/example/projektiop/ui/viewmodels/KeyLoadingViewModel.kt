@@ -125,7 +125,7 @@ class KeyLoadingViewModel(private val appContext: Context,
                     val decryptionResult = keyUtils.getDecryptedKeyPairFromBackup(password, result.data, userId)
                     when(decryptionResult) {
                         is Result.Error -> _errorMessage.value = when (decryptionResult.error) {
-                            BackupError.WRONG_PASSWORD -> appContext.getString(R.string.error_invalid_password)
+                            BackupError.WRONG_PASSWORD -> appContext.getString(R.string.error_invalid_backup_password)
                         }
                         is Result.Success -> {
                             _gotKeys.value = true

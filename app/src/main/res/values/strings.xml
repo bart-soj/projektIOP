@@ -273,5 +273,6 @@
     <string name="friendship_blocked">Znajomość zablokowana!</string>
     <string name="date_picker">Wybierz datę</string>
     <string name="error_icon_content_description">Błąd</string>
+    <string name="error_invalid_backup_password">Niepoprawne hasło!</string>
 
 </resources>

@@ -274,4 +274,6 @@
     <string name="friendship_removed">Friendship ended!</string>
     <string name="friendship_blocked">You have been blocked!</string>
     <string name="date_picker">Choose a date</string>
+    <string name="error_icon_content_description">Error</string>
+    <string name="error_invalid_backup_password">Wrong password!</string>
 </resources>
