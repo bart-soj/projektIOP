@@ -26,6 +26,7 @@ import org.koin.core.parameter.parametersOf
 import org.koin.java.KoinJavaComponent.inject
 import kotlin.Result
 import kotlin.getValue
+import kotlin.toString
 
 data class FriendItem(
     val id: String,
@@ -158,10 +159,10 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
                 runCatching { databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.ACCEPTED)
                 }.onFailure {} //e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 _friendsIds.update { list ->
-                    list + friendId.toString()
+                    (list + friendId.toString()).distinct()
                 }
                 _pendingIds.update { list ->
-                    list - friendId.toString()
+                    list.filter { it != friendId.toString() }
                 }
                 Result.success(Unit)
             } else Result.failure(Exception("Błąd akceptacji (${r.code()})"))
@@ -176,7 +177,7 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
                 runCatching { databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.REJECTED)
                 }.onFailure {} //e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 _pendingIds.update { list ->
-                    list - friendId.toString()
+                    list.filter { it != friendId.toString() }
                 }
                 Result.success(Unit)
             } else Result.failure(Exception("Błąd odrzucenia (${r.code()})"))
@@ -215,13 +216,13 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
                 assert(blockedBy != null && friendId != null)
                 databaseDataSource.blockFriendship(friendshipId, blockedBy!!)
                 _blockedIds.update { list ->
-                    list + friendId!!
+                    (list + friendId!!).distinct()
                 }
                 _pendingIds.update { list ->
-                    list - friendId!!
+                    list.filter { it != friendId.toString() }
                 }
                 _friendsIds.update { list ->
-                    list - friendId!!
+                    list.filter { it != friendId.toString() }
                 }
                 Result.success(Unit)
             } else {
@@ -241,13 +242,13 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
         try {
             val resp = friendshipApi.unblockFriendship(friendshipId)
             if (resp.isSuccessful) {
-                val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
                 databaseDataSource.unblockFriendship(friendshipId)
+                val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
                 _friendsIds.update { list ->
-                    list + friendId.toString()
+                    (list + friendId.toString()).distinct()
                 }
                 _blockedIds.update { list ->
-                    list - friendId.toString()
+                    list.filter { it != friendId.toString() }
                 }
                 Result.success(Unit)
             } else Result.failure(Exception("Błąd odblokowania (${resp.code()})"))
@@ -258,18 +259,19 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
         databaseDataSource.getUnblocked(friendId)
     }
 
-    fun getLocalFriendItemByFriendId(friendId: String): com.example.projektiop.domain.Result<FriendItem, DataError.Local> {
+    suspend fun getLocalFriendItemByFriendId(friendId: String): com.example.projektiop.domain.Result<FriendItem, DataError.Local> = withContext(
+        Dispatchers.IO) {
         try {
             val friendship = databaseDataSource.getFriendshipByFriendId(friendId)
-            if (friendship == null) return com.example.projektiop.domain.Result.Error(DataError.Local.NO_DATA)
+            if (friendship == null) return@withContext com.example.projektiop.domain.Result.Error(DataError.Local.NO_DATA)
             val friendItem = friendship.toFriendItem(databaseDataSource.getUserById(friendId))
-            return com.example.projektiop.domain.Result.Success(friendItem)
+            return@withContext com.example.projektiop.domain.Result.Success(friendItem)
         } catch(e: Exception) {
-            return com.example.projektiop.domain.Result.Error(DataError.Local.DB_ERROR)
+            return@withContext com.example.projektiop.domain.Result.Error(DataError.Local.DB_ERROR)
         }
     }
 
-    fun getLocalFriendship(friendId: String): com.example.projektiop.domain.Result<Friendship, DataError.Local> {
+    suspend fun getLocalFriendship(friendId: String): com.example.projektiop.domain.Result<Friendship, DataError.Local> {
         try {
             val friendship = databaseDataSource.getFriendshipByFriendId(friendId)
             val friend = databaseDataSource.getUserById(friendId)?.toDomain()

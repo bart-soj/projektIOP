@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -23,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.projektiop.R
@@ -33,6 +35,7 @@ import com.example.projektiop.ui.viewmodels.BackupViewModel
 import com.example.projektiop.ui.viewmodels.LanguageViewModel
 import com.example.projektiop.ui.viewmodels.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.foundation.lazy.items
 
 @Composable
 fun SettingsScreen(
@@ -341,8 +344,8 @@ private fun BlockedUsersDialog(
 ) {
     var loading by remember { mutableStateOf(false) }
 
-    val processingIds by viewModel.processingIds.collectAsState()
-    val items by viewModel.blockedFriendItems.collectAsState()
+    val processingIds by viewModel.processingIds.collectAsStateWithLifecycle()
+    val blocked by viewModel.blockedFriendItems.collectAsStateWithLifecycle()
     val error by viewModel.errorMessage.collectAsState()
     val myUserId by viewModel.myUserId.collectAsState()
 
@@ -358,13 +361,13 @@ private fun BlockedUsersDialog(
             when {
                 loading -> { CircularProgressIndicator() }
                 error != null -> { Text(error ?: stringResource(id = R.string.error), color = MaterialTheme.colorScheme.error) }
-                items.isEmpty() -> { Text(text = stringResource(id = R.string.no_blocked_users)) }
+                blocked.isEmpty() -> { Text(text = stringResource(id = R.string.no_blocked_users)) }
                 else -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        items.forEach { u ->
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        items(blocked, key = { it.id }) { u ->
                             val showUnblock = myUserId != null && myUserId == u.blockedBy
 
-                            if (showUnblock && u.id !in processingIds) {
+                            if (showUnblock) {
                                 FriendCard(
                                     friend = u,
                                     modifier = Modifier.fillMaxWidth(),

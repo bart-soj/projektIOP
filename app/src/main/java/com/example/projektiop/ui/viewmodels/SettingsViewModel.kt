@@ -12,11 +12,16 @@ import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.DataError
 import com.example.projektiop.domain.Result
 import com.example.projektiop.ui.toStringRes
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsViewModel(private val appContext: Context,
                         private val themePreference: ThemePreference,
@@ -30,23 +35,20 @@ class SettingsViewModel(private val appContext: Context,
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    private val _blockedFriendItems: MutableStateFlow<List<FriendItem>> = MutableStateFlow(
-        friendshipRepository.blockedIds.value.mapNotNull { blockedId ->
-            val result = friendshipRepository.getLocalFriendItemByFriendId(blockedId)
-            when (result) {
-                is Result.Error -> {
-                    _errorMessage.value = appContext.getString(result.error.toStringRes())
-                    Log.d("BLOCKED", "failed getting friendItem")
-                    return@mapNotNull null
-                }
-
-                is Result.Success -> {
-                    result.data
+    val blockedFriendItems: StateFlow<List<FriendItem>> =
+        friendshipRepository.blockedIds
+            .map { blockedIds ->
+                blockedIds.mapNotNull { blockedId ->
+                    when (val result = friendshipRepository.getLocalFriendItemByFriendId(blockedId)) {
+                        is Result.Success -> result.data
+                        is Result.Error -> {
+                            _errorMessage.value = appContext.getString(result.error.toStringRes())
+                            null
+                        }
+                    }
                 }
             }
-        }
-    )
-    val blockedFriendItems: StateFlow<List<FriendItem>> = _blockedFriendItems.asStateFlow()
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val _myUserId = MutableStateFlow<String?>(null)
     val myUserId: StateFlow<String?> = _myUserId.asStateFlow()
@@ -62,31 +64,14 @@ class SettingsViewModel(private val appContext: Context,
                 _myUserId.value = updatedUser?.id
             }
         }
-        viewModelScope.launch {
-            friendshipRepository.blockedIds.collect { blockedList ->
-                _blockedFriendItems.value = blockedList.mapNotNull { blockedId ->
-                    val result = friendshipRepository.getLocalFriendItemByFriendId(blockedId)
-                    when (result) {
-                        is Result.Error -> {
-                                _errorMessage.value = appContext.getString(result.error.toStringRes())
-                                Log.d("BLOCKED", "failed getting friendItem")
-                                return@mapNotNull null
-                        }
-                        is Result.Success -> {
-                            result.data
-                        }
-                    }
-                }
-            }
-        }
     }
 
 
     fun onUnblockClick(friendId: String, friendshipId: String) {
-        _processingIds.update { list -> list + friendId }
         viewModelScope.launch {
-            friendshipRepository.unblockFriendship(friendshipId)
-            _processingIds.update { list -> list - friendId }
+            friendshipRepository.unblockFriendship(friendshipId).onFailure { e ->
+                _errorMessage.value = e.message
+            }
         }
     }
 

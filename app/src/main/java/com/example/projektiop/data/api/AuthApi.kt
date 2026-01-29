@@ -12,7 +12,7 @@ interface AuthApi {
     @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
 
-    @POST("auth/resend-verification")
+    @POST("auth/resend-verification-email")
     suspend fun resendVerificationEmail(
         @Body request: EmailRequest
     ): Response<MessageResponse>
