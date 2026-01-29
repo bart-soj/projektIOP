@@ -77,10 +77,7 @@ fun DatePickerDocked(
                 focusedBorderColor = colorScheme.primary,
                 unfocusedBorderColor = colorScheme.onSurface.copy(alpha = 0.4f),
                 errorBorderColor = colorScheme.error,
-                focusedLabelColor = colorScheme.primary,
-                unfocusedContainerColor = colorScheme.surface.copy(alpha = 0.5f),
-                focusedContainerColor = colorScheme.surface.copy(alpha = 0.8f),
-                errorContainerColor = colorScheme.surface.copy(alpha = 0.5f)
+                focusedLabelColor = colorScheme.primary
             ),
             shape = RoundedCornerShape(28.dp)
         )
