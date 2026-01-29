@@ -11,12 +11,13 @@ import com.example.projektiop.data.repositories.InterestRepository
 import com.example.projektiop.data.repositories.OtherUserRepository
 import com.example.projektiop.data.repositories.SearchProfileRepository
 import com.example.projektiop.data.repositories.UserRepository
+import com.example.projektiop.domain.InterestSimilarity
+import com.example.projektiop.domain.OtsukaOchiaiSimilarityImpl
 import com.example.projektiop.domain.models.FriendshipStatus
 import com.example.projektiop.domain.models.Interest
 import com.example.projektiop.domain.models.SearchProfile
 import com.example.projektiop.domain.models.UserInterest
 import com.example.projektiop.domain.Result
-import com.example.projektiop.domain.cosineSimilarity
 import com.example.projektiop.ui.toStringRes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,7 +50,8 @@ class ScannerViewModel(application: Application,
                        private val friendshipRepository: FriendshipRepository,
                        private val bleManager: BluetoothRepository,
                        private val searchProfileRepository: SearchProfileRepository,
-                       private val interestRepository: InterestRepository) : AndroidViewModel(application) {
+                       private val interestRepository: InterestRepository,
+                       private val similarityFunction: InterestSimilarity) : AndroidViewModel(application) {
 
     val isScanning: StateFlow<Boolean> = bleManager.isScanning
     val isAdvertising: StateFlow<Boolean> = bleManager.isAdvertising
@@ -144,7 +146,7 @@ class ScannerViewModel(application: Application,
 
         val sorted = uwi.sortedByDescending { pair ->
             val interests = pair.second.map { it.id }
-            cosineSimilarity(interests.toSet(), myInterests.toSet())
+            similarityFunction.interestSimilarity(interests.toSet(), myInterests.toSet())
         }
         sorted.mapNotNull { pair ->
             val user = pair.first

@@ -27,9 +27,6 @@ sealed interface DataError: RootError {
 }
 
 
-
-
-
 enum class BackupError: RootError {
     WRONG_PASSWORD
 }
