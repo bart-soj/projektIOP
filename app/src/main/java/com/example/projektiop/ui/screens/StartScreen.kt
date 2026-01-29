@@ -66,10 +66,11 @@ fun StartScreen(navController: NavController) {
                 Text(
                     text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = MaterialTheme.colorScheme.background,
+                    modifier = Modifier.padding(top = 16.dp)
                 )
 
-                Spacer(modifier = Modifier.height(96.dp)) // Odstęp między tytułem a przyciskami
+                Spacer(modifier = Modifier.height(52.dp)) // Odstęp między tytułem a przyciskami
 
                 when (loading) {
                     true -> { CircularProgressIndicator() }
@@ -95,7 +96,11 @@ fun StartScreen(navController: NavController) {
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(50.dp)
+                                .height(50.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.background
+
+                            )
                         ) {
                             Text(text = stringResource(R.string.start_screen_register_button))
                         }

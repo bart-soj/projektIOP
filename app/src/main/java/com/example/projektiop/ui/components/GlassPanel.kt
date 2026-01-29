@@ -30,7 +30,7 @@ fun GlassPanel (content: @Composable ColumnScope.() -> Unit) {
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .background(Color.White.copy(alpha = 0.05f))
+                .background(Color.Black.copy(alpha = 0.2f))
                 .blur(20.dp)
         )
 

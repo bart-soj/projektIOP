@@ -8,13 +8,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -55,7 +58,17 @@ fun MultiSelectInterestsDropdown(
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier
                 .menuAnchor()
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = colorScheme.primary,
+                unfocusedBorderColor = colorScheme.onSurface.copy(alpha = 0.4f),
+                errorBorderColor = colorScheme.error,
+                focusedLabelColor = colorScheme.primary,
+                unfocusedContainerColor = colorScheme.surface.copy(alpha = 0.5f),
+                focusedContainerColor = colorScheme.surface.copy(alpha = 0.8f),
+                errorContainerColor = colorScheme.surface.copy(alpha = 0.5f)
+            ),
+            shape = RoundedCornerShape(28.dp)
         )
         ExposedDropdownMenu(
             expanded = expanded,

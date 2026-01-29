@@ -6,12 +6,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,29 +51,38 @@ fun OutlinedTextFieldWithClearAndError(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    modifier: Modifier = Modifier, // Dobrze jest dać modifier wcześniej
-    errorList: List<String> = emptyList(),// Zmień na nullable, aby nie wymagać wiadomości, gdy nie ma błędu
-    isError: Boolean = false, // Zachowaj isError jako główny wskaźnik błędu
+    modifier: Modifier = Modifier,
+    errorList: List<String> = emptyList(),
+    isError: Boolean = false,
     singleLine: Boolean = true,
-    visualTransformation: VisualTransformation = VisualTransformation.None // Domyślnie brak transformacji (tekst widoczny)
+    visualTransformation: VisualTransformation = VisualTransformation.None
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier, // Przekaż modifier
+        modifier = modifier,
         label = { Text(label) },
         singleLine = singleLine,
+        shape = RoundedCornerShape(28.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = colorScheme.primary,
+            unfocusedBorderColor = colorScheme.onSurface.copy(alpha = 0.4f),
+            errorBorderColor = colorScheme.error,
+            focusedLabelColor = colorScheme.primary,
+            unfocusedContainerColor = colorScheme.surface.copy(alpha = 0.5f),
+            focusedContainerColor = colorScheme.surface.copy(alpha = 0.8f),
+            errorContainerColor = colorScheme.surface.copy(alpha = 0.5f)
+        ),
+        isError = isError,
         trailingIcon = {
-            // Ikona czyszczenia tylko gdy pole nie jest puste
-            if (value.isNotEmpty()) {
+            if (value.isNotEmpty()){
                 IconButton(
                     onClick = {
-                        // Wyczyszczenie przez ustawienie pustego stringa
                         onValueChange("")
                     },
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Clear, // Ikona z Material Icons
+                        imageVector = Icons.Filled.Clear,
                         contentDescription = stringResource(
                             R.string.clear_content_description,
                             label
@@ -75,8 +90,13 @@ fun OutlinedTextFieldWithClearAndError(
                     )
                 }
             }
+            else if (isError){
+               Icon(
+                   imageVector = Icons.Filled.ErrorOutline,
+                     contentDescription = stringResource(R.string.error_icon_content_description)
+               )
+            }
         },
-        isError = isError,
         supportingText = {
             if (isError && errorList.isNotEmpty() ) {
                 ValidationErrorList(errorList)
@@ -102,6 +122,18 @@ fun SwitchWithText(
     {
         Text(text)
         Spacer(modifier = Modifier.padding(8.dp))
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = colorScheme.secondaryContainer,
+                checkedTrackColor = colorScheme.onSecondaryContainer,
+                checkedBorderColor = colorScheme.secondaryContainer,
+
+                uncheckedThumbColor = colorScheme.onSecondaryContainer,
+                uncheckedTrackColor = colorScheme.secondaryContainer,
+                uncheckedBorderColor = colorScheme.onSecondaryContainer,
+
+            )
+            )
     }
 }

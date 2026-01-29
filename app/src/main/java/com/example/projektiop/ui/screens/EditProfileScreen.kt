@@ -9,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,6 +25,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.MaterialTheme.colorScheme
 import com.example.projektiop.data.util.isoDateStringToMillis
 import com.example.projektiop.domain.models.Gender
 import com.example.projektiop.domain.models.Interest
@@ -123,7 +125,17 @@ fun EditProfileScreen(
                 label = { Text(stringResource(id = R.string.nickname_label)) },
                 supportingText = { Text(stringResource(id = R.string.nickname_count, name.length)) },
                 isError = name.isBlank() || name.length > 50,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = colorScheme.primary,
+                    unfocusedBorderColor = colorScheme.onSurface.copy(alpha = 0.4f),
+                    errorBorderColor = colorScheme.error,
+                    focusedLabelColor = colorScheme.primary,
+                    unfocusedContainerColor = colorScheme.surface.copy(alpha = 0.5f),
+                    focusedContainerColor = colorScheme.surface.copy(alpha = 0.8f),
+                    errorContainerColor = colorScheme.surface.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(28.dp)
             )
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
@@ -131,7 +143,17 @@ fun EditProfileScreen(
                 onValueChange = { if (it.length <= 100) location = it },
                 label = { Text(stringResource(id = R.string.location_label)) },
                 supportingText = { Text(stringResource(id = R.string.location_count , location.length)) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = colorScheme.primary,
+                    unfocusedBorderColor = colorScheme.onSurface.copy(alpha = 0.4f),
+                    errorBorderColor = colorScheme.error,
+                    focusedLabelColor = colorScheme.primary,
+                    unfocusedContainerColor = colorScheme.surface.copy(alpha = 0.5f),
+                    focusedContainerColor = colorScheme.surface.copy(alpha = 0.8f),
+                    errorContainerColor = colorScheme.surface.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(28.dp)
             )
             Spacer(Modifier.height(8.dp))
             DatePickerDocked(birthDate, onDateSelected = { millis -> birthDate = millis })
@@ -143,7 +165,17 @@ fun EditProfileScreen(
                 onValueChange = { if (it.length <= 500) description = it },
                 label = { Text(stringResource(id = R.string.description_label)) },
                 supportingText = { Text(stringResource(id = R.string.description_count, description.length)) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = colorScheme.primary,
+                    unfocusedBorderColor = colorScheme.onSurface.copy(alpha = 0.4f),
+                    errorBorderColor = colorScheme.error,
+                    focusedLabelColor = colorScheme.primary,
+                    unfocusedContainerColor = colorScheme.surface.copy(alpha = 0.5f),
+                    focusedContainerColor = colorScheme.surface.copy(alpha = 0.8f),
+                    errorContainerColor = colorScheme.surface.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(28.dp)
             )
             Spacer(Modifier.height(8.dp))
             MultiSelectInterestsDropdown(
@@ -195,7 +227,17 @@ fun EditProfileScreen(
                                     }
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = colorScheme.primary,
+                                unfocusedBorderColor = colorScheme.onSurface.copy(alpha = 0.4f),
+                                errorBorderColor = colorScheme.error,
+                                focusedLabelColor = colorScheme.primary,
+                                unfocusedContainerColor = colorScheme.surface.copy(alpha = 0.5f),
+                                focusedContainerColor = colorScheme.surface.copy(alpha = 0.8f),
+                                errorContainerColor = colorScheme.surface.copy(alpha = 0.5f)
+                            ),
+                            shape = RoundedCornerShape(28.dp)
                         )
                     }
                 }
@@ -206,7 +248,17 @@ fun EditProfileScreen(
                 onValueChange = { if (it.length <= 280) broadcastMessage = it },
                 label = { Text(stringResource(id = R.string.broadcast_message_label)) },
                 supportingText = { Text(stringResource(id = R.string.broadcast_message_count, broadcastMessage.length)) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = colorScheme.primary,
+                    unfocusedBorderColor = colorScheme.onSurface.copy(alpha = 0.4f),
+                    errorBorderColor = colorScheme.error,
+                    focusedLabelColor = colorScheme.primary,
+                    unfocusedContainerColor = colorScheme.surface.copy(alpha = 0.5f),
+                    focusedContainerColor = colorScheme.surface.copy(alpha = 0.8f),
+                    errorContainerColor = colorScheme.surface.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(28.dp)
             )
             Spacer(Modifier.height(16.dp))
             Button(
@@ -282,7 +334,17 @@ private fun GenderDropdown(gender: Gender?, onGenderChange: (Gender?) -> Unit) {
             readOnly = true,
             label = { Text(stringResource(id = R.string.gender_label)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor().fillMaxWidth()
+            modifier = Modifier.menuAnchor().fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = colorScheme.primary,
+                unfocusedBorderColor = colorScheme.onSurface.copy(alpha = 0.4f),
+                errorBorderColor = colorScheme.error,
+                focusedLabelColor = colorScheme.primary,
+                unfocusedContainerColor = colorScheme.surface.copy(alpha = 0.5f),
+                focusedContainerColor = colorScheme.surface.copy(alpha = 0.8f),
+                errorContainerColor = colorScheme.surface.copy(alpha = 0.5f)
+            ),
+            shape = RoundedCornerShape(28.dp)
         )
         ExposedDropdownMenu(
             expanded = expanded,
