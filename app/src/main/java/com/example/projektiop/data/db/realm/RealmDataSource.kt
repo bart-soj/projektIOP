@@ -76,8 +76,13 @@ class RealmDataSource(private val realm: Realm) {
         }
     }
 
-    fun getChatByFriendId(friendId: String): Chat? {
-        return realm.query<Chat>(Chat::class, "participants = $0", friendId).first().find()
+    fun getChatByFriendId(friendId: String, myId: String): Chat? {
+        return realm.query<Chat>(
+            Chat::class,
+            "participants CONTAINS $0 AND participants CONTAINS $1",
+            friendId,
+            myId
+        ).first().find()
     }
 
     fun getChatById(chatId: String): Chat? {

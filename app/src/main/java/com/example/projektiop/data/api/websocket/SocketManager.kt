@@ -63,7 +63,7 @@ class SocketManager(private val url: String, private val sharedDataSource: Share
 
                 on("writing_start") { chatId ->
                     scope.launch {
-                        Log.d("SOCC", "in writing man")
+                        Log.d("SOCC", "in writing man $chatId")
                         _chatEventFlow.emit(ChatEvent.WritingStart(chatId))
                     }
                 }

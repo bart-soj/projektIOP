@@ -24,6 +24,7 @@ import com.example.projektiop.domain.DataError
 import com.example.projektiop.util.NotificationHelper
 import com.example.projektiop.data.util.apiExceptionToDataError
 import com.example.projektiop.domain.models.User
+import com.example.projektiop.util.RouteHolder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -158,7 +159,7 @@ class ChatRepository(private val chatApi: ChatApi,
     }
 
     suspend fun ensureChatWithUser(friendId: String, myId: String): com.example.projektiop.domain.Result<DomainChat, DataError>  {
-        val localData = dbRepository.getChatByFriendId(friendId)
+        val localData = dbRepository.getChatByFriendId(friendId, myId)
         if (localData != null) return com.example.projektiop.domain.Result.Success(localData.toDomain(myId, dbRepository))
         try {
             // if we created the chat and got an error before saving it could exist on server but not locally
@@ -166,7 +167,8 @@ class ChatRepository(private val chatApi: ChatApi,
             val existing = chatApi.getChats()
             if (existing.isSuccessful) {
                 existing.body().orEmpty().firstOrNull { chat ->
-                    chat.participants?.any { it == friendId } == true
+                    val participants = chat.participants.orEmpty()
+                    participants.contains(friendId) && participants.contains(myId)
                 }?.let {
                     dto = it
                 }
@@ -294,10 +296,17 @@ class ChatRepository(private val chatApi: ChatApi,
             val chat = dbRepository.getChatById(chatId)
             val friendId = chat?.participants?.first{myId != it}
             val friend = dbRepository.getUserById(friendId!!)
+            val route = RouteHolder.currentRoute.value
+            val routeChatId = RouteHolder.currentChatId.value
+
             decryptMessage(message, friendId).onSuccess { decrypted ->
                 dbRepository.updateLastMessage(chatId, message.id, message.createdAt.toString())
                 if (message.senderId != myId) {
-                    NotificationHelper.notifyMessage(context, friend?.username.toString(), decrypted.content.take(100))
+                    if (route?.contains("chat_detail") == true && routeChatId == chatId) {
+                        return
+                    } else {
+                        NotificationHelper.notifyMessage(context, friend?.username.toString(), decrypted.content.take(100))
+                    }
                 }
             }
         } catch (e: Exception) {}

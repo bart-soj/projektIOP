@@ -63,7 +63,7 @@ class FriendsViewModel(
                 friendshipRepository.blockedIds,
                 friendshipRepository.friendsIds,
                 friendshipRepository.pendingIds
-            ) {
+            ){}.collect {
                 refreshAll()
             }
         }

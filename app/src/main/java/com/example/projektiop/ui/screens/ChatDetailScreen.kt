@@ -146,10 +146,12 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                 }
             }
             if(typing) {
-                MessageBubble(text = stringResource(R.string.typing), incoming = true,
+                MessageBubble(
+                    text = stringResource(R.string.typing), incoming = true,
                     groupedWithPrev = false,
-                    avatarUrl = chat!!.participants.firstOrNull { user -> user.id != myUser!!.id}?.profile?.avatarUrl,
-                    timeText = "")
+                    avatarUrl = chat!!.participants.firstOrNull { user -> user.id != myUser!!.id }?.profile?.avatarUrl,
+                    timeText = ""
+                )
             }
 
             val isBlocked = blockInfo != null

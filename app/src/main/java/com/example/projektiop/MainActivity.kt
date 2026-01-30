@@ -63,6 +63,7 @@ import com.example.projektiop.ui.screens.KeyLoadingScreen
 import com.example.projektiop.ui.screens.ReportScreen
 import com.example.projektiop.ui.screens.ResendEmailScreen
 import com.example.projektiop.util.NotificationHelper
+import com.example.projektiop.util.RouteHolder
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
@@ -323,8 +324,9 @@ fun AuthNavGraph() {
 @Composable
 fun MainNavGraph() {
     val navController = rememberNavController()
-    navController.addOnDestinationChangedListener { _, destination, _ ->
-        Log.d("NAV_DEBUG", "Actual Destination: ${destination.route}")
+    navController.addOnDestinationChangedListener { _, destination, arguments ->
+        val currentChatId = arguments?.getString("chatId")
+        RouteHolder.setRoute(destination.route, currentChatId)
     }
     val startDestination = "main"
 

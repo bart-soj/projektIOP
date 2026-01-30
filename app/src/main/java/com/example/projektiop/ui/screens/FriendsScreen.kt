@@ -43,7 +43,8 @@ fun FriendsListScreen(
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is FriendsUiEffect.NavigateToProfile -> navController.navigate(effect.route)
-                is FriendsUiEffect.NavigateToChat -> navController.navigate("chat_detail/${effect.chatId}?friendId=${effect.friendId}")
+                is FriendsUiEffect.NavigateToChat ->
+                    navController.navigate("chat_detail/${effect.chatId}?friendId=${effect.friendId}")
                 is FriendsUiEffect.ShowToast -> Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
                 is FriendsUiEffect.NavigateToReport -> {
                     val target = "report/${effect.friendId}"
@@ -51,17 +52,6 @@ fun FriendsListScreen(
                 }
             }
         }
-    }
-
-    LaunchedEffect(uiState.incomingRequests) {
-        val newIds = uiState.incomingRequests.map{ it.friendshipId }.toSet()
-        val newOnes = uiState.incomingRequests.filter { it.friendshipId !in lastIncomingIds }
-        if (newOnes.isNotEmpty()) {
-            newOnes.take(3).forEach { req ->
-                NotificationHelper.notifyFriendRequest(context, req.displayName)
-            }
-        }
-        lastIncomingIds = newIds
     }
 
     LaunchedEffect(Unit) {

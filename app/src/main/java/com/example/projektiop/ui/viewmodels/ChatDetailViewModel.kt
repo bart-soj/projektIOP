@@ -87,8 +87,12 @@ class ChatDetailViewModel(private val appContext: Context,
                             }
                         }
                         is ChatEvent.Send -> {}
-                        is ChatEvent.WritingStart -> { _typing.value = true }
-                        is ChatEvent.WritingStop -> { _typing.value = false }
+                        is ChatEvent.WritingStart -> {
+                            Log.d("SOCC", "in writing start vm")
+                            _typing.value = true }
+                        is ChatEvent.WritingStop -> {
+                            Log.d("SOCC", "in writing stop vm")
+                            _typing.value = false }
                         is ChatEvent.Block -> {
                             Log.d("SOCC", "got block vm")
                             _blockInfo.value = BlockInfo(
