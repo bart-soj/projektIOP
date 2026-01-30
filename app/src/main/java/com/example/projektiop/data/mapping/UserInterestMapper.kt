@@ -22,7 +22,6 @@ fun UserInterestDto.toRealm(userId: String, dbRepository: RealmDataSource): User
         interestId = interestId,
         interest = interest,
         customDescription = this.customDescription ?: "",
-        // createdAt = TODO(),
     )
 }
 

@@ -14,7 +14,6 @@ import com.example.projektiop.data.db.realm.objects.UserProfile
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 
-// TODO() use RealmSetTypes in RealmObject definition to represent relationships
 
 class RealmProvider(private val sharedDataSource: SharedDataSource) {
     private lateinit var realmInstance: Realm

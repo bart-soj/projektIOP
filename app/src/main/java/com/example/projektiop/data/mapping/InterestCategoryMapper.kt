@@ -16,7 +16,6 @@ fun PublicInterestCategoryDto.toRealm(): InterestCategory {
     return InterestCategory.create(
         id = id,
         name = name,
-        // createdAt = TODO(),
         updatedAt = RealmInstant.now()
     )
 }

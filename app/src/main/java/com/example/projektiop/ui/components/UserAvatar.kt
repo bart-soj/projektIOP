@@ -18,7 +18,7 @@ import org.koin.compose.koinInject
 private const val BASE_URL_KEY = "BASE_URL"
 
 
-@Composable // TODO() do we need to build url and get token here?
+@Composable
 fun UserAvatar(url: String?, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val sharedDataSource  = koinInject<SharedDataSource>()

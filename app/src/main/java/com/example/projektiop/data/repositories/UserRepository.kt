@@ -257,7 +257,7 @@ class UserRepository(private val userApi: UserApi,
                             userInterests,
                             body._id!!,
                             MutableStateFlow(null)
-                        ) // TODO() placeholder mutable stateflow for now
+                        )
                     } catch (e: Exception) {
                         return@withContext Result.failure<UserProfileResponse>(
                             Exception("Error saving interests to database: $e")
@@ -361,7 +361,6 @@ class UserRepository(private val userApi: UserApi,
         }
     }
 
-    // TODO make it respond to individual failures not just all failing
     suspend fun syncMyInterestsWithDescriptions(
         desired: Map<DomainInterest, String>
     ): Result<Unit> {
