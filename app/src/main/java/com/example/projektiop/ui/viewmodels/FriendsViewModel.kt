@@ -51,6 +51,7 @@ class FriendsViewModel(
     val uiEffect = _uiEffect.receiveAsFlow()
 
 
+
     private val myId: String
         get() {
             return userRepository.myUser.value!!.id
@@ -63,9 +64,13 @@ class FriendsViewModel(
                 friendshipRepository.blockedIds,
                 friendshipRepository.friendsIds,
                 friendshipRepository.pendingIds
-            ){}.collect {
-                refreshAll()
+            ) { blocked, friends, pending ->
+                Triple(blocked, friends, pending)
             }
+                .distinctUntilChanged()
+                .collect {
+                    refreshAll()
+                }
         }
     }
 
