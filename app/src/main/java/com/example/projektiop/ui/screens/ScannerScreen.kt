@@ -92,7 +92,6 @@ fun ScannerScreen( navController: NavController) {
                             navController.navigate("chats")
                         },
                     )
-
                     // ActiveHandshakeButton { }
                 }
             }
@@ -294,7 +293,7 @@ fun BLEControls(viewModel: ScannerViewModel, onSearchProfileClick: () -> Unit, m
 
 
 @Composable
-fun ScannedUserRow( // TODO() just use friend card
+fun ScannedUserRow(
     userWithStatus: UserWithStatus,
     onClick: (User) -> Unit,
     onAddClick: (String) -> Unit,

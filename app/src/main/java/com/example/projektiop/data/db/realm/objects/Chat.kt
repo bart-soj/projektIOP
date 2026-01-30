@@ -12,9 +12,9 @@ class Chat : RealmObject {
     @PrimaryKey
     var _id: ObjectId = ObjectId()
 
-    var participants: RealmList<String> = realmListOf() // References to User IDs
+    var participants: RealmList<String> = realmListOf()
 
-    var lastMessageId: String? = null // Reference to Message
+    var lastMessageId: String? = null
 
     var lastMessageTimestamp: RealmInstant? = null
 

@@ -50,13 +50,11 @@ fun LoginScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Tytuł
             Text(
                 text = stringResource(R.string.login_screen_title),
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
-            // Pole Email
             OutlinedTextFieldWithClearAndError(
                 value = email,
                 onValueChange = {
@@ -71,7 +69,6 @@ fun LoginScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Pole Hasło
             OutlinedTextFieldWithClearAndError(
                 value = password,
                 onValueChange = {
@@ -117,7 +114,6 @@ fun LoginScreen(navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Przycisk Powrót
                 Button(
                     onClick = { if (!isLoading) navController.popBackStack() },
                     modifier = Modifier
@@ -132,7 +128,6 @@ fun LoginScreen(navController: NavController) {
                     Text(stringResource(R.string.return_button_text))
                 }
 
-                // Przycisk Zaloguj
                 Button(
                     onClick = {
                         viewModel.onLoginClick(email, password)

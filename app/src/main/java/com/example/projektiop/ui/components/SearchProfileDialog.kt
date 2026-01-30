@@ -65,7 +65,6 @@ fun SearchProfileDialog(
                         Icon(imageVector = Icons.Filled.ChevronLeft, contentDescription = null)
                     }
 
-                    // Save Button
                     IconButton(
                         onClick = {
                             viewModel.addSearchProfile(name, selectedInterests)

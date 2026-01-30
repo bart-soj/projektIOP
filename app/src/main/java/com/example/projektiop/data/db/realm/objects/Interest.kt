@@ -14,7 +14,7 @@ class Interest : RealmObject {
     var name: String = ""
 
     @Index
-    var categoryId: ObjectId? = null // Reference to InterestCategory
+    var categoryId: ObjectId? = null
     var category: InterestCategory? = null
 
     var description: String = ""

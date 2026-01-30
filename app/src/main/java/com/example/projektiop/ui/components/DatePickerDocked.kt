@@ -50,7 +50,6 @@ fun DatePickerDocked(
         initialSelectedDateMillis = selectedDateMillis
     )
 
-    // Keep DatePickerState in sync with parent
     LaunchedEffect(datePickerState.selectedDateMillis) {
         onDateSelected(datePickerState.selectedDateMillis)
     }

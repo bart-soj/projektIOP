@@ -10,8 +10,6 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 import com.google.gson.annotations.SerializedName
 
-// Minimal API dla listy znajomości zalogowanego użytkownika.
-// Endpoint bazuje na server.js: app.use('/api/friendships', friendshipRoutes) oraz friendshipRoutes.get('/') -> GET /api/friendships
 interface FriendshipApi {
     @GET("friendships")
     suspend fun getFriendships(
@@ -48,13 +46,13 @@ data class FriendshipDto(
     val status: String? = null,
     val friendshipType: String? = null,
     val isPendingRecipient: Boolean? = null,
-    val requestedBy: String? = null,   // _id of the requesting user
+    val requestedBy: String? = null,
     val isBlocked: Boolean? = null,
     val blockedBy: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 ) {
-    val _id = friendshipId // quickfix as it was used this way in many places
+    val _id = friendshipId
 }
 
 data class BlockDto (

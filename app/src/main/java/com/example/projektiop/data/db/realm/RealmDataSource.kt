@@ -70,7 +70,6 @@ class RealmDataSource(private val realm: Realm) {
     // ----------------------
     // CHat operations
     // ----------------------
-
     fun addChat(toAdd: Chat) {
         realm.writeBlocking {
             copyToRealm(toAdd, updatePolicy = UpdatePolicy.ALL )

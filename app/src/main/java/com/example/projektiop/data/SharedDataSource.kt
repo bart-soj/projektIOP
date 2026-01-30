@@ -18,8 +18,8 @@ class SharedDataSource(private val appContext: Context) {
     companion object {
         private const val PREFS_NAME = "HelloBeaconSharedPrefs"
         private const val BASE_URL_KEY: String = "BASE_URL"
-        //private const val BASE_URL = "https://hellobeacon.onrender.com" // Ujednolicona baza – auth i user pod jednym URL
-        private const val BASE_URL = "http://192.168.1.13:3000" // 10.0.2.2 is bound to lo of local machine
+        // private const val BASE_URL = "hellobeacon.onrender.com" // Ujednolicona baza – auth i user pod jednym URL
+        private const val BASE_URL = "192.168.1.13:3000" // "10.0.2.2:3000" // is bound to lo of local machine
         private const val DB_KEY_ALIAS = "hellobeacon_database_key"
         private const val AES_KEY_ALIAS = "hellobeacon_encryption_key"
         private const val AES_KEY_SIZE = 256

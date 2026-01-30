@@ -50,9 +50,6 @@ class BluetoothRepository(private val context: Context) {
     private val _isAdvertising = MutableStateFlow(false)
     val isAdvertising = _isAdvertising.asStateFlow()
 
-    private val _foundDeviceStatus = MutableStateFlow("Status: Oczekuje...")
-    val foundDeviceStatus = _foundDeviceStatus.asStateFlow()
-
     private val _foundDeviceIds = MutableStateFlow<List<String>>(emptyList())
     val foundDeviceIds: StateFlow<List<String>> = _foundDeviceIds.asStateFlow()
 
@@ -77,20 +74,12 @@ class BluetoothRepository(private val context: Context) {
                             val foundUserId = bytesToUserId(serviceData)
 
                             if (foundUserId.isNotEmpty() && !_foundDeviceIds.value.contains(foundUserId)) {
-                                Log.i(TAG_SCAN, ">>> NOWE URZĄDZENIE: Znaleziono ID: $foundUserId (MAC: $deviceAddress) <<<")
-                                _foundDeviceStatus.value = "Status: Znaleziono $foundUserId"
                                 val updatedList = _foundDeviceIds.value + foundUserId
                                 _foundDeviceIds.value = updatedList
-                                _foundDeviceStatus.value = "Status: Znaleziono (${foundDeviceIds.value.size}): ${foundDeviceIds.value.joinToString()}"
                             } else if (foundUserId.isNotEmpty()) {
-                                // ID już znane w tej sesji skanowania
-                                Log.v(TAG_SCAN, "onScanResult: Ponownie wykryto urządzenie z ID: $foundUserId (MAC: $deviceAddress)")
-                            } else {
-                                Log.w(TAG_SCAN, "onScanResult: Otrzymano puste ID od urządzenia $deviceAddress")
+                                // id already known
                             }
-                        } catch (e: Exception) {
-                            Log.e(TAG_SCAN, "Błąd dekodowania danych usługi dla $deviceAddress", e)
-                        }
+                        } catch (e: Exception) {}
                     }
                 }
             }
@@ -108,8 +97,6 @@ class BluetoothRepository(private val context: Context) {
                 SCAN_FAILED_SCANNING_TOO_FREQUENTLY -> "Scan Failed: Scanning Too Frequently"
                 else -> "Scan Failed: Unknown error code $errorCode"
             }
-            _foundDeviceStatus.value = "Status: Błąd skan. ($errorCode)"
-            Log.e(TAG_SCAN, "Skanowanie nie powiodło się, kod błędu: $errorCode")
             Log.e(TAG_SCAN, errorText)
         }
     }
@@ -129,15 +116,12 @@ class BluetoothRepository(private val context: Context) {
                 this@BluetoothRepository.advertisingSet = advertisingSet
                 _isAdvertising.value = true
             } else {
-                Log.e(TAG_ADVERTISE, "Rozgłaszanie nie powiodło się, kod błędu: $status")
                 _isAdvertising.value = false
-                _foundDeviceStatus.value = "Status: Błąd rozgł. ($status)"
             }
         }
 
         override fun onAdvertisingSetStopped(advertisingSet: AdvertisingSet?) {
             super.onAdvertisingSetStopped(advertisingSet)
-            Log.i(TAG_ADVERTISE, "Rozgłaszanie zatrzymane")
             _isAdvertising.value = false
         }
     }
@@ -145,28 +129,22 @@ class BluetoothRepository(private val context: Context) {
     @SuppressLint("MissingPermission")
     fun startScan() {
         if (!permissionsManager.hasPermissions(permissionsManager.getRequiredPermissionsScan())) {
-            _foundDeviceStatus.value = "Status: Brak uprawnień skan."
             return
         }
 
         if (bluetoothAdapter?.isEnabled != true) {
-            _foundDeviceStatus.value = "Status: Włącz Bluetooth"
             return
         }
 
         if (!permissionsManager.isLocationEnabled()) {
-            _foundDeviceStatus.value = "Status: Włącz Lokalizację"
         }
 
         if (_isScanning.value) {
             return
         }
 
-        bluetoothLeScanner = bluetoothAdapter?.let { adapter ->
-            adapter.bluetoothLeScanner
-        }
+        bluetoothLeScanner = bluetoothAdapter?.bluetoothLeScanner
         if (bluetoothLeScanner == null) {
-            _foundDeviceStatus.value = "Status: Błąd inicj. skanera"
             return
         }
 
@@ -185,15 +163,11 @@ class BluetoothRepository(private val context: Context) {
         try {
             bluetoothLeScanner?.startScan(listOf(scanFilter), scanSettings, scanCallback)
             _isScanning.value = true
-            _foundDeviceStatus.value = "Status: Skanowanie..."
         } catch (e: SecurityException) {
-            _foundDeviceStatus.value = "Status: Błąd uprawnień kryt."
             _isScanning.value = false
         } catch (e: IllegalStateException) {
-            _foundDeviceStatus.value = "Status: Błąd stanu BLE"
             _isScanning.value = false
         } catch (e: Exception) {
-            _foundDeviceStatus.value = "Status: Błąd startu skan."
             _isScanning.value = false
         }
     }
@@ -213,9 +187,7 @@ class BluetoothRepository(private val context: Context) {
             bluetoothLeScanner!!.stopScan(scanCallback)
             _isScanning.value = false
             if (!_isAdvertising.value) {
-                _foundDeviceStatus.value = "Status: Zatrzymano"
             } else {
-                _foundDeviceStatus.value = "Status: Rozgłaszanie aktywne"
             }
         } catch (e: IllegalStateException) {
             _isScanning.value = false
@@ -227,17 +199,14 @@ class BluetoothRepository(private val context: Context) {
     @SuppressLint("MissingPermission")
     fun startAdvertising(myId: String) {
         if (!permissionsManager.hasPermissions(permissionsManager.getRequiredPermissionsAdvertise())) {
-            _foundDeviceStatus.value = "Status: Brak uprawnień rozgł."
             return
         }
 
         if (bluetoothAdapter?.isEnabled != true) {
-            _foundDeviceStatus.value = "Status: Włącz Bluetooth"
             return
         }
 
         if (bluetoothAdapter?.isLeExtendedAdvertisingSupported == false) {
-            _foundDeviceStatus.value = "Status: Rozgłaszanie niewspierane"
             return
         }
 
@@ -247,7 +216,6 @@ class BluetoothRepository(private val context: Context) {
 
         bluetoothLeAdvertiser = bluetoothAdapter?.bluetoothLeAdvertiser
         if (bluetoothLeAdvertiser == null) {
-            _foundDeviceStatus.value = "Status: Błąd inicj. rozgłaszacza"
             return
         }
 
@@ -262,7 +230,6 @@ class BluetoothRepository(private val context: Context) {
         val parcelUuid = ParcelUuid(SERVICE_UUID)
             val serviceData : ByteArray =  try { userIdToBytes(myId)
         } catch (e: Exception) {
-            _foundDeviceStatus.value = "Status: Błąd kodowania ID"
             return
         }
 
@@ -277,13 +244,10 @@ class BluetoothRepository(private val context: Context) {
             bluetoothLeAdvertiser?.startAdvertisingSet(settings, data, null, null, null, advertiseSetCallback)
 
         } catch (e: SecurityException) {
-            _foundDeviceStatus.value = "Status: Błąd uprawnień kryt."
             _isAdvertising.value = false
         } catch (e: IllegalStateException) {
-            _foundDeviceStatus.value = "Status: Błąd stanu BLE"
             _isAdvertising.value = false
         } catch (e: Exception) {
-            _foundDeviceStatus.value = "Status: Błąd startu rozgł."
             _isAdvertising.value = false
         }
     }
@@ -302,11 +266,6 @@ class BluetoothRepository(private val context: Context) {
         try {
             bluetoothLeAdvertiser?.stopAdvertisingSet(advertiseSetCallback)
             _isAdvertising.value = false
-            if (!_isScanning.value) {
-                _foundDeviceStatus.value = "Status: Zatrzymano"
-            } else {
-                _foundDeviceStatus.value = "Status: Skanowanie aktywne"
-            }
         } catch (e: IllegalStateException) {
             _isAdvertising.value = false
         } catch (e: Exception) {

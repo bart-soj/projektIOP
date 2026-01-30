@@ -39,7 +39,7 @@ sealed interface FriendsUiEffect {
 }
 
 class FriendsViewModel(
-    private val appContext: Context,  // for string resolution
+    private val appContext: Context,
     private val friendshipRepository: FriendshipRepository,
     private val userRepository: UserRepository,
     private val chatRepository: ChatRepository) : ViewModel() {
@@ -58,6 +58,15 @@ class FriendsViewModel(
 
     init {
         refreshAll()
+        viewModelScope.launch {
+            combine(
+                friendshipRepository.blockedIds,
+                friendshipRepository.friendsIds,
+                friendshipRepository.pendingIds
+            ) {
+                refreshAll()
+            }
+        }
     }
 
     fun refreshAll() {

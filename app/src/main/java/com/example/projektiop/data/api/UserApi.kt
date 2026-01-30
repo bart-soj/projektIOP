@@ -12,30 +12,23 @@ import retrofit2.http.Part
 import retrofit2.http.POST
 import retrofit2.http.DELETE
 
-// Zakładany endpoint profilu zalogowanego użytkownika.
-// Jeśli backend różni się ścieżką, zmień @GET("user/me") odpowiednio (np. "users/me" albo "profile/me").
 interface UserApi {
-    // server.js: app.use('/api/users', userRoutes) + userRoutes route '/profile' => pełny endpoint: /api/users/profile
     @GET("users/profile")
     suspend fun getMyProfile(): Response<UserProfileResponse>
 
     @PUT("users/profile")
     suspend fun updateMyProfile(@Body request: UpdateProfileRequest): Response<UserProfileResponse>
 
-    // Upload avatar image as multipart/form-data with field name 'avatarImage'
     @Multipart
     @PUT("users/profile/avatar")
     suspend fun uploadAvatar(@Part avatarImage: MultipartBody.Part): Response<UploadAvatarResponse>
 
-    // Profil innego użytkownika po ID: GET /api/users/{id}
     @GET("users/{id}")
     suspend fun getUserById(@Path("id") id: String): Response<UserProfileResponse>
 
-    // Wyszukiwanie użytkowników: GET /api/users/search?q=...
     @GET("users/search")
     suspend fun searchUsers(@Query("q") query: String): Response<List<UserSearchDto>>
 
-    // Interests management
     @POST("users/profile/interests")
     suspend fun addUserInterest(@Body body: AddUserInterestRequest): Response<UserInterestDto>
 
@@ -52,7 +45,6 @@ interface UserApi {
     suspend fun deleteOwnAccount(): Response<Unit>
 }
 
-// Dane profilu – wszystkie pola opcjonalne, żeby uniknąć crashy przy różnym JSON.
 data class UserProfileResponse(
     val profile: ProfileDto? = ProfileDto(),
     val _id: String? = null,

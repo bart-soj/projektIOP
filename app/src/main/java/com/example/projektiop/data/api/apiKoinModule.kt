@@ -12,11 +12,11 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 val apiKoinModule = module {
     single<String>(qualifier = named("BaseApiUrl")) {
-        get<SharedDataSource>().get("BASE_URL", "") + "/api/"
+        "http://" + get<SharedDataSource>().get("BASE_URL", "") + "/api/"
     }
 
-    single<String>(qualifier = named("BaseUrl")) {
-        get<SharedDataSource>().get("BASE_URL", "")
+    single<String>(qualifier = named("BaseWSUrl")) {
+        "ws://" + get<SharedDataSource>().get("BASE_URL", "")
     }
 
     single { AuthInterceptor( get() ) }
@@ -94,6 +94,5 @@ val apiKoinModule = module {
 
     single<ReportApi> { get<retrofit2.Retrofit>().create(ReportApi::class.java) }
 
-
-    single { SocketManager( get<String>(named("BaseUrl")) , get() ) }
+    single { SocketManager( get<String>(named("BaseWSUrl")) , get() ) }
 }

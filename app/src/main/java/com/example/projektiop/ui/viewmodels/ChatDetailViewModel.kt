@@ -150,9 +150,7 @@ class ChatDetailViewModel(private val appContext: Context,
 
     fun onSendClick(content: String) {
         viewModelScope.launch {
-            // chatRepository.sendMessage(chatId, content)
-            // loadMessages()
-            Log.d("SOCC", "out send vm")
+
             chatRepository.sendMessageSocket(chatId, content)
         }
     }

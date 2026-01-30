@@ -8,22 +8,16 @@ import retrofit2.http.Path
 import retrofit2.http.Body
 
 
-// Endpoint bazuje na server.js: app.use('/api/chats', chatRoutes)
-// Zakładamy GET /api/chats zwraca listę czatów bieżącego użytkownika.
 interface ChatApi {
-    // fetchChats controller
     @GET("chats")
     suspend fun getChats(): Response<List<ChatDto>>
 
-    // accessChat controller: POST /chats { userId }
     @POST("chats")
     suspend fun accessChat(@Body body: AccesChatRequest): Response<ChatDto>
 
-    // allMessages controller: GET /messages/:chatId
     @GET("messages/{chatId}")
     suspend fun getMessages(@Path("chatId") chatId: String): Response<MessagesPageDto>
 
-    // sendMessage controller: POST /messages { chatId, content }
     @POST("messages")
     suspend fun sendMessage(@Body body: SendMessageRequest): Response<MessageDto>
 }

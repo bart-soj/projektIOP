@@ -60,7 +60,7 @@ class BTPermissionsManager(private val context: Context) {
     }
 
     fun getRequiredPermissionsScan(): Array<String> {
-        return arrayOf(Manifest.permission.BLUETOOTH_SCAN, /*Manifest.permission.ACCESS_FINE_LOCATION*/)
+        return arrayOf(Manifest.permission.BLUETOOTH_SCAN/*, Manifest.permission.ACCESS_FINE_LOCATION*/)
     }
 
     fun getRequiredPermissionsAdvertise(): Array<String> {
@@ -73,12 +73,9 @@ class BTPermissionsManager(private val context: Context) {
         }
         val hasAll = permissions.all { permission ->
             val granted = ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
-            if (!granted) {
-                Log.w(TAG_PERMISSIONS, "Brakujące uprawnienie: $permission")
-            }
+            if(!granted) { Log.d(TAG_PERMISSIONS, "missing $permission") }
             granted
         }
-        Log.d(TAG_PERMISSIONS, "Sprawdzenie uprawnień [${permissions.joinToString()}]: $hasAll")
         return hasAll
     }
 
@@ -89,10 +86,7 @@ class BTPermissionsManager(private val context: Context) {
         }.toTypedArray()
 
         if (missingPermissions.isNotEmpty()) {
-            Log.i(TAG_PERMISSIONS, "Żądanie brakujących uprawnień: ${missingPermissions.joinToString()}")
             launcher.launch(missingPermissions)
-        } else {
-            Log.d(TAG_PERMISSIONS, "Wszystkie wymagane uprawnienia (${allRequiredPermissions.joinToString()}) są już przyznane.")
         }
     }
 }

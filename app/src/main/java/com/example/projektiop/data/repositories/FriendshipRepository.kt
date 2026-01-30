@@ -112,7 +112,7 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
             _pendingIds.value = items.map { it.user?._id.toString() }
             Result.success(items.mapNotNull { it.toFriendItem() })
         } catch (e: Exception) {
-            val local = databaseDataSource.getFriendshipsByStatus(FriendshipStatus.PENDING) // TODO() direction
+            val local = databaseDataSource.getFriendshipsByStatus(FriendshipStatus.PENDING)
             if (local.isNotEmpty()) {
                 Result.success(local.map { it.toFriendItem(databaseDataSource.getUserById(it._id.toHexString())) })
             }
@@ -284,65 +284,95 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
     }
 
     suspend fun onInviteAccepted(friendshipId: String, appContext: Context) {
-        val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
-        databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.ACCEPTED)
-        _pendingIds.update { list ->
-            list - friendId.toString()
-        }
-        _friendsIds.update { list ->
-            list + friendId.toString()
-        }
-        val otherUserRepository: OtherUserRepository by inject(OtherUserRepository::class.java) { parametersOf(friendId) }
-        otherUserRepository.fetchProfile()
-        val displayName = otherUserRepository.Profile.value?.profile?.displayName ?:
-        otherUserRepository.Profile.value?.username
-        if (ActivityCompat.checkSelfPermission(
+        try {
+            val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
+            databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.ACCEPTED)
+            _pendingIds.update { list ->
+                list - friendId.toString()
+            }
+            _friendsIds.update { list ->
+                list + friendId.toString()
+            }
+            val otherUserRepository: OtherUserRepository by inject(OtherUserRepository::class.java) {
+                parametersOf(
+                    friendId
+                )
+            }
+            otherUserRepository.fetchProfile()
+            val displayName = otherUserRepository.Profile.value?.profile?.displayName
+                ?: otherUserRepository.Profile.value?.username
+            if (ActivityCompat.checkSelfPermission(
+                    appContext,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+            NotificationHelper.notifyFriendshipStatus(
                 appContext,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-        NotificationHelper.notifyFriendshipStatus(appContext, displayName.toString(), FriendshipStatus.ACCEPTED)
+                displayName.toString(),
+                FriendshipStatus.ACCEPTED
+            )
+        } catch (e: Exception) {}
     }
 
     suspend fun onInviteRejected(friendshipId: String, appContext: Context ) {
-        val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
-        databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.REJECTED)
-        _pendingIds.update { list ->
-            list - friendId.toString()
-        }
-        val otherUserRepository: OtherUserRepository by inject(OtherUserRepository::class.java) { parametersOf(friendId) }
-        otherUserRepository.fetchProfile()
-        val displayName = otherUserRepository.Profile.value?.profile?.displayName ?:
-        otherUserRepository.Profile.value?.username
-        if (ActivityCompat.checkSelfPermission(
+        try {
+            val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
+            databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.REJECTED)
+            _pendingIds.update { list ->
+                list - friendId.toString()
+            }
+            val otherUserRepository: OtherUserRepository by inject(OtherUserRepository::class.java) {
+                parametersOf(
+                    friendId
+                )
+            }
+            otherUserRepository.fetchProfile()
+            val displayName = otherUserRepository.Profile.value?.profile?.displayName
+                ?: otherUserRepository.Profile.value?.username
+            if (ActivityCompat.checkSelfPermission(
+                    appContext,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+            NotificationHelper.notifyFriendshipStatus(
                 appContext,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-        NotificationHelper.notifyFriendshipStatus(appContext, displayName.toString(), FriendshipStatus.REJECTED)
+                displayName.toString(),
+                FriendshipStatus.REJECTED
+            )
+        } catch (e: Exception) {}
     }
 
     suspend fun onFriendshipEnded(friendshipId: String, appContext: Context ) {
-        val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
-        databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.NOT_FRIENDS)
-        _pendingIds.update { list ->
-            list - friendId.toString()
-        }
-        val otherUserRepository: OtherUserRepository by inject(OtherUserRepository::class.java) { parametersOf(friendId) }
-        otherUserRepository.fetchProfile()
-        val displayName = otherUserRepository.Profile.value?.profile?.displayName ?:
-        otherUserRepository.Profile.value?.username
-        if (ActivityCompat.checkSelfPermission(
+        try {
+            val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
+            databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.NOT_FRIENDS)
+            _pendingIds.update { list ->
+                list - friendId.toString()
+            }
+            val otherUserRepository: OtherUserRepository by inject(OtherUserRepository::class.java) {
+                parametersOf(
+                    friendId
+                )
+            }
+            otherUserRepository.fetchProfile()
+            val displayName = otherUserRepository.Profile.value?.profile?.displayName
+                ?: otherUserRepository.Profile.value?.username
+            if (ActivityCompat.checkSelfPermission(
+                    appContext,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+            NotificationHelper.notifyFriendshipStatus(
                 appContext,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-        NotificationHelper.notifyFriendshipStatus(appContext, displayName.toString(), FriendshipStatus.NOT_FRIENDS)
+                displayName.toString(),
+                FriendshipStatus.NOT_FRIENDS
+            )
+        } catch (e: Exception) {}
     }
 }

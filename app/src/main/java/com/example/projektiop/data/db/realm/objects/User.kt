@@ -51,7 +51,7 @@ class User : RealmObject {
 
     private var _role: String = UserRole.USER.name
 
-    var interestIds: RealmList<ObjectId> = realmListOf() // list of ids of user interests
+    var interestIds: RealmList<ObjectId> = realmListOf()
     var interests: RealmList<UserInterest> = realmListOf()
 
     var publicKey: base64? = null

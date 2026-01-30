@@ -109,7 +109,6 @@ fun ResendEmailScreen(emailPrefill: String? = null) {
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Pole Email
                         OutlinedTextFieldWithClearAndError(
                             value = email,
                             onValueChange = {

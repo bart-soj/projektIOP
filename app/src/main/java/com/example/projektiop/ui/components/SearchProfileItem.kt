@@ -65,7 +65,6 @@ fun SearchProfileItem(
                             Icon(imageVector = Icons.Filled.Delete, contentDescription = null)
                         }
                     }
-                    // Visual cue for expansion
                     Icon(
                         imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                         contentDescription = null,

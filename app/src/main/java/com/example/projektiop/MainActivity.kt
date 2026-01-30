@@ -82,9 +82,7 @@ class MainActivity : AppCompatActivity() {
         }
 
     private val notificationPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            // Obsługa powiadomień
-        }
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
 
     private val localBTPermissionsManager: BTPermissionsManager by inject()
@@ -261,11 +259,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        /*
-        Intent(this, ChatUpdateService::class.java).also { intent ->
-            bindService(intent, serviceConnection, BIND_ADJUST_WITH_ACTIVITY)
-        }
-         */
     }
 
     override fun onStop() {

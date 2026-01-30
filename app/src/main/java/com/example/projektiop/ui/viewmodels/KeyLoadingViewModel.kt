@@ -61,7 +61,7 @@ class KeyLoadingViewModel(private val appContext: Context,
                     var synced = false
                     var failCounter = 0
                     while (synced == false) {
-                        if (failCounter >= 8) {
+                        if (failCounter >= 4) {
                             synced = true
                             appStateRepository.logout()
                         } // unlikely, force user to log-in again

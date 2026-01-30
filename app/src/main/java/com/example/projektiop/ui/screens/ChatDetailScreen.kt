@@ -382,8 +382,3 @@ private fun DateSeparator(date: String) {
         }
     }
 }
-
-@Composable
-private fun ReportMessageButton() {
-
-}

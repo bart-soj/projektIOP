@@ -12,7 +12,6 @@ import com.example.projektiop.data.repositories.OtherUserRepository
 import com.example.projektiop.data.repositories.SearchProfileRepository
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.InterestSimilarity
-import com.example.projektiop.domain.OtsukaOchiaiSimilarityImpl
 import com.example.projektiop.domain.models.FriendshipStatus
 import com.example.projektiop.domain.models.Interest
 import com.example.projektiop.domain.models.SearchProfile

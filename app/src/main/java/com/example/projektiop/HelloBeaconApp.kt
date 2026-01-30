@@ -20,7 +20,7 @@ import org.koin.core.context.GlobalContext.startKoin
 
 /**
  * Application class for the HelloBeacon Application
- * It initializes the RealmProvider and NotificationHelper
+ * It initializes the RealmProvider, NotificationHelper and Language Repository
  */
 
 class HelloBeaconApp : Application() {

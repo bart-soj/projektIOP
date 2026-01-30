@@ -7,11 +7,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.example.projektiop.ui.components.BottomNavigationBar
 import com.example.projektiop.ui.components.ProfileCard
 import com.example.projektiop.ui.components.PullToRefresh
@@ -54,7 +52,6 @@ fun MainScreen(navController: NavController) {
             ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Karta profilu
             ProfileCard(
                 onEditProfile = { navController.navigate("edit_profile") },
                 user = user,
@@ -66,14 +63,5 @@ fun MainScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(40.dp))
             }
         }
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun MainScreenPreview() {
-    MaterialTheme {
-        MainScreen(navController = rememberNavController())
     }
 }

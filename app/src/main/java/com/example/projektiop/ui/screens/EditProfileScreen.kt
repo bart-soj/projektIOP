@@ -81,9 +81,6 @@ fun EditProfileScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        // was fetching my profile and public interests
-    }
 
     Surface(
         modifier = Modifier

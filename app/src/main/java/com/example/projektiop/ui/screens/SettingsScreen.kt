@@ -263,14 +263,6 @@ fun SettingsScreen(
                             contentColor = MaterialTheme.colorScheme.onError
                         )
                     ) {
-                        /*
-                    Text(
-                        stringResource(R.string.log_out),
-                        style = MaterialTheme.typography.titleLarge,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    */
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Logout,
                             contentDescription = stringResource(R.string.log_out),

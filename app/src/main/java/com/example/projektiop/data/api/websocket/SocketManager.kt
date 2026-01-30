@@ -43,8 +43,6 @@ class SocketManager(private val url: String, private val sharedDataSource: Share
     // is null when user logs out before getting keys
     var socket: Socket? = null
 
-    //   "wss://hellobeacon.onrender.com/ws"
-
     fun connect() {
         socket = Socket(
             endpoint = url,

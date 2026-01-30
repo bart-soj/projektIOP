@@ -13,11 +13,11 @@ class UserInterest : RealmObject {
     var _id: ObjectId = ObjectId()
 
     @Index
-    var userId: ObjectId? = null // Reference to User
+    var userId: ObjectId? = null
     val user: RealmResults<User> by backlinks(User::interests)
 
     @Index
-    var interestId: ObjectId? = null// Reference to Interest
+    var interestId: ObjectId? = null
     var interest: Interest? = null
 
     var customDescription: String = ""

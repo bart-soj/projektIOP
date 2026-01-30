@@ -1,6 +1,5 @@
 package com.example.projektiop.ui.components
 
-import androidx.activity.ComponentActivity
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.material3.IconButton

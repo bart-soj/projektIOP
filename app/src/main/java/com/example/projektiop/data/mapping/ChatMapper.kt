@@ -35,18 +35,11 @@ fun ChatDto.toRealm(chatKey: base64): Chat {
 
 
 fun Chat.toDomain(myUserId: String, dbRepository: RealmDataSource, message: DomainMessage? = null): DomainChat {
-    /*
-    var lastMessage: Message? = null
-    if (this.lastMessageId != null) {
-        lastMessage = dbRepository.getMessageById(this.lastMessageId!!)
-    }
-     */
 
     val participants: List<User> = this.participants.map {
         dbRepository.getUserById(it)!!
     }
 
-    // val unread = lastMessage?.readBy?.map{it.toHexString()}?.contains(myUserId)
     val unread = message?.readBy?.contains(myUserId)
     val otherUser = participants.firstOrNull{ user -> user._id.toHexString() != myUserId}
     val otherUserName = otherUser?.profile?.displayName ?: otherUser?.username
@@ -56,10 +49,9 @@ fun Chat.toDomain(myUserId: String, dbRepository: RealmDataSource, message: Doma
         id = this._id.toHexString(),
         title = otherUserName.toString(),
         participants = participants.map{ it.toDomain() },
-        // lastMessage = lastMessage?.toDomain(),
         lastMessage = message,
         unread = unread == true,
-        createdAt = this.createdAt?.toJavaInstant() ?: Instant.now(), // TODO() hotifx
+        createdAt = this.createdAt?.toJavaInstant() ?: Instant.now(),
         otherUserId = otherUser!!._id.toHexString(),
         lostHistory = lostHistory
     )

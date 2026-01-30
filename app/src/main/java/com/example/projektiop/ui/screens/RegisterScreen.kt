@@ -66,14 +66,12 @@ fun RegisterScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center // Wyśrodkowanie zawartości
         ) {
-            // Tytuł
             Text(
                 text = stringResource(R.string.register_screen_title), // Użyj zasobu string
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // Pole Nazwa użytkownika
             OutlinedTextFieldWithClearAndError(
                 value = username,
                 onValueChange = {
@@ -88,7 +86,6 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Pole Email
             OutlinedTextFieldWithClearAndError(
                 value = email,
                 onValueChange = {
@@ -103,7 +100,6 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Pole Hasło
             OutlinedTextFieldWithClearAndError(
                 value = password,
                 onValueChange = {

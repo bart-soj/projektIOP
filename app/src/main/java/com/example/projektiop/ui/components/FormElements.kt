@@ -131,6 +131,6 @@ fun SwitchWithText(
                 uncheckedBorderColor = colorScheme.secondaryContainer,
 
             )
-            )
+        )
     }
 }

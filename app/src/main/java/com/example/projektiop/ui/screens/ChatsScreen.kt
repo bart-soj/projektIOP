@@ -114,8 +114,6 @@ fun ChatsScreen(navController: NavController) {
     }
 }
 
-// --- Komponenty pomocnicze dla ChatsScreen ---
-
 @Composable
 fun ChatItem(
     chatData: ChatListItem,
