@@ -59,6 +59,7 @@ class FriendsViewModel(
 
     init {
         refreshAll()
+        /*
         viewModelScope.launch {
             combine(
                 friendshipRepository.blockedIds,
@@ -72,6 +73,7 @@ class FriendsViewModel(
                     refreshAll()
                 }
         }
+         */
     }
 
     fun refreshAll() {

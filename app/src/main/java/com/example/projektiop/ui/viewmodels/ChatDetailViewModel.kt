@@ -146,8 +146,10 @@ class ChatDetailViewModel(private val appContext: Context,
 
     suspend fun loadMessages() {
         chatRepository.loadMessages(chatId, friendId).onSuccess { list ->
+            _errorMessage.value = null
             _messages.value = list
         }.onFailure { e ->
+            _errorMessage.value = "failed to load messages $e"
             Log.d("mess", "failed to load messages:\t$e")
         }
     }

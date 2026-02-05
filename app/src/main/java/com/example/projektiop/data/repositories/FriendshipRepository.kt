@@ -76,23 +76,23 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
                         databaseDataSource.addFriendship(dto.toRealm(myId))
                         val tmpUser = dto.user?.toRealm()
                         if (tmpUser != null) databaseDataSource.addUser(tmpUser)
-                    }.onFailure { e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
+                    }.onFailure { e -> return@withContext Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 }
                 _friendsIds.value = all.map{ it.user?._id.toString() }
-                Result.success(all.mapNotNull { it.toFriendItem() })
+                return@withContext Result.success(all.mapNotNull { it.toFriendItem() })
             } else {
                 val localAccepted = databaseDataSource.getFriendshipsByStatus(FriendshipStatus.ACCEPTED)
                 if (localAccepted.isNotEmpty()) {
-                    Result.success(localAccepted.map { it.toFriendItem(databaseDataSource.getUserById(it._id.toHexString())) })
+                    return@withContext Result.success(localAccepted.map { it.toFriendItem(databaseDataSource.getUserById(it._id.toHexString())) })
                 }
-                Result.failure(Exception("Nie udało się pobrać listy (${response.code()})"))
+                return@withContext Result.failure(Exception("Nie udało się pobrać listy (${response.code()})"))
             }
         } catch (e: Exception) {
             val localAccepted = databaseDataSource.getFriendshipsByStatus(FriendshipStatus.ACCEPTED)
             if (localAccepted.isNotEmpty()) {
-                Result.success(localAccepted.map { it.toFriendItem(databaseDataSource.getUserById(it._id.toHexString())) })
+                return@withContext Result.success(localAccepted.map { it.toFriendItem(databaseDataSource.getUserById(it._id.toHexString())) })
             }
-            Result.failure(e)
+            return@withContext Result.failure(e)
         }
     }
 
