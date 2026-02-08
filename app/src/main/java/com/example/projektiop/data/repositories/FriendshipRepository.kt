@@ -132,13 +132,15 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
                     databaseDataSource.addFriendship(friendship)
                     val tmpUser = dto.user?.toRealm()
                     if (tmpUser != null) databaseDataSource.addUser(tmpUser)
-                    val tmpId = dto.user?._id.toString()
-                    tmpBlockedIds += tmpId
+                    val tmpId = dto.user?._id
+                    tmpId?.let {
+                        tmpBlockedIds += it
+                    }
                 }.onFailure { e ->
                     Log.d("BLOCKED", "caught exception when saving to db", e)
                     Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 Log.d("BLOCKED", tmpBlockedIds.toString())
-                _blockedIds.value = tmpBlockedIds
+                _blockedIds.value = tmpBlockedIds.toList()
             }
             Result.success(items.mapNotNull { it.toFriendItem() })
         } catch (e: Exception) {
@@ -159,10 +161,10 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
                 runCatching { databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.ACCEPTED)
                 }.onFailure {} //e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 _friendsIds.update { list ->
-                    (list + friendId.toString()).distinct()
+                    (list + friendId).distinct()
                 }
                 _pendingIds.update { list ->
-                    list.filter { it != friendId.toString() }
+                    list.filter { it != friendId }
                 }
                 Result.success(Unit)
             } else Result.failure(Exception("Błąd akceptacji (${r.code()})"))
@@ -177,7 +179,7 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
                 runCatching { databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.REJECTED)
                 }.onFailure {} //e -> Result.failure<List<FriendItem>>(Exception("Failed to save to db", e))  }
                 _pendingIds.update { list ->
-                    list.filter { it != friendId.toString() }
+                    list.filter { it != friendId }
                 }
                 Result.success(Unit)
             } else Result.failure(Exception("Błąd odrzucenia (${r.code()})"))
@@ -288,10 +290,10 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
             val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
             databaseDataSource.changeFriendshipStatus(friendshipId, FriendshipStatus.ACCEPTED)
             _pendingIds.update { list ->
-                list - friendId.toString()
+                list - friendId
             }
             _friendsIds.update { list ->
-                list + friendId.toString()
+                list + friendId
             }
             val otherUserRepository: OtherUserRepository by inject(OtherUserRepository::class.java) {
                 parametersOf(
