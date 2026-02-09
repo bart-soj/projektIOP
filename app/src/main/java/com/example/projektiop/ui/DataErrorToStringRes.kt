@@ -22,5 +22,6 @@ fun DataError.toStringRes(): Int = when (this) {
     Network.PAYLOAD_TOO_LARGE -> R.string.error_payload_too_large
     Network.SERVER_ERROR -> R.string.error_server_error
     Network.SERIALIZATION -> R.string.error_serialization
+    Network.INVALID_TOKEN -> R.string.error_invalid_token
     Network.UNKNOWN -> R.string.error_unknown
 }

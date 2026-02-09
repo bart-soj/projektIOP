@@ -17,7 +17,15 @@ fun <T> apiExceptionToDataError(e: Exception): Result.Error<T, DataError> {
             val errorMessage = e.response()?.errorBody()?.string()
             when (e.code()) {
                 400 -> Result.Error(DataError.Authentication.EMAIL_USERNAME_TAKEN)
-                401 -> Result.Error(DataError.Authentication.INVALID_EMAIL_PASSWORD)
+                401 -> {
+                  if (errorMessage?.contains("Invalid credentials") == true) {
+                      Result.Error(DataError.Authentication.INVALID_EMAIL_PASSWORD)
+                  } else if (errorMessage?.contains("Not authorized") == true) {
+                      Result.Error(DataError.Network.INVALID_TOKEN)
+                  } else {
+                      Result.Error(DataError.Network.UNKNOWN)
+                  }
+                }
                 403 -> {
                     if (errorMessage?.contains("emailNotVerified") == true)
                         Result.Error(DataError.Authentication.EMAIL_NOT_VERIFIED)
