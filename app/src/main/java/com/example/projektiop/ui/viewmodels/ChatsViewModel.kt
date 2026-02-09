@@ -1,5 +1,6 @@
 package com.example.projektiop.ui.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.repositories.ChatListItem
@@ -7,6 +8,7 @@ import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.UserRepository
 import com.example.projektiop.domain.DataError
 import com.example.projektiop.domain.Result
+import com.example.projektiop.ui.toStringRes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,6 +24,7 @@ import com.example.projektiop.domain.models.Chat as DomainChat
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatsViewModel(
+    private val appContext: Context,
     private val userRepository: UserRepository,
     private val chatRepository: ChatRepository) : ViewModel() {
 
@@ -95,25 +98,12 @@ class ChatsViewModel(
 
     fun refreshAll() {
         _loading.value = true
+        _error.value = null
         viewModelScope.launch {
             val result = chatRepository.fetchChats( myUser.value!!.id )
             when(result) {
-                is Result.Error -> _error.value = when (result.error) {
-                    DataError.Local.DISK_FULL -> "no disk space"
-                    DataError.Local.DB_ERROR -> "db failed"
-                    DataError.Network.REQUEST_TIMEOUT -> "request timeout"
-                    DataError.Network.TOO_MANY_REQUESTS -> "Server Error"
-                    DataError.Network.NO_INTERNET -> "no internet"
-                    DataError.Network.PAYLOAD_TOO_LARGE -> "Server Error"
-                    DataError.Network.SERVER_ERROR -> "Server Error"
-                    DataError.Network.SERIALIZATION -> "Serialization Error"
-                    DataError.Network.UNKNOWN -> "Unknown Error"
-                    DataError.Local.NO_DATA -> "no local data"
-                    DataError.Authentication.INVALID_EMAIL_PASSWORD -> "Invalid Email or Password"
-                    DataError.Authentication.ACCOUNT_BANNED -> "Account banned"
-                    DataError.Authentication.EMAIL_NOT_VERIFIED -> "Email not verified"
-                    DataError.Authentication.EMAIL_USERNAME_TAKEN -> "Username or Email taken"
-                }
+                is Result.Error ->
+                    _error.value = appContext.getString(result.error.toStringRes())
                 is Result.Success -> {
                     _chats.value = result.data
                 }
