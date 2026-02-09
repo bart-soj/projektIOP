@@ -25,7 +25,7 @@ val viewModelsKoinModule = module {
     viewModel { AuthViewModel(androidApplication(), get()) }
     viewModel { ScannerViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { FriendsViewModel(androidApplication(), get(), get(), get() ) }
-    viewModel { ChatsViewModel(get(), get()) }
+    viewModel { ChatsViewModel(androidApplication(), get(), get()) }
     viewModel { (userId: String, uname: String, dname: String, avatar: String) ->
         FriendProfileViewModel(userId, uname, dname, avatar, get{ parametersOf(userId) }) }
     viewModel { (chatId: String, friendId: String) -> ChatDetailViewModel(androidApplication(), chatId, friendId, get(), get(), get(), get()) }
