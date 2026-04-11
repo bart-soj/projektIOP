@@ -247,7 +247,7 @@ class FriendshipRepository(private val friendshipApi: FriendshipApi,
                 databaseDataSource.unblockFriendship(friendshipId)
                 val friendId = databaseDataSource.getFriendshipById(friendshipId)!!.user2Id
                 _friendsIds.update { list ->
-                    (list + friendId.toString()).distinct()
+                    (list + friendId).distinct()
                 }
                 _blockedIds.update { list ->
                     list.filter { it != friendId.toString() }

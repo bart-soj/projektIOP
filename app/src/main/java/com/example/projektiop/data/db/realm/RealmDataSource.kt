@@ -115,7 +115,8 @@ class RealmDataSource(private val realm: Realm) {
 
     fun getUserById(userId: String): User? {
         val objectId = ObjectId(userId)
-        return realm.query<User>(User::class, "_id == $0", objectId).first().find()
+        val managed = realm.query<User>(User::class, "_id == $0", objectId).first().find()
+        return managed?.let { realm.copyFromRealm(it) }
     }
 
     fun getUserByEmail(email: String): User? {

@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.projektiop.data.repositories.ChatListItem
 import com.example.projektiop.data.repositories.ChatRepository
 import com.example.projektiop.data.repositories.UserRepository
-import com.example.projektiop.domain.DataError
 import com.example.projektiop.domain.Result
 import com.example.projektiop.ui.toStringRes
 import kotlinx.coroutines.ExperimentalCoroutinesApi

@@ -99,8 +99,8 @@ class EditProfileViewModel(private val interestRepository: InterestRepository, p
             ).onFailure {
                 _errorUploading.value = context.getString(R.string.avatar_upload_error)
             }.onSuccess { url ->
-                _currentAvatarUrl.value = url
                 userRepository.getMyProfile()
+                _currentAvatarUrl.value = url
             }
             _uploading.value = false
         }

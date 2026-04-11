@@ -178,6 +178,7 @@ class ScannerViewModel(application: Application,
                 if (idsToFetch.isNotEmpty()) {
                     val newProfiles = idsToFetch.map { id ->
                         val otherUserRepository: OtherUserRepository by inject(OtherUserRepository::class.java) { parametersOf(id) }
+                        otherUserRepository.fetchProfile()
                         otherUserRepository
                     }
                     _userRepositories.update { oldProfiles ->

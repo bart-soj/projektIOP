@@ -49,7 +49,6 @@ fun EditProfileScreen(
 
     val uploading by viewModel.uploading.collectAsState()
     val uploadError by viewModel.errorUploading.collectAsState()
-    val currentAvatarUrl by viewModel.currentAvatarUrl.collectAsState()
 
     val context = LocalContext.current
 
@@ -99,15 +98,13 @@ fun EditProfileScreen(
             AvatarPicker(
                 avatarPreviewUri = avatarPreviewUri,
                 avatarPreviewBytes = avatarPreviewBytes,
-                currentAvatarUrl = currentAvatarUrl,
+                currentAvatarUrl = myUser?.profile?.avatarUrl,
                 onPick = { uri, bytes ->
                     avatarPreviewUri = uri
                     avatarPreviewBytes = bytes
                 },
                 onUpload = {
                     viewModel.onAvatarUpload(avatarPreviewBytes, avatarPreviewUri, context)
-                    avatarPreviewBytes = null
-                    avatarPreviewUri = null
                 },
                 uploading = uploading
             )

@@ -46,7 +46,7 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
     val dateFormatter = viewModel.dateFormatter
     val timeFormatter = viewModel.timeFormatter
 
-    val typing by viewModel.typing.collectAsState()
+    val typing by viewModel.typing.collectAsState() // for the other user
     val myUser by viewModel.myUser.collectAsState()
 
     var input by remember { mutableStateOf("") }
@@ -57,7 +57,8 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
         when(event) {
             is ChatDetailUIEvent.NavigateToReport -> {
                 val target = "report/${event.friendId}?messageId=${event.messageId}&content=${event.content}"
-                navController.navigate(target)            }
+                navController.navigate(target)
+            }
             is ChatDetailUIEvent.ShowToast -> {}
         }
     }
@@ -74,13 +75,19 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
             )
         }
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .imePadding() // <-- ensures input moves above keyboard
+        ) {
             val listState = rememberLazyListState()
-            LaunchedEffect(messages.size) {
-                if (messages.isNotEmpty()) {
+            LaunchedEffect(messages.size, typing) {
+                if (messages.isNotEmpty() || typing) {
                     listState.animateScrollToItem(messages.lastIndex)
                 }
             }
+
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when {
                     loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
@@ -95,59 +102,60 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                         modifier = Modifier.align(Alignment.Center)
                     )
 
-                    else ->
-                        Box(Modifier.fillMaxSize()) {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                state = listState,
-                                contentPadding = PaddingValues(12.dp)
-                            ) {
-                                itemsIndexed(messages, key = { _, m -> m.id }) { index, m ->
-                                    val isIncoming = m.senderId == friendId
+                    else -> Box(Modifier.fillMaxSize()) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            state = listState,
+                            contentPadding = PaddingValues(12.dp)
+                        ) {
+                            itemsIndexed(messages, key = { _, m -> m.id }) { index, m ->
+                                val isIncoming = m.senderId == friendId
 
-                                    val showTime = index == messages.lastIndex || runCatching {
-                                        val diff = Duration.between(
-                                            m.createdAt,
-                                            messages[index + 1].createdAt
-                                        ).toMinutes()
-                                        diff >= 1
-                                    }.getOrDefault(false)
+                                val showTime = index == messages.lastIndex || runCatching {
+                                    val diff = Duration.between(
+                                        m.createdAt,
+                                        messages[index + 1].createdAt
+                                    ).toMinutes()
+                                    diff >= 1
+                                }.getOrDefault(false)
 
-                                    val prevSame = index > 0 && runCatching {
-                                        val sameSender = messages[index - 1].senderId == m.senderId
-                                        if (!sameSender) false else {
-                                            val prevInstant = messages[index - 1].createdAt
-                                            val currInstant = m.createdAt
-                                            val diffMinutes = Duration.between(prevInstant, currInstant).toMinutes()
-                                            diffMinutes < 1
-                                        }
-                                    }.getOrDefault(false)
-                                    val currentDate = dateFormatter.format(m.createdAt)
-                                    val prevDate = if (index > 0)
-                                        dateFormatter.format(messages[index - 1].createdAt) else null
-                                    val showDateHeader = currentDate != prevDate
-                                    if (showDateHeader) {
-                                        DateSeparator(date = currentDate)
-                                        Spacer(Modifier.height(6.dp))
+                                val prevSame = index > 0 && runCatching {
+                                    val sameSender = messages[index - 1].senderId == m.senderId
+                                    if (!sameSender) false else {
+                                        val prevInstant = messages[index - 1].createdAt
+                                        val currInstant = m.createdAt
+                                        val diffMinutes = Duration.between(prevInstant, currInstant).toMinutes()
+                                        diffMinutes < 1
                                     }
-                                    val url: String? = chat!!.participants.firstOrNull { user -> user.id == m.senderId }?.profile?.avatarUrl
-
-                                    MessageBubble(
-                                        text = m.content,
-                                        incoming = isIncoming,
-                                        groupedWithPrev = prevSame,
-                                        avatarUrl = if (isIncoming && !prevSame) url else myUser!!.profile.avatarUrl,
-                                        timeText = if (showTime) timeFormatter.format(m.createdAt) else "",
-                                        onReportClick = { if (isIncoming)  viewModel.onReportClick(m.id, m.content) }
-                                    )
+                                }.getOrDefault(false)
+                                val currentDate = dateFormatter.format(m.createdAt)
+                                val prevDate = if (index > 0)
+                                    dateFormatter.format(messages[index - 1].createdAt) else null
+                                val showDateHeader = currentDate != prevDate
+                                if (showDateHeader) {
+                                    DateSeparator(date = currentDate)
+                                    Spacer(Modifier.height(6.dp))
                                 }
+                                val url: String? = chat!!.participants.firstOrNull { user -> user.id == m.senderId }?.profile?.avatarUrl
+
+                                MessageBubble(
+                                    text = m.content,
+                                    incoming = isIncoming,
+                                    groupedWithPrev = prevSame,
+                                    avatarUrl = if (isIncoming && !prevSame) url else myUser!!.profile.avatarUrl,
+                                    timeText = if (showTime) timeFormatter.format(m.createdAt) else "",
+                                    onReportClick = { if (isIncoming) viewModel.onReportClick(m.id, m.content) }
+                                )
                             }
                         }
+                    }
                 }
             }
+
             if(typing) {
                 MessageBubble(
-                    text = stringResource(R.string.typing), incoming = true,
+                    text = stringResource(R.string.typing),
+                    incoming = true,
                     groupedWithPrev = false,
                     avatarUrl = chat!!.participants.firstOrNull { user -> user.id != myUser!!.id }?.profile?.avatarUrl,
                     timeText = ""
@@ -165,9 +173,11 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                     Text(msg, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.padding(12.dp))
                 }
             }
+
             Row(
                 Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically) {
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 OutlinedTextField(
                     value = input,
                     onValueChange = {
@@ -176,7 +186,8 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                         } else if(it == "") {
                             viewModel.onTypeStop()
                         }
-                        input = it },
+                        input = it
+                    },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     shape = RoundedCornerShape(28.dp),
@@ -187,29 +198,35 @@ fun ChatDetailScreen(navController: NavController, chatId: String?, friendId: St
                         )
                     },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = colorScheme.primary,
-                        unfocusedBorderColor = colorScheme.onSurface.copy(alpha = 0.4f),
-                        errorBorderColor = colorScheme.error,
-                        focusedLabelColor = colorScheme.primary
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                        errorBorderColor = MaterialTheme.colorScheme.error,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary
                     ),
                     enabled = !isBlocked
                 )
+
                 Spacer(Modifier.width(8.dp))
+
                 Button(
                     modifier = Modifier.width(100.dp).height(48.dp),
                     onClick = {
                         viewModel.onSendClick(input)
-                        input = "" },
+                        input = ""
+                    },
                     enabled = !chat?.id.isNullOrBlank() && !isBlocked && viewModel.validateInput(input),
                     colors = buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
-                    ))
-                { Text(stringResource(R.string.send)) }
+                    )
+                ) {
+                    Text(stringResource(R.string.send))
+                }
             }
         }
     }
 }
+
 
 @Composable
 private fun MessageBubble(

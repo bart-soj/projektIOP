@@ -34,7 +34,7 @@ private const val ID = "_id"
 
 
 class UserRepository(private val userApi: UserApi,
-                     private val dbRepository: RealmDataSource,
+                     private val databaseDataSource: RealmDataSource,
                      private val sharedDataSource: SharedDataSource,
                      private val interestRepository: InterestRepository) {
     private lateinit var id: String
@@ -59,7 +59,7 @@ class UserRepository(private val userApi: UserApi,
 
 
     suspend fun getMyProfile(): Result<DomainUser> {
-        val local = dbRepository.getUserById(id)
+        val local = databaseDataSource.getUserById(id)
         if (local != null) {
             _myUser.value = local.toDomain()
             return Result.success(local.toDomain())
@@ -75,11 +75,11 @@ class UserRepository(private val userApi: UserApi,
 
             val tmpId: String? = body._id
 
-            dbRepository.addUser(body.toRealm())
+            databaseDataSource.addUser(body.toRealm())
 
             interestRepository.resolveIncomingUserInterests(userInterests, tmpId!!, _MyUserInterests)
 
-            val local = dbRepository.getUserById(id)!!
+            val local = databaseDataSource.getUserById(id)!!
             _myUser.value = local.toDomain()
 
             return Result.success(local.toDomain())
@@ -105,7 +105,7 @@ class UserRepository(private val userApi: UserApi,
 
                 // Save user in DB, mapper ensures mandatory fields present
                 try {
-                    dbRepository.addUser(body.toRealm())
+                    databaseDataSource.addUser(body.toRealm())
                 } catch (e: Exception) {
                     Log.d("USR", "failed to save to db $e")
                     return@withContext Result.failure<UserProfileResponse>(
@@ -132,7 +132,7 @@ class UserRepository(private val userApi: UserApi,
                     updateMyId()
                 }
 
-                _myUser.value = dbRepository.getUserById(id)!!.toDomain()
+                _myUser.value = databaseDataSource.getUserById(id)!!.toDomain()
                 return@withContext Result.success(body)
             } else {
                 val tmpId: String = sharedDataSource.get(ID, "")
@@ -140,7 +140,7 @@ class UserRepository(private val userApi: UserApi,
                 if (tmpId.isBlank()) {
                     return@withContext Result.failure(Exception("API failed and no user ID found in preferences"))
                 }
-                val localUser = dbRepository.getUserById(tmpId)
+                val localUser = databaseDataSource.getUserById(tmpId)
                 if (localUser != null) {
                     _myUser.value = localUser.toDomain()
                     val userProfile = localUser.toUserProfileResponse()
@@ -154,7 +154,7 @@ class UserRepository(private val userApi: UserApi,
             if (tmpId.isBlank()) {
                 return@withContext Result.failure(Exception("API error and no user ID found in preferences: $e"))
             }
-            val localUser = dbRepository.getUserById(tmpId)
+            val localUser = databaseDataSource.getUserById(tmpId)
             if (localUser != null) {
                 _myUser.value = localUser.toDomain()
                 val userProfile = localUser.toUserProfileResponse()
@@ -192,7 +192,7 @@ class UserRepository(private val userApi: UserApi,
                 if (body == null) throw Exception()
                 // Save user in DB
                 try {
-                    dbRepository.addUser(body.toRealm())
+                    databaseDataSource.addUser(body.toRealm())
                 } catch (e: Exception) {
                     Log.d("USR", "failed to save to db $e")
                     return@withContext Result.failure<UserProfileResponse>(
@@ -213,7 +213,7 @@ class UserRepository(private val userApi: UserApi,
                     )
                 }
 
-                _myUser.value = dbRepository.getUserById(id)!!.toDomain()
+                _myUser.value = databaseDataSource.getUserById(id)!!.toDomain()
                 Result.success(response.body()!!)
             } else {
                 val errBody = try {
@@ -244,7 +244,7 @@ class UserRepository(private val userApi: UserApi,
 
                     // Save user in DB
                     try {
-                        dbRepository.addUser(body.toRealm())
+                        databaseDataSource.addUser(body.toRealm())
                     } catch (e: Exception) {
                         return@withContext Result.failure<UserProfileResponse>(
                             Exception("Error saving to database: $e")
@@ -267,7 +267,7 @@ class UserRepository(private val userApi: UserApi,
                     Result.success(response.body()!!)
                 } else {
                     // API failed → fallback to DB
-                    val localUser = dbRepository.getUserById(id)
+                    val localUser = databaseDataSource.getUserById(id)
                     if (localUser != null) {
                         val userProfile = localUser.toUserProfileResponse()
                         return@withContext Result.success(userProfile)
@@ -286,7 +286,7 @@ class UserRepository(private val userApi: UserApi,
                 }
             } catch (e: Exception) {
                 // API failed → fallback to DB
-                val localUser = dbRepository.getUserById(id)
+                val localUser = databaseDataSource.getUserById(id)
                 if (localUser != null) {
                     val userProfile = localUser.toUserProfileResponse()
                     return@withContext Result.success(userProfile)
@@ -335,7 +335,7 @@ class UserRepository(private val userApi: UserApi,
                 if(newUrl == null) throw IllegalArgumentException("no avatar url")
 
                 try {
-                    dbRepository.updateUserAvatar(id, newUrl)
+                    databaseDataSource.updateUserAvatar(id, newUrl)
                 } catch (e: Exception) {
                     Log.w(
                         "AVATAR",

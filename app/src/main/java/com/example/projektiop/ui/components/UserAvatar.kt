@@ -26,7 +26,7 @@ fun UserAvatar(url: String?, modifier: Modifier = Modifier) {
     val fullUrl = remember(url) {
         url?.let {
             if (it.startsWith("http")) it
-            else "${sharedDataSource.get(BASE_URL_KEY, "")}$it"
+            else "https://${sharedDataSource.get(BASE_URL_KEY, "")}$it"
         }
     }
 
