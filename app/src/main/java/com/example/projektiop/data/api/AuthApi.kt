@@ -4,7 +4,25 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 
-// Data classes for requests and responses
+
+interface AuthApi {
+    @POST("auth/register")
+    suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
+
+    @POST("auth/login")
+    suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
+
+    @POST("auth/resend-verification-email")
+    suspend fun resendVerificationEmail(
+        @Body request: EmailRequest
+    ): Response<MessageResponse>
+
+    @POST("auth/forgot-password")
+    suspend fun forgotPassword(
+        @Body request: EmailRequest
+    ): Response<MessageResponse>
+}
+
 
 data class RegisterRequest(
     val username: String,
@@ -18,14 +36,22 @@ data class LoginRequest(
 )
 
 data class AuthResponse(
+    val _id: String?,
+    val username: String?,
+    val email: String?,
+    val profile: ProfileDto?,
+    val role: String?,
+    val isTestAccount: String?,
     val token: String?,
-    val message: String?
+    val isBackedUp: Boolean?
 )
 
-interface AuthApi {
-    @POST("auth/register")
-    suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
+data class EmailRequest(
+    val email: String
+)
 
-    @POST("auth/login")
-    suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
-}
+data class MessageResponse(
+    val message: String
+)
+
+

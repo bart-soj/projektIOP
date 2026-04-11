@@ -1,33 +1,49 @@
 package com.example.projektiop.data.mapping
 
 import com.example.projektiop.data.api.MessageDto
-import com.example.projektiop.data.db.objects.Message
-import io.realm.kotlin.types.RealmInstant
-import io.realm.kotlin.types.RealmList
-import com.google.gson.JsonElement
+import com.example.projektiop.data.db.realm.objects.Message
+import com.example.projektiop.data.util.mongoTimestampToRealmInstant
+import com.example.projektiop.data.util.toJavaInstant
+import io.realm.kotlin.ext.realmListOf
+import com.example.projektiop.domain.models.Message as DomainMessage
 
-fun MessageDto.toRealm(): Message {
-    var message = Message()
+fun MessageDto.toRealm(decryptedContent: String): Message {
+    require(!this._id.isNullOrBlank()) { "Missing message id" }
+    val id = this._id
+    val chatId = this.chatId
+    require(!chatId.isNullOrBlank()) { "Missing chat id" }
+    require(!(this.senderId).isNullOrBlank()) { "Missing sender id" }
+    val senderId = this.senderId
 
-    message.id = this._id.toString()
-    message.chatId = extractIdFromElement(this.chatId)
-    message.senderId = this.senderId?._id ?: ""
-    message.content = this.content ?: ""
-    message.readBy = (this.readBy?.mapNotNull { it._id } ?: emptyList<String>()) as RealmList<String>
-    message.createdAt = mongoTimestampToRealmInstant(this.createdAt)
+    val readByList = realmListOf<String>().apply {
+        addAll(this@toRealm.readBy?.mapNotNull { it } ?: emptyList())
+    }
+    val createdAt = mongoTimestampToRealmInstant(this.createdAt)
+    val updatedAt = mongoTimestampToRealmInstant(this.updatedAt)
 
-    return message
+    return Message.create(
+        id = id,
+        chatId = chatId,
+        senderId = senderId,
+        content = decryptedContent,
+        readBy = readByList,
+        createdAt = createdAt,
+    )
 }
 
-private fun extractIdFromElement(el: JsonElement?): String {
-    if (el == null || el.isJsonNull) return ""
-    return try {
-        when {
-            el.isJsonPrimitive && el.asJsonPrimitive.isString -> el.asString
-            el.isJsonObject && el.asJsonObject.has("_id") -> el.asJsonObject.get("_id").asString
-            else -> el.toString()
-        }
-    } catch (_: Exception) {
-        ""
-    }
+
+fun Message.toDomain(): DomainMessage {
+    return DomainMessage(
+        id = this._id.toHexString(),
+        chatId = this.chatId.toHexString(),
+        content = this.content,
+        readBy = this.readBy.map { it.toHexString() },
+        senderId = this.senderId.toHexString(),
+        createdAt = this.createdAt!!.toJavaInstant()
+    )
+}
+
+
+fun MessageDto.toDomain(decryptedContent: String): DomainMessage {
+    return this.toRealm(decryptedContent).toDomain()
 }

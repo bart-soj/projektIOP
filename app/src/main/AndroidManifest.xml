@@ -1,29 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-feature android:name="androd.hardware.nfc" android:required="false"/>
+    <!-- <uses-feature android:name="android.hardware.nfc" android:required="true" /> -->
+    <!-- <uses-feature android:name="android.hardware.nfc.hce" android:required="true" /> -->
 
     <!-- Required permissions for BLE -->
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
 
     <!-- Bluetooth permissions for Android 12+ -->
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE"/>
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
 
     <!-- Location permissions for BLE scanning (required on Android < 12) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
     <!-- Permission to access the internet -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Notifications (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <application
         android:networkSecurityConfig="@xml/network_security_config"
@@ -36,18 +35,62 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ProjektIOP"
-        tools:targetApi="31">
+        android:configChanges="layoutDirection|locale"
+        android:localeConfig="@xml/locale_config">
+
+<activity
+    android:name=".MainActivity"
+    android:exported="true"
+    android:theme="@style/Theme.ProjektIOP">
+    <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+
+        <category android:name="android.intent.category.LAUNCHER" />
+    </intent-filter>
+</activity >
+<activity
+    android:name=".activeHandshake.NFC.ReadNFCActivity"
+    android:exported="true"
+    android:label="readNFCActivity"
+    android:theme="@style/Theme.ProjektIOP">
+    <intent-filter>
+        <!-- NFC intents here -->
+                <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
         <activity
-            android:name=".MainActivity"
+            android:name=".activeHandshake.NFC.HostBasedCardEmulatorActivity"
             android:exported="true"
-            android:label="@string/app_name"
+            android:label="HCEActivity"
             android:theme="@style/Theme.ProjektIOP">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
+        <service android:name=".activeHandshake.NFC.HCEApduService" android:exported="true"
+            android:permission="android.permission.BIND_NFC_SERVICE">
+            <intent-filter>
+                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE"/>
+
+            </intent-filter>
+            <meta-data android:name="android.nfc.cardemulation.host_apdu_service"
+                android:resource="@xml/apduservice"/>
+        </service>
+        <service
+            android:name=".BluetoothLE.BLEService"
+            android:exported="false"
+            android:foregroundServiceType="location">
+        </service>
+        <service
+            android:name=".data.repositories.ChatUpdateService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync">
+        </service>
     </application>
 
 </manifest>

@@ -1,0 +1,116 @@
+package com.example.projektiop.ui.viewmodels
+
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.projektiop.R
+import com.example.projektiop.data.repositories.InterestRepository
+import com.example.projektiop.data.repositories.UserRepository
+import com.example.projektiop.domain.models.Gender
+import com.example.projektiop.domain.models.Interest
+import com.example.projektiop.ui.components.millisToDisplayDate
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
+
+
+sealed interface EditProfileUiEevent {
+    object UpdateSuccess : EditProfileUiEevent
+    object UpdateFailure : EditProfileUiEevent
+    data class ShowToast(val message: String) : EditProfileUiEevent
+}
+
+
+class EditProfileViewModel(private val interestRepository: InterestRepository, private val userRepository: UserRepository): ViewModel() {
+
+    val publicInterests = interestRepository.publicInterests
+    val myInterests = userRepository.MyUserInterests
+    val myUser = userRepository.myUser
+
+    private val _loading: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val loading: StateFlow<Boolean> = _loading.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private val _errorUploading = MutableStateFlow<String?>(null)
+    val errorUploading : StateFlow<String?> = _errorUploading.asStateFlow()
+
+    private val _uploading: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val uploading: StateFlow<Boolean> = _uploading.asStateFlow()
+
+    private val _currentAvatarUrl = MutableStateFlow<String?>(myUser.value?.profile?.avatarUrl)
+    val currentAvatarUrl = _currentAvatarUrl.asStateFlow()
+
+    private val _uiEvents = Channel<EditProfileUiEevent>()
+    val uiEvents = _uiEvents.receiveAsFlow()
+
+    fun onUpdateClick(displayName: String?, gender: Gender?, location: String?,
+                      bio: String?, birthDate: Long?, broadcastMessage: String?,
+                      interestsWithDescriptions: Map<Interest, String>
+                      ) {
+        _loading.value = true
+        _errorMessage.value = null
+        viewModelScope.launch {
+            userRepository.updateMyProfile(
+                displayName = displayName,
+                gender = gender?.name?.lowercase(),
+                location = location,
+                bio = bio,
+                birthDate = birthDate?.let{ millisToDisplayDate(it) },
+                broadcastMessage = broadcastMessage
+            ).onFailure { e ->
+                _errorMessage.value = e.message
+            }
+            userRepository.syncMyInterestsWithDescriptions(interestsWithDescriptions)
+                .onFailure { e ->
+                    _errorMessage.value = errorMessage.value + e.message
+                }
+            if (_errorMessage.value == null) {
+                _uiEvents.send(EditProfileUiEevent.UpdateSuccess)
+            }
+            _loading.value = false
+        }
+    }
+
+    fun onAvatarUpload(toUploadBytes: ByteArray?, toUploadUri: Uri?, context: Context) {
+        if (toUploadUri == null || toUploadBytes == null) return
+        _uploading.value = true
+        _errorUploading.value = null
+        viewModelScope.launch {
+            val resolver = context.contentResolver
+            val type = resolver.getType(toUploadUri)
+            val name = queryDisplayName(context, toUploadUri)
+            val sizeOk = toUploadBytes.size <= 5 * 1024 * 1024
+            if (!sizeOk) {
+                _errorUploading.value = context.getString(R.string.upload_error_file_too_large)
+                _uploading.value = false
+                return@launch
+            }
+            userRepository.uploadAvatar(
+                bytes = toUploadBytes,
+                originalFileName = name,
+                mimeType = type
+            ).onFailure {
+                _errorUploading.value = context.getString(R.string.avatar_upload_error)
+            }.onSuccess { url ->
+                userRepository.getMyProfile()
+                _currentAvatarUrl.value = url
+            }
+            _uploading.value = false
+        }
+    }
+
+    private fun queryDisplayName(context: Context, uri: Uri): String? {
+        val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
+        return context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+            val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            if (index >= 0 && cursor.moveToFirst()) cursor.getString(index) else null
+        }
+    }
+}

@@ -1,37 +1,58 @@
 package com.example.projektiop
 
 import android.app.Application
-import com.example.projektiop.data.db.RealmProvider
+import com.example.projektiop.BluetoothLE.bleKoinModule
+import com.example.projektiop.activeHandshake.NFC.nfcKoinModule
+import com.example.projektiop.data.api.apiKoinModule
+import com.example.projektiop.data.db.realm.RealmProvider
+import com.example.projektiop.data.db.realm.realmKoinModule
 import com.example.projektiop.data.repositories.AuthRepository
-import com.example.projektiop.data.ThemePreference
-import com.example.projektiop.data.repositories.DBRepository
-import com.example.projektiop.data.repositories.SharedPreferencesRepository
-import com.example.projektiop.data.repositories.UserRepository
+import com.example.projektiop.data.repositories.LanguageRepository
+import com.example.projektiop.ui.viewModelsKoinModule
 import com.example.projektiop.util.NotificationHelper
-import io.realm.kotlin.Realm
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.getKoin
+import org.koin.android.ext.android.inject
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.core.context.GlobalContext.startKoin
 
 /**
  * Application class for the HelloBeacon Application
- * It initializes the Realm Database and Repositories
+ * It initializes the RealmProvider, NotificationHelper and Language Repository
  */
 
 class HelloBeaconApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        RealmProvider.init(this)
-        DBRepository.init(RealmProvider.getRealm())
-        SharedPreferencesRepository.init(this)
-        AuthRepository.init(this)
-        UserRepository.init(this)
+
+        startKoin {
+            androidLogger()
+            androidContext(this@HelloBeaconApp)
+            modules(rootKoinModule, nfcKoinModule, apiKoinModule, realmKoinModule, bleKoinModule,
+                viewModelsKoinModule
+            )
+        }
+
         NotificationHelper.initChannels(this)
-        com.example.projektiop.data.repositories.ChatRepository.init(this)
-        com.example.projektiop.data.repositories.ChatUpdateManager.start(this)
+
+        // initializes language before MainActivity is created
+        getKoin().get<LanguageRepository>()
+
+        val realmProvider by inject<RealmProvider>()
+        realmProvider.init(this)
     }
+
 
     override fun onTerminate() {
         super.onTerminate()
-
-        RealmProvider.close()
+        val authRepository by inject<AuthRepository>()
+        val realmProvider by inject<RealmProvider>()
+        realmProvider.close()
+        MainScope().launch {
+            authRepository.onTerminate()
+        }
     }
 }

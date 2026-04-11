@@ -1,0 +1,67 @@
+package com.example.projektiop.ui.screens
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.projektiop.ui.components.BottomNavigationBar
+import com.example.projektiop.ui.components.ProfileCard
+import com.example.projektiop.ui.components.PullToRefresh
+import com.example.projektiop.ui.viewmodels.MainViewModel
+import org.koin.androidx.compose.koinViewModel
+
+
+internal data class InfoItem(val icon: ImageVector, val text: String)
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreen(navController: NavController) {
+    val viewModel = koinViewModel<MainViewModel>()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val loading by viewModel.loading.collectAsState()
+    val error by viewModel.errorMessage.collectAsState()
+    val user by viewModel.user.collectAsState()
+    val interests by viewModel.myInterests.collectAsState()
+
+    Scaffold(
+        bottomBar = {
+            BottomNavigationBar(navController = navController, currentRoute = currentRoute)
+        }
+    ) { paddingValues ->
+        val isLoading by viewModel.loading.collectAsState()
+
+        PullToRefresh(
+            refreshing = isLoading,
+            onRefresh = { viewModel.getMyProfile() }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp)
+            ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ProfileCard(
+                onEditProfile = { navController.navigate("edit_profile") },
+                user = user,
+                interests = interests,
+                loading = loading,
+                error = error
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+            }
+        }
+    }
+}

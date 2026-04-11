@@ -4,32 +4,51 @@ import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.os.Build
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.projektiop.R
+import com.example.projektiop.domain.models.FriendshipStatus
 
 object NotificationHelper {
-    const val CHANNEL_FRIEND = "friend_events"
-    const val CHANNEL_MESSAGES = "chat_messages"
+    val CHANNEL_FRIEND = "friend_events"
+    val CHANNEL_MESSAGES = "chat_messages"
+    val CHANNEL_BLE = "ble_service"
 
     fun initChannels(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val friend = NotificationChannel(CHANNEL_FRIEND, "Zaproszenia", NotificationManager.IMPORTANCE_DEFAULT)
-            val messages = NotificationChannel(CHANNEL_MESSAGES, "Wiadomości", NotificationManager.IMPORTANCE_HIGH)
-            nm.createNotificationChannel(friend)
-            nm.createNotificationChannel(messages)
-        }
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val friend = NotificationChannel(CHANNEL_FRIEND, context.getString(R.string.channel_friend_name), NotificationManager.IMPORTANCE_DEFAULT)
+        val bleservice = NotificationChannel(CHANNEL_BLE, context.getString(R.string.channel_ble_name), NotificationManager.IMPORTANCE_DEFAULT)
+        val messages = NotificationChannel(CHANNEL_MESSAGES, context.getString(R.string.channel_messages_name), NotificationManager.IMPORTANCE_HIGH)
+        nm.createNotificationChannel(friend)
+        nm.createNotificationChannel(messages)
+        nm.createNotificationChannel(bleservice)
     }
 
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     fun notifyFriendRequest(context: Context, fromUser: String) {
         val notif = NotificationCompat.Builder(context, CHANNEL_FRIEND)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Nowe zaproszenie do znajomych")
+            .setContentTitle(context.getString(R.string.new_friend_request))
             .setContentText(fromUser)
+            .setAutoCancel(true)
+            .build()
+        NotificationManagerCompat.from(context).notify((System.currentTimeMillis() % 100000).toInt(), notif)
+    }
+
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
+    fun notifyFriendshipStatus(context: Context, fromUser: String, status: FriendshipStatus) {
+        val content = when(status) {
+            FriendshipStatus.ACCEPTED -> context.getString(R.string.friendship_accepted)
+            FriendshipStatus.REJECTED -> context.getString(R.string.friendship_rejected)
+            FriendshipStatus.BLOCKED -> context.getString(R.string.friendship_blocked)
+            FriendshipStatus.NOT_FRIENDS -> context.getString(R.string.friendship_removed)
+            else -> { return }
+        }
+        val notif = NotificationCompat.Builder(context, CHANNEL_FRIEND)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle(fromUser)
+            .setContentText(content)
             .setAutoCancel(true)
             .build()
         NotificationManagerCompat.from(context).notify((System.currentTimeMillis() % 100000).toInt(), notif)
@@ -39,7 +58,7 @@ object NotificationHelper {
     fun notifyMessage(context: Context, fromUser: String, preview: String) {
         val notif = NotificationCompat.Builder(context, CHANNEL_MESSAGES)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Nowa wiadomość od $fromUser")
+            .setContentTitle(context.getString(R.string.notification_new_message, fromUser))
             .setContentText(preview)
             .setStyle(NotificationCompat.BigTextStyle().bigText(preview))
             .setAutoCancel(true)

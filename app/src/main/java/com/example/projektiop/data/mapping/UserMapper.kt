@@ -1,68 +1,85 @@
 package com.example.projektiop.data.mapping
 
-import androidx.compose.ui.semantics.Role
-import com.example.projektiop.data.api.Profile
+import com.example.projektiop.data.api.ProfileDto
 import com.example.projektiop.data.api.UserProfileResponse
-import com.example.projektiop.data.db.objects.Gender
-import com.example.projektiop.data.db.objects.User
-import com.example.projektiop.data.db.objects.UserProfile
-import com.example.projektiop.data.db.objects.UserRole
+import com.example.projektiop.data.db.realm.objects.User
+import com.example.projektiop.data.db.realm.objects.UserProfile
+import com.example.projektiop.domain.models.Gender
+import com.example.projektiop.domain.models.UserRole
+import com.example.projektiop.data.util.mongoTimestampToRealmInstant
+import com.example.projektiop.data.util.realmInstantToMongoTimestamp
+import com.example.projektiop.data.util.toJavaInstant
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.RealmInstant
+import kotlin.String
+import com.example.projektiop.domain.models.User as DomainUser
+import com.example.projektiop.domain.models.User.UserProfile as DomainUserProfile
 
 
 fun UserProfileResponse.toRealm(): User {
-    val user = User()
-    // Primary key – must not be null/blank; caller should ensure presence, otherwise DB save should be skipped
-    val idFromApi = this._id
-    if (idFromApi != null) {
-        user.id = idFromApi
-    }
-    this.username?.let { user.username = it }
-    this.email?.let { user.email = it }
-    user.profile = UserProfile()
-    user.profile?.displayName = this.profile?.displayName.toString()
-    // Safe gender mapping
-    val genderEnum = this.profile?.gender
-        ?.takeIf { it.isNotBlank() }
-        ?.uppercase()
-        ?.let { runCatching { Gender.valueOf(it) }.getOrNull() }
-    user.profile?.gender = genderEnum
-    user.profile?.birthDate = mongoTimestampToRealmInstant(this.profile?.birthDate)
-    user.profile?.location = this.profile?.location.toString()
-    user.profile?.bio = this.profile?.bio.toString()
-    user.profile?.broadcastMessage = this.profile?.broadcastMessage.toString()
-    user.profile?.avatarUrl = this.profile?.avatarUrl ?: ""
-    // Safe role mapping
-    val roleEnum: UserRole? = this.role
-        ?.takeIf { it.isNotBlank() }
-        ?.uppercase()
-        ?.let { runCatching { UserRole.valueOf(it) }.getOrNull() }
-    user.role = roleEnum
-    user.isBanned = this.isBanned ?: true
-    user.banReason = this.banReason
-    user.bannedAt = mongoTimestampToRealmInstant(this.bannedAt)
-    user.isTestAccount = this.isTestAccount ?: false
-    user.isEmailVerified = this.isEmailVerified ?: false
-    user.isDeleted = this.isDeleted ?: false
-    user.deletedAt = mongoTimestampToRealmInstant(this.deletedAt)
-    user.createdAt = mongoTimestampToRealmInstant(this.createdAt)
-    user.updatedAt = mongoTimestampToRealmInstant(this.updatedAt)
+    require(!this._id.isNullOrBlank()) { "Missing user id" }
+    val id = this._id
+    require(!this.username.isNullOrBlank()) { "Missing username" }
+    val username = this.username
+    require(!this.email.isNullOrBlank()) { "Missing email" }
+    val email = this.email
 
-    return user
+    val profile = UserProfile().apply {
+        displayName = this@toRealm.profile?.displayName ?: this@toRealm.username
+        avatarUrl = this@toRealm.profile?.avatarUrl.orEmpty()
+        gender = this@toRealm.profile?.gender
+            ?.takeIf { it.isNotBlank() }
+            ?.uppercase()
+            ?.let { runCatching { Gender.valueOf(it) }.getOrNull() }
+        birthDate = this@toRealm.profile?.birthDate
+        location = this@toRealm.profile?.location.orEmpty()
+        bio = this@toRealm.profile?.bio.orEmpty()
+        broadcastMessage = this@toRealm.profile?.broadcastMessage.orEmpty()
+    }
+
+    val roleEnum = this.role
+        ?.takeIf { it.isNotBlank() }
+        ?.uppercase()
+        ?.let { runCatching { UserRole.valueOf(it) }.getOrDefault(UserRole.USER) }
+        ?: UserRole.USER
+
+    val interestIds = realmListOf<String>().apply {
+        addAll(this@toRealm.interests?.mapNotNull { it.userInterestId } ?: emptyList())
+    }
+
+    return User.create(
+        id = id,
+        username = username,
+        email = email,
+        profile = profile,
+        role = roleEnum,
+        interestIds = interestIds,
+        isBanned = this.isBanned ?: false,
+        banReason = this.banReason,
+        bannedAt = mongoTimestampToRealmInstant(this.bannedAt),
+        isTestAccount = this.isTestAccount == true,
+        isEmailVerified = this.isEmailVerified == true,
+        isDeleted = this.isDeleted == true,
+        deletedAt = mongoTimestampToRealmInstant(this.deletedAt),
+        createdAt = mongoTimestampToRealmInstant(this.createdAt),
+        updatedAt = RealmInstant.now()
+    )
 }
+
 
 
 fun User.toUserProfileResponse(): UserProfileResponse {
     return UserProfileResponse(
-        profile = Profile(
+        profile = ProfileDto(
             displayName = this.profile?.displayName,
             bio = this.profile?.bio,
             gender = this.profile?.gender?.name,
             location = this.profile?.location,
-            birthDate = realmInstantToMongoTimestamp(this.profile?.birthDate),
+            birthDate = this.profile?.birthDate,
             broadcastMessage = this.profile?.broadcastMessage,
             avatarUrl = this.profile?.avatarUrl
         ),
-        _id = this.id,
+        _id = this._id.toHexString(),
         username = this.username,
         email = this.email,
         role = this.role?.name,
@@ -76,7 +93,33 @@ fun User.toUserProfileResponse(): UserProfileResponse {
         createdAt = realmInstantToMongoTimestamp(this.createdAt),
         updatedAt = realmInstantToMongoTimestamp(this.updatedAt),
         __v = null,
-        interests = null // TODO() need to store in db first
+        interests = null
+    )
+}
+
+
+fun User.toDomain(): DomainUser {
+    return DomainUser(
+        id = this._id.toHexString(),
+        username = this.username,
+        email = this.email,
+        profile = DomainUserProfile(
+            displayName = this.profile!!.displayName,
+            avatarUrl = this.profile!!.avatarUrl,
+            gender = this.profile!!.gender,
+            birthDate = this.profile!!.birthDate,
+            location = this.profile!!.location,
+            bio = this.profile!!.bio,
+            broadcastMessage = this.profile!!.broadcastMessage
+        ),
+        role = this.role!!,
+        interests = this.interests.map { it.toDomain() },
+        isBanned = this.isBanned,
+        banReason = this.banReason,
+        bannedAt = this.bannedAt?.toJavaInstant(),
+        isDeleted = this.isDeleted,
+        deletedAt = this.deletedAt?.toJavaInstant(),
+        createdAt = this.createdAt?.toJavaInstant()
     )
 }
 

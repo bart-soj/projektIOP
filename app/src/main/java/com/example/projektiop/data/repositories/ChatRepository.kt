@@ -1,47 +1,44 @@
 package com.example.projektiop.data.repositories
 
+import android.annotation.SuppressLint
 import com.example.projektiop.data.api.MessageDto
-import com.example.projektiop.data.api.RetrofitInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.content.Context
-import android.content.SharedPreferences
+import android.util.Log
+import com.example.projektiop.data.SharedDataSource
+import com.example.projektiop.data.api.AccesChatRequest
+import com.example.projektiop.data.api.ChatApi
+import com.example.projektiop.data.api.ChatDto
+import com.example.projektiop.data.api.MessagesPageDto
+import com.example.projektiop.data.api.SendMessageRequest
+import com.example.projektiop.domain.ChatEvent
+import com.example.projektiop.data.api.websocket.SocketManager
+import com.example.projektiop.data.db.realm.RealmDataSource
+import com.example.projektiop.data.mapping.toDomain
+import com.example.projektiop.data.mapping.toRealm
+import com.example.projektiop.domain.models.Message
+import com.example.projektiop.domain.models.base64
+import com.example.projektiop.data.util.KeyUtils
+import com.example.projektiop.domain.DataError
+import com.example.projektiop.util.NotificationHelper
+import com.example.projektiop.data.util.apiExceptionToDataError
+import com.example.projektiop.domain.models.User
+import com.example.projektiop.util.RouteHolder
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOf
+import org.bouncycastle.crypto.InvalidCipherTextException
+import retrofit2.HttpException
+import com.example.projektiop.domain.models.Chat as DomainChat
+import org.koin.core.parameter.parametersOf
+import org.koin.java.KoinJavaComponent.inject
+
 
 private const val BASE_URL_KEY: String = "BASE_URL"
 
-// Lightweight local storage for last read timestamps per chat
-private object ChatReadState {
-    private const val PREFS = "chat_read_state"
-    private const val KEY_PREFIX = "last_read_"
-    @Volatile private var prefs: SharedPreferences? = null
-
-    fun ensure(context: Context) {
-        if (prefs == null) {
-            prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        }
-    }
-
-    fun getLastRead(chatId: String): String? = prefs?.getString(KEY_PREFIX + chatId, null)
-
-    fun markRead(chatId: String, lastMessageTime: String?) {
-        if (lastMessageTime == null) return
-        prefs?.edit()?.putString(KEY_PREFIX + chatId, lastMessageTime)?.apply()
-    }
-
-    fun storeBaseline(chatId: String, lastMessageTime: String) {
-        // Only set if absent to avoid retroactively marking old messages unread
-        if (getLastRead(chatId) == null) markRead(chatId, lastMessageTime)
-    }
-
-    fun isAfter(candidate: String, baseline: String?): Boolean {
-        if (baseline == null) return false
-        // ISO-8601 lexical compare works for ordering if same format
-        return candidate > baseline
-    }
-}
-
-// Public list item used by ChatsScreen
-// Includes friendId and avatarUrl for navigation and UI
 
 data class ChatListItem(
     val id: String,
@@ -53,95 +50,265 @@ data class ChatListItem(
     val unread: Boolean = false
 )
 
-object ChatRepository {
-    private fun normalizeUrl(url: String?): String? {
-        if (url.isNullOrBlank()) return null
-        val trimmed = url.trim()
-        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed
-        val base = SharedPreferencesRepository.get(BASE_URL_KEY,"")
-        return if (trimmed.startsWith("/")) base + trimmed else "$base/$trimmed"
-    }
-    // Call once at app start
-    fun init(context: Context) { ChatReadState.ensure(context) }
-    /** Mark a chat read by persisting last seen message timestamp */
-    fun markChatRead(chatId: String, lastMessageTime: String?) {
-        ChatReadState.markRead(chatId, lastMessageTime)
+class ChatRepository(private val chatApi: ChatApi,
+                     private val sharedDataSource: SharedDataSource,
+                     private val dbRepository: RealmDataSource,
+                     private val keyUtils: KeyUtils,
+                     private val socketManager: SocketManager
+) {
+
+    private val _chats = MutableStateFlow<Flow<List<DomainChat>>>(flowOf(emptyList()))
+    val chats = _chats.asStateFlow()
+
+    private val KEY_ID = "_id"
+
+    suspend fun fetchChats(myUserId: String): com.example.projektiop.domain.Result<List<DomainChat>, DataError> = withContext(Dispatchers.IO) {
+        val dtoList: List<ChatDto>
+        val domainList: MutableList<DomainChat> = emptyList<DomainChat>().toMutableList()
+        try {
+            val response = chatApi.getChats()
+            if(!response.isSuccessful) throw HttpException(response)
+            val body = response.body()
+            require(body != null)
+            dtoList = body
+
+        } catch (e: Exception) {
+            return@withContext apiExceptionToDataError<List<DomainChat>>(e)
+        }
+
+        dtoList.forEach {
+            try {
+                val chatId = it._id
+                require(chatId != null)
+                val otherUserId = it.participants?.firstOrNull { id -> id != myUserId }
+                require(otherUserId != null)
+                val otherUserRepository: OtherUserRepository by inject(OtherUserRepository::class.java) { parametersOf(otherUserId) }
+                var otherUser: User? = otherUserRepository.Profile.value
+                if (otherUser == null) {
+                    val result = otherUserRepository.fetchProfile()
+                    if (result.isSuccess) {
+                        otherUser = result.getOrNull()
+                    }
+                }
+                if (otherUser == null) throw Exception("otherUser not found")
+
+                val chatKey: base64
+
+                val domainChat: DomainChat
+                val lastMessage = it.lastMessage
+                var decrypted: String? = null
+                if (lastMessage != null) {
+                    if (lastMessage.content != null) {
+                        chatKey = dbRepository.getChatById(chatId)?.chatKey
+                            ?: run {
+                                val pubResult = keyUtils.getPubKey(otherUserId)
+                                if (pubResult !is com.example.projektiop.domain.Result.Success) throw Exception("No pubkey")
+                                keyUtils.calculateChatKey(myUserId, pubResult.data)
+                            }
+                        try {
+                            val content = lastMessage.content
+
+                            decrypted = try {
+                                keyUtils.decryptMessage(content, chatKey)
+                            } catch (e: InvalidCipherTextException) {
+                                val chatKeyResult = keyUtils.getPubKey(otherUserId)
+                                if (chatKeyResult is com.example.projektiop.domain.Result.Success) {
+                                    keyUtils.decryptMessage(content, chatKeyResult.data)
+                                } else {
+                                    throw e
+                                }
+                            }
+                        } catch (e: Exception) { }
+
+                        if (decrypted != null) {
+                            val realmChat = it.toRealm(chatKey)
+                            dbRepository.addChat(realmChat)
+                            domainChat = realmChat.toDomain(
+                                myUserId, dbRepository,
+                                lastMessage.toDomain(decrypted)
+                            )
+                            domainList += domainChat
+                        }
+                    }
+                } else {
+                    val local = dbRepository.getChatById(chatId)?.chatKey
+                    if (local != null) { chatKey = local
+                    } else {
+                        val otherUserPubResult = keyUtils.getPubKey(otherUserId)
+                        val otherUserPub: base64?
+                        when (otherUserPubResult) {
+                            is com.example.projektiop.domain.Result.Error -> {
+                                return@forEach
+                            }
+
+                            is com.example.projektiop.domain.Result.Success -> otherUserPub =
+                                otherUserPubResult.data
+                        }
+                        chatKey = keyUtils.calculateChatKey(myUserId, otherUserPub)
+                    }
+                    val realmChat = it.toRealm(chatKey)
+                    dbRepository.addChat(realmChat)
+                    domainChat = realmChat.toDomain(myUserId, dbRepository)
+                    domainList += domainChat
+                }
+            } catch(e: Exception ) {
+                Log.d("CHATS", "failed to resolve chat $e")
+            }
+        }
+        return@withContext com.example.projektiop.domain.Result.Success(domainList)
     }
 
-    suspend fun fetchChats(currentUserId: String? = null, currentUsername: String? = null): Result<List<ChatListItem>> = withContext(Dispatchers.IO) {
+    suspend fun ensureChatWithUser(friendId: String, myId: String): com.example.projektiop.domain.Result<DomainChat, DataError>  {
+        val localData = dbRepository.getChatByFriendId(friendId, myId)
+        if (localData != null) return com.example.projektiop.domain.Result.Success(localData.toDomain(myId, dbRepository))
         try {
-            val response = RetrofitInstance.chatApi.getChats()
-            if (response.isSuccessful) {
-                val body = response.body().orEmpty()
-                val mapped = body.mapNotNull { chat ->
-                    val id = chat._id ?: return@mapNotNull null
+            // if we created the chat and got an error before saving it could exist on server but not locally
+            var dto: ChatDto? = null
+            val existing = chatApi.getChats()
+            if (existing.isSuccessful) {
+                existing.body().orEmpty().firstOrNull { chat ->
                     val participants = chat.participants.orEmpty()
-                    val other = participants.firstOrNull { p ->
-                        (currentUserId != null && p._id != null && p._id != currentUserId) ||
-                        (currentUsername != null && p.username != null && p.username != currentUsername)
-                    } ?: if (participants.size == 2) {
-                        participants.firstOrNull { it.username != null && it.username != currentUsername } ?: participants.firstOrNull()
-                    } else {
-                        participants.firstOrNull()
-                    }
-                    val title = other?.profile?.displayName ?: other?.username ?: "Czat"
-                    val lastMsg = chat.lastMessage?.content ?: "(brak wiadomości)"
-                    val lastMessageTime = chat.lastMessage?.createdAt
-                    val lastRead = ChatReadState.getLastRead(id)
-                    // If no stored lastRead baseline, establish one to avoid flagging entire history as unread immediately
-                    if (lastRead == null && lastMessageTime != null) {
-                        ChatReadState.storeBaseline(id, lastMessageTime)
-                    }
-                    val unread = if (lastMessageTime == null) false else ChatReadState.isAfter(lastMessageTime, ChatReadState.getLastRead(id))
-                    ChatListItem(
-                        id = id,
-                        title = title,
-                        lastMessage = lastMsg,
-                        lastMessageTime = lastMessageTime,
-                        friendId = other?._id,
-                        avatarUrl = normalizeUrl(other?.profile?.avatarUrl),
-                        unread = unread
-                    )
+                    participants.contains(friendId) && participants.contains(myId)
+                }?.let {
+                    dto = it
                 }
-                val sorted = mapped.sortedWith(
-                    compareBy<ChatListItem> { it.lastMessageTime == null }
-                        .thenByDescending { it.lastMessageTime }
-                )
-                Result.success(sorted)
-            } else {
-                Result.failure(Exception("Nie udało się pobrać czatów (${response.code()})"))
             }
+            if (dto == null){
+                val created = chatApi.accessChat(AccesChatRequest(friendId))
+                if(!created.isSuccessful) throw HttpException(created)
+                dto = created.body()
+            }
+
+            require(dto != null)
+
+            val otherUserPubResult = keyUtils.getPubKey(friendId)
+            val otherUserPub: base64?
+            when (otherUserPubResult) {
+                is com.example.projektiop.domain.Result.Error -> { return com.example.projektiop.domain.Result.Error(otherUserPubResult.error) }
+                is com.example.projektiop.domain.Result.Success -> otherUserPub =
+                    otherUserPubResult.data
+            }
+            val chatKey = keyUtils.calculateChatKey(myId, otherUserPub)
+            val realmChat = dto.toRealm(chatKey)
+            dbRepository.addChat(realmChat)
+            val domainChat = realmChat.toDomain(myId, dbRepository)
+            return com.example.projektiop.domain.Result.Success(domainChat)
+        } catch (e: Exception) {
+            return apiExceptionToDataError<DomainChat>(e)
+        }
+    }
+
+    suspend fun loadMessages(chatId: String, friendId: String): Result<List<Message>> = withContext(Dispatchers.IO) {
+        var r: retrofit2.Response<MessagesPageDto>
+        try {
+            r = chatApi.getMessages(chatId)
+            if (!r.isSuccessful) {
+                throw HttpException(r)
+            }
+        } catch (e: Exception) {
+            return@withContext Result.failure(e)
+        }
+
+        var chatKey = dbRepository.getChatById(chatId)!!.chatKey
+        val messages = r.body()?.messages
+        if (messages.orEmpty() == emptyList<MessageDto>()) return@withContext Result.success(emptyList())
+        val firstMessage = messages?.first()
+
+        // if we fail to decrypt the message with locally saved key we try to get a new one
+        try {
+            val decrypted = keyUtils.decryptMessage(firstMessage!!.content!!, chatKey!!)
+        } catch (e: InvalidCipherTextException) {
+            val chatKeyResult = keyUtils.getPubKey(friendId)
+            when(chatKeyResult) {
+                is com.example.projektiop.domain.Result.Error -> {throw e}
+                is com.example.projektiop.domain.Result.Success -> { chatKey = chatKeyResult.data }
+            }
+        }
+
+        try {
+            return@withContext Result.success(messages!!.map {
+                require(it.content != null)
+                val decrypted = keyUtils.decryptMessage(it.content, chatKey)
+                it.toDomain(decrypted)
+            })
+        } catch (e: Exception) {
+            return@withContext Result.failure(Exception("failed to load messages $e"))
+        }
+    }
+
+    suspend fun decryptMessage(message: Message, friendId: String): Result<Message> {
+        return try {
+            val chatKey = dbRepository.getChatById(message.chatId)?.chatKey
+
+            val decrypted = try {
+                keyUtils.decryptMessage(message.content, chatKey!!)
+            } catch (e: InvalidCipherTextException) {
+                val chatKeyResult = keyUtils.getPubKey(friendId)
+                if (chatKeyResult is com.example.projektiop.domain.Result.Success) {
+                    keyUtils.decryptMessage(message.content, chatKeyResult.data)
+                } else {
+                    throw e
+                }
+            }
+
+            val out = Message(
+                id = message.id,
+                chatId = message.chatId,
+                content = decrypted,
+                readBy = message.readBy,
+                senderId = message.senderId,
+                createdAt = message.createdAt
+            )
+            return Result.success(out)
+
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun ensureChatWithUser(friendId: String): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun sendMessage(chatId: String, content: String): Result<Message> = withContext(Dispatchers.IO) {
         try {
-            val existing = RetrofitInstance.chatApi.getChats()
-            if (existing.isSuccessful) {
-                existing.body().orEmpty().firstOrNull { chat ->
-                    chat.participants?.any { it._id == friendId } == true
-                }?.let { return@withContext Result.success(it._id ?: "") }
+            val chatKey = dbRepository.getChatById(chatId)!!.chatKey
+            val encrypted = keyUtils.encryptMessage(content, chatKey!!)
+            val r = chatApi.sendMessage(SendMessageRequest(encrypted, chatId))
+            if (r.isSuccessful) Result.success(r.body()!!.toDomain(encrypted)) else Result.failure(Exception("Błąd wysyłania (${r.code()})"))
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun sendMessageSocket(chatId: String, content: String): Result<Unit> {
+        try {
+            val chatKey = dbRepository.getChatById(chatId)!!.chatKey
+            val encrypted = keyUtils.encryptMessage(content, chatKey!!)
+            socketManager.emit(ChatEvent.Send(chatId, encrypted))
+            return Result.success(Unit)
+        } catch (e: Exception) { return Result.failure(e) }
+    }
+
+    fun connectToService(serviceFlow: StateFlow<List<DomainChat>>) {
+        _chats.value = serviceFlow
+    }
+
+    @SuppressLint("MissingPermission")
+    suspend fun receiveMessage(message: Message, context: Context) {
+        try {
+            val myId = sharedDataSource.get(KEY_ID, "")
+            val chatId = message.chatId
+            val chat = dbRepository.getChatById(chatId)
+            val friendId = chat?.participants?.first{myId != it}
+            val friend = dbRepository.getUserById(friendId!!)
+            val route = RouteHolder.currentRoute.value
+            val routeChatId = RouteHolder.currentChatId.value
+
+            decryptMessage(message, friendId).onSuccess { decrypted ->
+                dbRepository.updateLastMessage(chatId, message.id, message.createdAt.toString())
+                if (message.senderId != myId) {
+                    if (route?.contains("chat_detail") == true && routeChatId == chatId) {
+                        return
+                    } else {
+                        NotificationHelper.notifyMessage(context, friend?.username.toString(), decrypted.content.take(100))
+                    }
+                }
             }
-            val created = RetrofitInstance.chatApi.accessChat(mapOf("userId" to friendId))
-            if (created.isSuccessful) {
-                Result.success(created.body()?._id ?: return@withContext Result.failure(Exception("Brak ID czatu")))
-            } else Result.failure(Exception("Tworzenie czatu nie powiodło się (${created.code()}) ${created.errorBody()?.string()?.take(150)}"))
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    suspend fun loadMessages(chatId: String): Result<List<MessageDto>> = withContext(Dispatchers.IO) {
-        try {
-            val r = RetrofitInstance.chatApi.getMessages(chatId)
-            if (r.isSuccessful) Result.success(r.body()?.messages.orEmpty()) else Result.failure(Exception("Błąd pobierania wiadomości (${r.code()})"))
-        } catch (e: Exception) { Result.failure(e) }
-    }
-
-    suspend fun sendMessage(chatId: String, content: String): Result<MessageDto> = withContext(Dispatchers.IO) {
-        try {
-            val r = RetrofitInstance.chatApi.sendMessage(mapOf("chatId" to chatId, "content" to content))
-            if (r.isSuccessful) Result.success(r.body()!!) else Result.failure(Exception("Błąd wysyłania (${r.code()})"))
-        } catch (e: Exception) { Result.failure(e) }
+        } catch (e: Exception) {}
     }
 }
